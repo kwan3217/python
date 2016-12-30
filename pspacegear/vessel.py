@@ -7,6 +7,7 @@ Created on Thu Dec 29 14:48:24 2016
 """
 
 import numpy as np
+from inertia import *
 
 class mass:
     """
@@ -22,8 +23,9 @@ class mass:
     m : real
       Mass of this element in global mass units, usually kg
     I : 3x3 numpy matrix
-      Inertia tensor about center of mass of mass element, in global mass and
-      length units, usually kg and m
+      Normaized inertia tensor about center of mass of mass element, in global 
+      length units, usually m. This is the actual inertia tensor divided by the
+      mass of the object
     CoM : 3-element numpy vector
       Center of mass of this element in station coordinates
     
@@ -35,7 +37,7 @@ class mass:
     def __init__(self,m,I,CoM):
         self.CoM=CoM
         self.m=m
-        self.I=I
+        self.I=I*m
         
 class vessel:
     """
@@ -107,28 +109,21 @@ class vessel:
         """
         #vessel mass.
         m=0
-        #Inertia matrix. Accumulate in station coordinates, then shift to 
-        #center-of-mass-relative.
-        I=np.matrix([[0,0,0],[0,0,0],[0,0,0]])
-        #Center of mass of vessel in station coordinates
         CoM=np.array([0,0,0])
         for mass in self.masses:
             m=m+mass.m
             CoM=CoM+np.array((mass.m,))*mass.CoM
-            #Use the parallel axis theorem to get the inertia of this part
-            #relative to the station origin
-            #https://en.wikipedia.org/wiki/Parallel_axis_theorem#Tensor_generalization
-            RdR=np.inner(mass.CoM,mass.CoM)
-            RxR=np.outer(mass.CoM,mass.CoM)
-            I=I+mass.I+np.array((mass.m,))*(RdR*vessel.E3-RxR)
         #Divide the weighted sum of center of masses by the total mass to get
         #the actual center of mass
         CoM=CoM/m
-        #Use the parallel axis theorem to shift the inertia of this vessel
-        #from station-relative to center-of-mass-relative
-        RdR=np.inner(-CoM,-CoM)
-        RxR=np.outer(-CoM,-CoM)
-        I=I+m*(RdR*vessel.E3-RxR)
+        #Now that we know where the total center of mass is, use the parallel
+        #axis theorem to figure the moment of inertia of each element
+        #relative to that center of mass
+        #https://en.wikipedia.org/wiki/Parallel_axis_theorem#Tensor_generalization
+        I=np.matrix([[0,0,0],[0,0,0],[0,0,0]])
+        for mass in self.masses:
+            R=mass.CoM-CoM
+            I=I+mass.I+m*(np.inner(R,R)*vessel.E3-np.outer(R,R))
         return (m,I,CoM)
     def actuate(self):
         """
@@ -146,3 +141,7 @@ class vessel:
         """
         pass
     
+v=vessel([],[mass(100,SolidSphereI(100,1),np.array([-1,0,0])),
+             mass(100,ThinSphereI (100,1),np.array([ 1,0,0]))])
+print(v.inertia())
+
