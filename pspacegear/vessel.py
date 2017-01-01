@@ -7,7 +7,7 @@ Created on Thu Dec 29 14:48:24 2016
 """
 
 import numpy as np
-from inertia import *
+from inertia import SolidSphereI, ThinSphereI
 
 class mass:
     """
@@ -133,15 +133,15 @@ class vessel:
         Returns
         -------
         f : 3-element numpy vector
-            Force on center of mass in global mass, length, and time units,
-            usually N
+            Force on center of mass in body frame in global mass, length, and 
+            time units, usually N
         M : 3-element numpy vector
-            Moment about center of mass in global mass, length, and time units,
-            usually N-m
+            Moment about center of mass in body frame in global mass, length, 
+            and time units, usually N-m
         """
-        pass
+        return (np.array([0,0,0]),np.array([0,0,0]))
     
-v=vessel([],[mass(100,SolidSphereI(100,1),np.array([-1,0,0])),
-             mass(100,ThinSphereI (100,1),np.array([ 1,0,0]))])
+v=vessel([],[mass(1,SolidSphereI(0),np.array([-1,0,0])),
+             mass(1,ThinSphereI (0),np.array([ 1,0,0]))])
 print(v.inertia())
 
