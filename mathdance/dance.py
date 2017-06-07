@@ -1,0 +1,307 @@
+import subprocess
+import os
+import re
+import xml.etree.ElementTree as ET
+from matplotlib.path import Path
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+
+position=re.compile(r"!--Position: ([A-Za-z0-9_]+) \(([0-9]+),([0-9]+)\)")
+spaceparse=re.compile(r"\s+")
+
+def tex_head(oufn):
+    ouf=open(oufn+'.tex','w')
+    ouf.write("\\documentclass{minimal}\n")
+    ouf.write("\\usepackage[user,pagelayout,savepos]{zref}\n")
+    ouf.write("\\begin{document}\n")
+    ouf.write("$$\n")
+    return ouf
+
+def tex_eqn(ouf,tag,text,phantom=False):
+    ouf.write("\\zsavepos{"+tag+"}")
+    if phantom:
+        ouf.write("\phantom{")
+    ouf.write("{"+text+"}")
+    if phantom:
+        ouf.write("}")
+    ouf.write("\n")
+
+def tex_foot(ouf,tags):
+    ouf.write("$$\n")
+    for tag in tags:
+        ouf.write("\\typeout{!--Position: "+tag+" (\\zposx{"+tag+"},\\zposy{"+tag+"})}\n")
+    ouf.write("\\end{document}\n")
+    ouf.close()
+
+def tex_render(oufn,clean=False):
+    # Get the coordinates of the piece by itself
+    subprocess.call("latex "+oufn+".tex > /dev/null",shell=True)
+    subprocess.call("latex "+oufn+".tex | grep \"!--Position:\" > "+oufn+".coords",shell=True)
+    # Delete the .tex since we no longer need it
+    if clean: os.remove(oufn+'.tex')
+    # clean up other files we don't care about
+    if clean: os.remove(oufn+'.aux')
+    if clean: os.remove(oufn+'.log')
+    # Parse the coords
+    with open(oufn+'.coords',"r") as inf:
+        content=inf.readlines()
+    if clean: os.remove(oufn+'.coords')
+    content=[x.strip() for x in content]
+    coords={}
+    for line in content:
+        m=position.search(line)
+        coords[m.group(1)]=(int(m.group(2)),int(m.group(3)))
+    # Render the piece
+    subprocess.call("dvisvgm -e -n -bmin --keep "+oufn+".dvi > /dev/null 2>&1",shell=True)
+    # Delete the DVI now that it is rendered
+    if clean: os.remove(oufn+'.dvi')
+    # Slurp the SVG for this equation
+    with open(oufn+'.svg',"r") as inf:
+        content=inf.readlines()
+    # Delete the SVG
+    if clean: os.remove(oufn+'.svg')
+    return (coords,content)
+
+class svgdraw:
+    def pathEnd(self,path):
+        pathStart=(0,0)
+        result=(0,0)
+        for i,code in enumerate(path["code"]):
+            if code==Path.MOVETO:
+                pathStart=path["coords"][i]
+                result=pathStart
+            elif code==Path.CLOSEPOLY:
+                result=pathStart
+            else:
+                result=path["coords"][i]
+        return result
+    def smoothPt(self,path):
+        if(len(path["code"])<2):
+            return self.pathEnd(path)
+        if(path["code"][-2]!=Path.CURVE4):
+            return self.pathEnd(path)
+        return path["coords"][-2]
+    def finishCommand(self,path,command,coords):
+        if command=="M":
+            path["code"].append(Path.MOVETO)
+            path["coords"].append(coords)
+        elif command=="L":
+            pe=self.pathEnd(path)
+            path["code"].append(Path.LINETO)
+            path["coords"].append(coords)
+        elif command=="H":
+            pe=self.pathEnd(path)
+            path["code"].append(Path.LINETO)
+            path["coords"].append((coords[0],pe[1]))
+        elif command=="V":
+            pe=self.pathEnd(path)
+            path["code"].append(Path.LINETO)
+            path["coords"].append((pe[0],coords[0]))
+        elif command=="C":
+            path["code"].append(Path.CURVE4)
+            path["code"].append(Path.CURVE4)
+            path["code"].append(Path.CURVE4)
+            path["coords"].append(coords[0:2])
+            path["coords"].append(coords[2:4])
+            path["coords"].append(coords[4:6])
+        elif command=="S":
+            sp=self.smoothPt(path)
+            pe=self.pathEnd(path)
+            path["code"].append(Path.CURVE4)
+            path["code"].append(Path.CURVE4)
+            path["code"].append(Path.CURVE4)
+            dsp=(pe[0]-sp[0],pe[1]-sp[1])
+            p1=(pe[0]+dsp[0],pe[1]+dsp[1])
+            path["coords"].append(p1)
+            path["coords"].append(coords[0:2])
+            path["coords"].append(coords[2:4])
+        elif command=="Z":
+            path["code"].append(Path.CLOSEPOLY)
+            path["coords"].append((0,0))
+        else:
+            raise Exception("Unhandled command "+command)
+    def draw(self,ax,coords,fade):
+        print("Drawing "+self.name+" at coords: ",coords," fade: ",fade)
+        for use in self.uses:
+            commands=self.paths[use["id"]]["code"]
+            rcoords =self.paths[use["id"]]["coords"]
+            ref=use["coords"]
+            acoords=[]
+            for rcoord in rcoords:
+                acoords.append((rcoord[0]+ref[0]+coords[0],rcoord[1]+ref[1]+coords[1]))
+            path=Path(acoords,commands)
+            patch=patches.PathPatch(path,facecolor='orange',lw=0)
+            ax.add_patch(patch)
+    def set_svg(self,svg):
+        self.svg=svg
+        #This parser is not for general purpose SVG files, but for those 
+        #generated by dvisvgm. This uses paths defined in the defs section
+        #and instantiated in a use section. The path might be disconnected
+        self.paths={}
+        self.uses=[]
+        #Parse the XML into an ElementTree
+        root=ET.fromstringlist(self.svg)
+        bbox=spaceparse.split(root.attrib["viewBox"])
+        self.left=float(bbox[0])
+        self.top=float(bbox[1])
+        self.width=float(bbox[2])
+        self.height=float(bbox[3])
+        
+        defs=root.find('{http://www.w3.org/2000/svg}defs')
+        if defs is not None:
+            #Get all the paths out of the xml, which are in svg/defs
+            for svgpath in defs.findall("{http://www.w3.org/2000/svg}path"):
+                id=svgpath.attrib["id"]
+                d=re.findall('[A-Za-z ]|(?:[-+]?[0-9]+(?:\.[0-9]+)?)',svgpath.attrib["d"])
+                d=[x for x in d if x != " "]
+                path={"code":[],"coords":[]}
+                coords=None
+                command=None
+                for part in d:
+                    if re.match("[A-Za-z]",part):
+                        if coords is not None:
+                            self.finishCommand(path,command,coords)
+                        command=part
+                        coords=None
+                    else:
+                        if coords is None:
+                            coords=(float(part),)
+                        else:
+                            coords=coords+(float(part),)
+                if command is not None:
+                    self.finishCommand(path,command,coords)
+                self.paths[id]=path
+        g=root.find('{http://www.w3.org/2000/svg}g')
+        if g is not None:
+            #Get all the paths out of the xml, which are in svg/defs
+            for svguse in g.findall("{http://www.w3.org/2000/svg}use"):
+                use={"id":svguse.attrib["{http://www.w3.org/1999/xlink}href"][1:],
+                     "coords":(float(svguse.attrib["x"]),float(svguse.attrib["y"]))}
+                self.uses.append(use)
+        
+class subexpr(svgdraw):
+    def __init__(self,eqnname,names,texes,name):
+        self.name=name
+        ouf=tex_head(eqnname+name)
+        for iname,itex in zip(names,texes):
+            tex_eqn(ouf,iname,itex,phantom=(name!=iname))
+            if(name==iname):
+              self.tex =itex
+        tex_foot(ouf,[name])
+        (self.coords,svg)=tex_render(eqnname+name)
+        self.set_svg(svg)
+
+class expr(svgdraw):
+    def __init__(self,eqnname,names,texes):
+        ouf=tex_head(eqnname+'whole')
+        self.subexprs={}
+        for name,tex in zip(names,texes):
+            self.subexprs[name]=subexpr(eqnname,names,texes,name)
+            tex_eqn(ouf,name,tex)
+        tex_foot(ouf,names)
+        (self.coords,svg)=tex_render(eqnname+'whole')
+        self.set_svg(svg)
+        for k,v in self.coords.items():
+            print(k,v)
+
+class dance_eqn:
+    def normalize_parts(self):
+        totalWidth_sp=self.exprA.coords["__last__"][0]-self.exprA.coords["__first__"][0]
+        totalWidth_svg=self.exprA.width
+        ratio=totalWidth_sp/totalWidth_svg
+        #At this point, all the terms have matching names, so we can get the 
+        #coefficients for a linterp from one to the other
+        self.m={}
+        self.b={}
+        for k,v in self.exprA.coords.items():
+            self.m[k]=(self.exprB.coords[k][0]-v[0],self.exprB.coords[k][1]-v[1])
+            self.b[k]=self.exprA.coords[k]
+        #Adjust so that the equals doesn't move
+        equals_m=self.m["equals"]
+        for k in self.m:
+            self.m[k]=(self.m[k][0]-equals_m[0],self.m[k][1]-equals_m[1])
+        #scale all the M and B down to SVG
+        for k in self.m:
+            self.m[k]=(self.m[k][0]/ratio,self.m[k][1]/ratio)
+            self.b[k]=(self.b[k][0]/ratio,self.b[k][1]/ratio)
+        #Set the equals to its proper position
+        equals_b=self.b["equals"]
+        for k in self.b:
+            self.b[k]=(self.b[k][0]-equals_b[0]+self.xeq,self.b[k][1]-equals_b[1]+self.yeq)
+
+
+class dance_addsub_left_right(dance_eqn):
+    def __init__(self,
+                 left_before ,left_sign ,term,left_after ,
+                 equals,
+                 right_before,right_sign,     right_after,
+                 xeq,yeq):
+        """
+        Render the movement of a term from the left side to the right side.
+    
+        :param left_before:  Part of equation on the left side to the left of 
+                             (before) the term to be moved, in TeX format
+        :type  left_before:  string
+        :param left_sign:    Sign of the term to be moved when it is on the left side
+        :type  left_sign:    string
+        :param term:         Term to be moved
+        :type  term:         string
+        :param left_after:   Part of equation on the left side to the right of 
+                             (after) the term to be moved
+        :type  left_after:   string
+        :param equals:       Anchor of expression, usually equals. This will remain 
+                             in the same place
+        :type  equals:       string
+        :param right_before: Part of equation on the right side to the left of 
+                             (before) the term to be moved, in TeX format
+        :type  right_before: string
+        :param right_sign:   Sign of the term to be moved when it is on the right side
+        :type  right_sign:   string
+        :param right_after:  Part of equation on the right side to the right of 
+                             (after) the term to be moved
+        :type  right_after:  string
+        :param xeq:          X coordinate of equals sign
+        :type  xeq:          int
+        :param yeq:          Y coordinate of equals sign
+        :type  yeq:          int
+        :param frames:       Number of frames to use in animation
+        :type  frames:       int
+        """
+        self.xeq=xeq
+        self.yeq=yeq
+        # Get the spacing of the equation before the move
+        self.exprA=expr("exprA",
+                        ["__first__","left_before",     "sign","term","left_after","equals","right_before","right_after","__last__"],
+                        [""         , left_before , left_sign , term , left_after , equals , right_before , right_after, ""        ])
+        # Get the spacing of the equation after the move
+        self.exprB=expr("exprB",
+                        ["__first__","left_before","left_after","equals","right_before",      "sign","term","right_after","__last__"],
+                        [""         , left_before , left_after , equals , right_before , right_sign , term , right_after ,""        ])
+        self.normalize_parts()
+        
+    def get_piece_coords(self,k,t):
+        return (self.b[k][0]+self.m[k][0]*t,self.b[k][1]+self.m[k][1]*t)
+
+    def draw_piece(self,ax,k,t,fade=1):
+        if k=='sign':
+            self.exprA.subexprs["sign"].draw(ax,self.get_piece_coords(k,t),(1-t)*fade)
+            self.exprB.subexprs["sign"].draw(ax,self.get_piece_coords(k,t),(  t)*fade)
+        else:
+            self.exprA.subexprs[k].draw(ax,self.get_piece_coords(k,t),fade)
+
+    def draw(self,ax,t,fade=1):
+       for k in self.m:
+           self.draw_piece(ax,k,t,fade)
+            
+d=dance_addsub_left_right("1","+","1","+\int_a^b x^2 dx","=","2","-","\sum_{n=0}^\infty \sin(x^2) dx",100,100)
+fig=plt.figure()
+ax=fig.add_subplot(111)
+ax.set_xlim(0,1000)
+ax.set_ylim(1000,0)
+
+d.draw(ax,0.0)
+plt.show()
+d.draw(ax,1.0)
+plt.show()
+
+
