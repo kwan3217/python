@@ -1,13 +1,14 @@
-import subprocess
-import os
 import re
 import xml.etree.ElementTree as ET
 from matplotlib.path import Path
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import tex
+import subprocess
+import os
 
-position=re.compile(r"!--Position: ([A-Za-z0-9_]+) \(([0-9]+),([0-9]+)\)")
 spaceparse=re.compile(r"\s+")
+position=re.compile(r"!--Position: ([A-Za-z0-9_]+) \(([0-9]+),([0-9]+)\)")
 
 def tex_head(oufn):
     ouf=open(oufn+'.tex','w')
@@ -28,29 +29,19 @@ def tex_eqn(ouf,tag,text,phantom=False):
 
 def tex_foot(ouf,tags):
     ouf.write("$$\n")
-    for tag in tags:
-        ouf.write("\\typeout{!--Position: "+tag+" (\\zposx{"+tag+"},\\zposy{"+tag+"})}\n")
+#    for tag in tags:
+#        ouf.write("\\typeout{!--Position: "+tag+" (\\zposx{"+tag+"},\\zposy{"+tag+"})}\n")
     ouf.write("\\end{document}\n")
     ouf.close()
 
 def tex_render(oufn,clean=False):
     # Get the coordinates of the piece by itself
     subprocess.call("latex "+oufn+".tex > /dev/null",shell=True)
-    subprocess.call("latex "+oufn+".tex | grep \"!--Position:\" > "+oufn+".coords",shell=True)
     # Delete the .tex since we no longer need it
     if clean: os.remove(oufn+'.tex')
     # clean up other files we don't care about
     if clean: os.remove(oufn+'.aux')
     if clean: os.remove(oufn+'.log')
-    # Parse the coords
-    with open(oufn+'.coords',"r") as inf:
-        content=inf.readlines()
-    if clean: os.remove(oufn+'.coords')
-    content=[x.strip() for x in content]
-    coords={}
-    for line in content:
-        m=position.search(line)
-        coords[m.group(1)]=(int(m.group(2)),int(m.group(3)))
     # Render the piece
     subprocess.call("dvisvgm -e -n -bmin --keep "+oufn+".dvi > /dev/null 2>&1",shell=True)
     # Delete the DVI now that it is rendered
@@ -60,7 +51,8 @@ def tex_render(oufn,clean=False):
         content=inf.readlines()
     # Delete the SVG
     if clean: os.remove(oufn+'.svg')
-    return (coords,content)
+    return content
+
 
 class svgdraw:
     def pathEnd(self,path):
@@ -121,7 +113,6 @@ class svgdraw:
         else:
             raise Exception("Unhandled command "+command)
     def draw(self,ax,coords,fade):
-        print("Drawing "+self.name+" at coords: ",coords," fade: ",fade)
         for use in self.uses:
             commands=self.paths[use["id"]]["code"]
             rcoords =self.paths[use["id"]]["coords"]
@@ -130,7 +121,7 @@ class svgdraw:
             for rcoord in rcoords:
                 acoords.append((rcoord[0]+ref[0]+coords[0],rcoord[1]+ref[1]+coords[1]))
             path=Path(acoords,commands)
-            patch=patches.PathPatch(path,facecolor='orange',lw=0)
+            patch=patches.PathPatch(path,facecolor=(0,0,0,fade),lw=0)
             ax.add_patch(patch)
     def set_svg(self,svg):
         self.svg=svg
@@ -178,7 +169,14 @@ class svgdraw:
                 use={"id":svguse.attrib["{http://www.w3.org/1999/xlink}href"][1:],
                      "coords":(float(svguse.attrib["x"]),float(svguse.attrib["y"]))}
                 self.uses.append(use)
-        
+    def shift(self,delta_coords):
+        dx=delta_coords[0]
+        dy=delta_coords[1]
+        self.left+=dx
+        self.top+=dy
+        for use in self.uses:
+            use["coords"]=(use["coords"][0]+dx,use["coords"][1]+dy)
+            
 class subexpr(svgdraw):
     def __init__(self,eqnname,names,texes,name):
         self.name=name
@@ -188,54 +186,64 @@ class subexpr(svgdraw):
             if(name==iname):
               self.tex =itex
         tex_foot(ouf,[name])
-        (self.coords,svg)=tex_render(eqnname+name)
+        svg=tex_render(eqnname+name)
         self.set_svg(svg)
 
 class expr(svgdraw):
-    def __init__(self,eqnname,names,texes):
-        ouf=tex_head(eqnname+'whole')
+    def __init__(self,eqnname,names,texes,anchor):
+        """
+        Construct an expression out of a number of named subexpressions
+        :param eqnname:  Name to use for the whole expression, used as the root
+                         of the temporary files created in the process 
+        :type  eqnname:  string
+        :param names:  Names to use for each subexpression
+        :type  names:  list of strings
+        :param texes:  TeX code for each subexpression
+        :type  texes:  list of strings
+        :param anchor:  Name of subexpression used as anchor. In most dances,
+                        the anchor subexpression won't move, and specifying the
+                        location of the expression specifies the location
+                        of the anchor subexpression
+        :type  anchor:  list of strings
+
+        """
         self.subexprs={}
         for name,tex in zip(names,texes):
             self.subexprs[name]=subexpr(eqnname,names,texes,name)
-            tex_eqn(ouf,name,tex)
-        tex_foot(ouf,names)
-        (self.coords,svg)=tex_render(eqnname+'whole')
-        self.set_svg(svg)
-        for k,v in self.coords.items():
-            print(k,v)
+        #Find the original position of the subexpression
+        anchor_coords=(-self.subexprs[anchor].left,-self.subexprs[anchor].top)
+        #Move the subexpressions so that the anchor subexpression is at 0,0
+        for k,v in self.subexprs.items():
+            self.subexprs[k].shift(anchor_coords)
+        pass
+
+def cubic(t):
+    if(t<0):
+        return 0
+    if(t>1):
+        return 1
+    return 6*(t*t/2-t*t*t/3)
+
+def linterp(x0,y0,x1,y1,x):
+    t=(x-x0)/(x1-x0)
+    return y0*(1-t)+y1*t
 
 class dance_eqn:
-    def normalize_parts(self):
-        totalWidth_sp=self.exprA.coords["__last__"][0]-self.exprA.coords["__first__"][0]
-        totalWidth_svg=self.exprA.width
-        ratio=totalWidth_sp/totalWidth_svg
-        #At this point, all the terms have matching names, so we can get the 
-        #coefficients for a linterp from one to the other
-        self.m={}
-        self.b={}
-        for k,v in self.exprA.coords.items():
-            self.m[k]=(self.exprB.coords[k][0]-v[0],self.exprB.coords[k][1]-v[1])
-            self.b[k]=self.exprA.coords[k]
-        #Adjust so that the equals doesn't move
-        equals_m=self.m["equals"]
-        for k in self.m:
-            self.m[k]=(self.m[k][0]-equals_m[0],self.m[k][1]-equals_m[1])
-        #scale all the M and B down to SVG
-        for k in self.m:
-            self.m[k]=(self.m[k][0]/ratio,self.m[k][1]/ratio)
-            self.b[k]=(self.b[k][0]/ratio,self.b[k][1]/ratio)
-        #Set the equals to its proper position
-        equals_b=self.b["equals"]
-        for k in self.b:
-            self.b[k]=(self.b[k][0]-equals_b[0]+self.xeq,self.b[k][1]-equals_b[1]+self.yeq)
-
+    def draw_piece(self,ax,k,t,fade=1):
+        (xa,ya,fadea,xb,yb,fadeb)=self.get_piece_choreography(k,t)
+        if fadea>0:
+            self.exprA.subexprs[k].draw(ax,(xa,ya),fade*fadea)
+        if fadeb>0:
+            self.exprB.subexprs[k].draw(ax,(xb,yb),fade*fadeb)
+    def draw(self,ax,t,anchor_coords,fade=1):
+        for k in self.exprA.subexprs.keys():
+            self.draw_piece(ax,k,t,fade)
 
 class dance_addsub_left_right(dance_eqn):
     def __init__(self,
                  left_before ,left_sign ,term,left_after ,
                  equals,
-                 right_before,right_sign,     right_after,
-                 xeq,yeq):
+                 right_before,right_sign,     right_after):
         """
         Render the movement of a term from the left side to the right side.
     
@@ -260,48 +268,198 @@ class dance_addsub_left_right(dance_eqn):
         :param right_after:  Part of equation on the right side to the right of 
                              (after) the term to be moved
         :type  right_after:  string
-        :param xeq:          X coordinate of equals sign
-        :type  xeq:          int
-        :param yeq:          Y coordinate of equals sign
-        :type  yeq:          int
-        :param frames:       Number of frames to use in animation
-        :type  frames:       int
         """
-        self.xeq=xeq
-        self.yeq=yeq
         # Get the spacing of the equation before the move
         self.exprA=expr("exprA",
-                        ["__first__","left_before",     "sign","term","left_after","equals","right_before","right_after","__last__"],
-                        [""         , left_before , left_sign , term , left_after , equals , right_before , right_after, ""        ])
+                        ["left_before",     "sign","term","left_after","equals","right_before","right_after"],
+                        [ left_before , left_sign , term , left_after , equals , right_before , right_after ],"equals")
         # Get the spacing of the equation after the move
         self.exprB=expr("exprB",
-                        ["__first__","left_before","left_after","equals","right_before",      "sign","term","right_after","__last__"],
-                        [""         , left_before , left_after , equals , right_before , right_sign , term , right_after ,""        ])
-        self.normalize_parts()
+                        ["left_before","left_after","equals","right_before",      "sign","term","right_after"],
+                        [ left_before , left_after , equals , right_before , right_sign , term , right_after ],"equals")
         
-    def get_piece_coords(self,k,t):
-        return (self.b[k][0]+self.m[k][0]*t,self.b[k][1]+self.m[k][1]*t)
-
-    def draw_piece(self,ax,k,t,fade=1):
-        if k=='sign':
-            self.exprA.subexprs["sign"].draw(ax,self.get_piece_coords(k,t),(1-t)*fade)
-            self.exprB.subexprs["sign"].draw(ax,self.get_piece_coords(k,t),(  t)*fade)
+    def get_piece_choreography(self,k,t):
+        firstStageEnd=0.2
+        secondStageEnd=0.8
+        xa=0
+        ya=0
+        fadea=1
+        xb=0
+        yb=0
+        fadeb=1
+        if(t<firstStageEnd):
+            this_t=linterp(0,0,firstStageEnd,1,t)
+            # No second part at all yet
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            if(k=='term') or (k=='sign'):
+                #move the first term and sign straight up
+                xa=0
+                ya=cubic(this_t)*-25
+            else:
+                xa=0
+                ya=0
+        elif(t<secondStageEnd):
+            #No second part by default for most parts
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            # Move parts by default
+            this_t=linterp(firstStageEnd,0,secondStageEnd,1,t)
+            mx=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left           
+            my=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+            xa=mx*cubic(this_t)
+            ya=my*cubic(this_t)           
+            if(k=='term') or (k=='sign'):
+                ya=ya-25
+            if(k=='sign'):
+                #Now we actually have to calculate the position of the other part
+                fadea=1-this_t
+                fadeb=this_t
+                mx=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left           
+                my=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+                xb=mx*(cubic(this_t)-1)
+                yb=my*(cubic(this_t)-1)-25           
         else:
-            self.exprA.subexprs[k].draw(ax,self.get_piece_coords(k,t),fade)
+            this_t=linterp(secondStageEnd,0,1,1,t)
+            # No second part at all by default
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            xa=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left
+            ya=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+            if(k=='term'):
+                #move the term straight down
+                ya+=cubic(1-this_t)*-25
+            if(k=='sign'):
+                #move the sign straight down and only show the second sign
+                fadea=0
+                fadeb=1
+                xb=0
+                yb=cubic(1-this_t)*-25
+        return (xa,ya,fadea,xb,yb,fadeb)
 
-    def draw(self,ax,t,fade=1):
-       for k in self.m:
-           self.draw_piece(ax,k,t,fade)
+class dance_transform_right(dance_eqn):
+    def __init__(self,
+                 left,
+                 equals,
+                 right_before,termA,termB,right_after):
+        """
+        Render the movement of a term from the left side to the right side.
+    
+        :param left:  Part of equation on the left side of the anchor in TeX format
+        :type  left:  string
+        :param equals:       Anchor of expression, usually equals. This will remain 
+                             in the same place
+        :type  equals:       string
+        :param right_before: Part of equation on the right side to the left of 
+                             (before) the term to be moved, in TeX format
+        :type  right_before: string
+        :param termA:   Term to be transformed, before it is transformed
+        :type  termA:   string
+        :param termB:   Term to be transformed, before it is transformed
+        :type  termB:   string
+        :param right_after:  Part of equation on the right side to the right of 
+                             (after) the term to be moved
+        :type  right_after:  string
+        """
+        # Get the spacing of the equation before the move
+        self.exprA=expr("exprA",
+                        ["left","equals","right_before","termA","right_after"],
+                        [ left , equals , right_before , termA , right_after ],"equals")
+        # Get the spacing of the equation after the move
+        self.exprB=expr("exprB",
+                        ["left","equals","right_before","termB","right_after"],
+                        [ left , equals , right_before , termB , right_after ],"equals")
+        
+    def get_piece_choreography(self,k,t):
+        firstStageEnd=0.2
+        secondStageEnd=0.8
+        xa=0
+        ya=0
+        fadea=1
+        xb=0
+        yb=0
+        fadeb=1
+        if(t<firstStageEnd):
+            this_t=linterp(0,0,firstStageEnd,1,t)
+            # No second part at all yet
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            if(k=='term') or (k=='sign'):
+                #move the first term and sign straight up
+                xa=0
+                ya=cubic(this_t)*-25
+            else:
+                xa=0
+                ya=0
+        elif(t<secondStageEnd):
+            #No second part by default for most parts
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            # Move parts by default
+            this_t=linterp(firstStageEnd,0,secondStageEnd,1,t)
+            mx=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left           
+            my=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+            xa=mx*cubic(this_t)
+            ya=my*cubic(this_t)           
+            if(k=='term') or (k=='sign'):
+                ya=ya-25
+            if(k=='sign'):
+                #Now we actually have to calculate the position of the other part
+                fadea=1-this_t
+                fadeb=this_t
+                mx=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left           
+                my=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+                xb=mx*(cubic(this_t)-1)
+                yb=my*(cubic(this_t)-1)-25           
+        else:
+            this_t=linterp(secondStageEnd,0,1,1,t)
+            # No second part at all by default
+            xb=0
+            yb=0
+            fadeb=0
+            # first part completely visible
+            fadea=1
+            xa=self.exprB.subexprs[k].left-self.exprA.subexprs[k].left
+            ya=self.exprB.subexprs[k].top -self.exprA.subexprs[k].top
+            if(k=='term'):
+                #move the term straight down
+                ya+=cubic(1-this_t)*-25
+            if(k=='sign'):
+                #move the sign straight down and only show the second sign
+                fadea=0
+                fadeb=1
+                xb=0
+                yb=cubic(1-this_t)*-25
+        return (xa,ya,fadea,xb,yb,fadeb)
+
             
-d=dance_addsub_left_right("1","+","1","+\int_a^b x^2 dx","=","2","-","\sum_{n=0}^\infty \sin(x^2) dx",100,100)
-fig=plt.figure()
-ax=fig.add_subplot(111)
-ax.set_xlim(0,1000)
-ax.set_ylim(1000,0)
-
-d.draw(ax,0.0)
-plt.show()
-d.draw(ax,1.0)
-plt.show()
+#d1=dance_addsub_left_right("1","+","1","+\int_a^b x^2 dx","=","2","-","+\sum_{n=0}^\infty \sin(x^2) dx")
+d1=dance_transform_right(r"\frac{d}{dx}f(x)",r"=",r"\frac{",r"f(x+dx)",r"(x+dx)^2",r"-f(x)}{dx}")
+fig,ax=plt.subplots(figsize=(16,9),dpi=108)
+plt.axis('off')
+frames=50
+for i in range(frames):
+    t=linterp(0,0,frames,1,i)
+    print(t,i)
+    plt.cla()
+    ax.set_xlim(-200,200)
+    ax.set_ylim(200*9/16,-200*9/16)
+    d1.draw(ax,t,(0,0))
+    plt.savefig("transform_%03d.png"%(i,))
 
 
