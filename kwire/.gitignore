@@ -1,4 +1,7 @@
 *.class
 *.java
 *.tokens
+*Lexer.py
+*Listener.py
+*Parser.py
 
