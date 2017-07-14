@@ -1,13 +1,13 @@
 test: all
-	grun $(GRAMMAR:.g4=) `grep : Kicad.g4 | head -n 1 | sed 's/\s*:.*$///'` -gui < $(TESTDATA)
+	grun $(GRAMMAR:.g4=) `grep : $(GRAMMAR) | head -n 1 | sed 's/\s*:.*$///'` -gui < $(TESTDATA)
 
 all: class py
 
-GRAMMAR=Kicad.g4
+GRAMMAR=Schematic.g4
 JAVA=$(GRAMMAR:.g4=.java)
 CLASS=$(GRAMMAR:.g4=.class)
 PY=$(GRAMMAR:.g4=Listener.py)
-TESTDATA=Tomo.net
+TESTDATA=1bitadder.sch
 
 class: $(CLASS) java
 java: $(JAVA)

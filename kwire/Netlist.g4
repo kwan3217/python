@@ -1,10 +1,10 @@
-grammar Kicad;
+grammar Netlist;
 
 /*
  * Parser Rules
  */
 
-kicad               : export EOF ;
+netlist             : export EOF ;
 
 export              : EXPORT 
                        (version 
