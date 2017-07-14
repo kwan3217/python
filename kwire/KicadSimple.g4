@@ -4,23 +4,23 @@ grammar KicadSimple;
  * Parser Rules
  */
 
-kicad               : node+ EOF ;
+kicad               : exportnode EOF ;
 
-node                : '(' WORD WHITESPACE content ')' ;
+exportnode          : '(' EXPORT (versionnode | content)+ ')' ;
+versionnode         : '(' VERSION (WORD | STRING) ')' ;
+node                : '(' WORD content* ')' ;
 
-content             : TEXT | STRING | node+ ;
+content             : WORD | STRING | node ;
 
 /*
  * Lexer Rules
  */
 
-STRING : '"' ~[<"]* '"'
+EXPORT              : 'export';
+VERSION             : 'version';
+WORD                : ([-A-Za-z0-9_/\\.:*~?+] )+ ;
 
-fragment LOWERCASE  : [a-z] ;
-fragment UPPERCASE  : [A-Z] ;
+WHITESPACE          : (' ' | '\t' | '\r' | '\n')+ -> skip;
 
-WORD                : (LOWERCASE | UPPERCASE | '_')+ ;
+STRING : '"' ~[<"]* '"';
 
-WHITESPACE          : (' ' | '\t' | '\r' | '\n')+ ;
-
-TEXT                : ('['|'(') ~[\])]+ (']'|')');

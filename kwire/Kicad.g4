@@ -6,54 +6,37 @@ grammar Kicad;
 
 kicad               : exportnode EOF ;
 
-exportnode          : '(' EXPORT genericnode* componentsnode genericnode* ')' ;
-
-componentsnode      : '(' COMPONENTS compnode* ')' ;
-
-compnode            : '(' COMP compinternals* ')' ;
-
-refnode             : '(' REF (WORD | STRING) ')' ;
-
-valuenode           : '(' VALUE (WORD | STRING) ')' ;
-
-libsourcenode       : '(' LIBSOURCE '(' LIB (WORD|STRING) ')' '(' PART (WORD|STRING) ')' genericnode* ')' ;
-
-compinternals       : refnode 
-                    | valuenode
-                    | libsourcenode
-                    | genericnode
+exportnode          : '(' EXPORT 
+                       (versionnode 
+                       | designnode
+                       | node)+ ')' ;
+versionnode         : '(' VERSION string ')' ;
+designnode          : '(' DESIGN 
+                       (sourcenode
+                       |node
+                       )+ ')';
+sourcenode          : '(' SOURCE string ')' ;
+datenode            : '(' DATE string ')' ;
+node                : '(' WORD 
+                       ( string
+                       | node
+                       )* ')' ;
+string              : WORD
+                    | QUOTEDSTRING 
                     ;
-
-node                : genericnode 
-                    | componentsnode 
-                    | compinternals
-                    ;
-
-genericnode         : '(' WORD ')'
-                    | '(' WORD content ')' ;
-
-content             : (WORD | STRING | node )+ ;
-
 
 /*
  * Lexer Rules
  */
 
 EXPORT              : 'export';
-COMPONENTS          : 'components';
-COMP                : 'comp';
-REF                 : 'ref';
-VALUE               : 'value';
-LIBSOURCE           : 'libsource';
-LIB                 : 'lib';
-PART                : 'part';
-
-WORD                : ([-A-Za-z0-9_/.:*~?+] )+ ;
+VERSION             : 'version';
+SOURCE              : 'source';
+DESIGN              : 'design';
+DATE                : 'date';
+WORD                : [-A-Za-z0-9_/\\.:*~?+]+ ;
+QUOTEDSTRING        : '"' ~["]* '"';
 
 WHITESPACE          : (' ' | '\t' | '\r' | '\n')+ -> skip;
-
-STRING              : '"' ~["]* '"';
-
-
 
 
