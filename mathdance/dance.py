@@ -13,7 +13,7 @@ position=re.compile(r"!--Position: ([A-Za-z0-9_]+) \(([0-9]+),([0-9]+)\)")
 def tex_head(oufn):
     ouf=open(oufn+'.tex','w')
     ouf.write("\\documentclass{minimal}\n")
-    ouf.write("\\usepackage[user,pagelayout,savepos]{zref}\n")
+    ouf.write("\\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}\n")
     ouf.write("\\begin{document}\n")
     ouf.write("$$\n")
     return ouf
@@ -448,8 +448,8 @@ class dance_transform_right(dance_eqn):
         return (xa,ya,fadea,xb,yb,fadeb)
 
             
-#d1=dance_addsub_left_right("1","+","1","+\int_a^b x^2 dx","=","2","-","+\sum_{n=0}^\infty \sin(x^2) dx")
-d1=dance_transform_right(r"\frac{d}{dx}f(x)",r"=",r"\frac{",r"f(x+dx)",r"(x+dx)^2",r"-f(x)}{dx}")
+d1=dance_addsub_left_right("1","+","1","+\int_a^b x^2 dx","=","2","-","+\sum_{n=0}^\infty \sin(x^2) dx")
+#d1=dance_transform_right(r"\frac{d}{dx}f(x)",r"=",r"\frac{",r"f(x+dx)",r"(x+dx)^2",r"-f(x)}{dx}")
 fig,ax=plt.subplots(figsize=(16,9),dpi=108)
 plt.axis('off')
 frames=50
