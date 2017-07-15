@@ -1,30 +1,38 @@
-test: all
-	grun $(GRAMMAR:.g4=) `grep : $(GRAMMAR) | head -n 1 | sed 's/\s*:.*$///'` -gui < $(TESTDATA)
+test_%: %Parser.class
+	$(eval BASENAME=$(shell echo $@ | sed 's/test_//'))
+	$(eval FIRSTRULE=$(shell grep : $(BASENAME).g4 | head -n 1 | sed 's/\s*:.*$///'))
+	grun $(BASENAME) $(FIRSTRULE) -gui < $(TESTDATA)
 
 all: class py
 
-GRAMMAR=Schematic.g4
-JAVA=$(GRAMMAR:.g4=.java)
-CLASS=$(GRAMMAR:.g4=.class)
+GRAMMAR=Netlist.g4 Schematic.g4
+JAVA=$(GRAMMAR:.g4=Parser.java)
+CLASS=$(GRAMMAR:.g4=Parser.class)
 PY=$(GRAMMAR:.g4=Listener.py)
-TESTDATA=1bitadder.sch
+TESTDATA=../../kicad/Tomo/Tomo.net
 
 class: $(CLASS) java
 java: $(JAVA)
 py: $(PY)
 
-%.java: %.g4
+%Parser.java: %.g4
 	antlr4 $<
 
-%.class: %.java
-	javac $(^:.java=*.java)
+%Parser.class: %Parser.java
+	javac $(^:Parser.java=*.java)
 
 %Listener.py: %.g4
 	antlr4 -Dlanguage=Python3 $<
 
 clean: 
-	$(RM) $(JAVA:.java=*.java)
-	$(RM) $(CLASS:.class=*.class)
+	$(RM) $(JAVA:Parser.java=Parser*.java)
+	$(RM) $(JAVA:Parser.java=Lexer*.java)
+	$(RM) $(JAVA:Parser.java=BaseListener*.java)
+	$(RM) $(JAVA:Parser.java=Listener*.java)
+	$(RM) $(CLASS:Parser.class=Parser*.class)
+	$(RM) $(CLASS:Parser.class=Lexer*.class)
+	$(RM) $(CLASS:Parser.class=BaseListener*.class)
+	$(RM) $(CLASS:Parser.class=Listener*.class)
 	$(RM) $(GRAMMAR:.g4=.tokens)
 	$(RM) $(GRAMMAR:.g4=Lexer.tokens)
 	$(RM) $(GRAMMAR:.g4=Parser.py)
