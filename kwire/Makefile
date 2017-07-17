@@ -8,7 +8,7 @@ all: class py
 GRAMMAR=Netlist.g4 Schematic.g4
 JAVA=$(GRAMMAR:.g4=Parser.java)
 CLASS=$(GRAMMAR:.g4=Parser.class)
-PY=$(GRAMMAR:.g4=Listener.py)
+PY=$(GRAMMAR:.g4=Parser.py)
 TESTDATA=../../kicad/Tomo/Tomo.net
 
 class: $(CLASS) java
@@ -21,8 +21,8 @@ py: $(PY)
 %Parser.class: %Parser.java
 	javac $(^:Parser.java=*.java)
 
-%Listener.py: %.g4
-	antlr4 -Dlanguage=Python3 $<
+%Parser.py: %.g4
+	antlr4 -visitor -no-listener -Dlanguage=Python3 $<
 
 clean: 
 	$(RM) $(JAVA:Parser.java=Parser*.java)
@@ -38,4 +38,6 @@ clean:
 	$(RM) $(GRAMMAR:.g4=Parser.py)
 	$(RM) $(GRAMMAR:.g4=Lexer.py)
 	$(RM) $(GRAMMAR:.g4=Listener.py)
+	$(RM) $(GRAMMAR:.g4=Visitor.py)
+	$(RM) -rf __pycache__
 

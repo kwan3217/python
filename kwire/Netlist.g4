@@ -13,7 +13,7 @@ export              : EXPORT
                        | libparts
                        | libraries
                        | nets
-                       | generic)+ ')' ;
+                       )+ ')' ;
 design              : DESIGN 
                        (source
                        |date
@@ -80,10 +80,12 @@ libsource           : LIBSOURCE lib part ')';
 sheetpath           : SHEETPATH names tstamps ')';        
 
 /* Generic node - capable of holding subnodes */
+/*
 generic             : '(' WORD 
                        ( string
                        | generic
                        )* ')' ;
+*/
 
 /* Collection nodes. These are collections of the same type of node. These 
    collections will have pluralized names and will be collections of nodes
