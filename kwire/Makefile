@@ -5,7 +5,8 @@ test_%: %Parser.class
 
 all: class py
 
-GRAMMAR=Netlist.g4 Schematic.g4
+GRAMMAR=Netlist Schematic
+G4=$(addsuffix .g4,$(GRAMMAR))
 JAVA=$(GRAMMAR:.g4=Parser.java)
 CLASS=$(GRAMMAR:.g4=Parser.class)
 PY=$(GRAMMAR:.g4=Parser.py)
@@ -15,14 +16,23 @@ class: $(CLASS) java
 java: $(JAVA)
 py: $(PY)
 
-%Parser.java: %.g4
-	antlr4 $<
+$(GRAMMAR) : % :
+	mkdir -v $@
+	
+%/__init__.py : %
+	touch $^
 
-%Parser.class: %Parser.java
+%/%Parser.java: %.g4
+	cd `basename $<`
+	antlr4 ../$<
+
+%/%Parser.class: %Parser.java
+	cd `basename $<`
 	javac $(^:Parser.java=*.java)
 
-%Parser.py: %.g4
-	antlr4 -visitor -no-listener -Dlanguage=Python3 $<
+%/%Parser.py: %.g4 %/__init__.py
+	cd `basename $<`
+	antlr4 -visitor -no-listener -Dlanguage=Python3 ../$<
 
 clean: 
 	$(RM) $(JAVA:Parser.java=Parser*.java)
