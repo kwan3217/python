@@ -1,53 +1,25 @@
-test_%: %Parser.class
-	$(eval BASENAME=$(shell echo $@ | sed 's/test_//'))
-	$(eval FIRSTRULE=$(shell grep : $(BASENAME).g4 | head -n 1 | sed 's/\s*:.*$///'))
-	grun $(BASENAME) $(FIRSTRULE) -gui < $(TESTDATA)
+all: py
 
-all: class py
+#This disables implicit rules:
+#https://stackoverflow.com/questions/4122831/disable-make-builtin-rules-and-variables-from-inside-the-make-file
+.SUFFIXES:
 
 GRAMMAR=Netlist Schematic
 G4=$(addsuffix .g4,$(GRAMMAR))
-JAVA=$(GRAMMAR:.g4=Parser.java)
-CLASS=$(GRAMMAR:.g4=Parser.class)
-PY=$(GRAMMAR:.g4=Parser.py)
-TESTDATA=../../kicad/Tomo/Tomo.net
+PY=$(G4:.g4=/Parser.py)
 
-class: $(CLASS) java
-java: $(JAVA)
 py: $(PY)
 
 $(GRAMMAR) : % :
 	mkdir -v $@
-	
+
 %/__init__.py : %
-	touch $^
+	touch $@
 
-%/%Parser.java: %.g4
-	cd `basename $<`
-	antlr4 ../$<
+%/Parser.py: %.g4 %/__init__.py
+	antlr4 -o `basename $< .g4` -visitor -no-listener -Dlanguage=Python3 $<
 
-%/%Parser.class: %Parser.java
-	cd `basename $<`
-	javac $(^:Parser.java=*.java)
-
-%/%Parser.py: %.g4 %/__init__.py
-	cd `basename $<`
-	antlr4 -visitor -no-listener -Dlanguage=Python3 ../$<
-
-clean: 
-	$(RM) $(JAVA:Parser.java=Parser*.java)
-	$(RM) $(JAVA:Parser.java=Lexer*.java)
-	$(RM) $(JAVA:Parser.java=BaseListener*.java)
-	$(RM) $(JAVA:Parser.java=Listener*.java)
-	$(RM) $(CLASS:Parser.class=Parser*.class)
-	$(RM) $(CLASS:Parser.class=Lexer*.class)
-	$(RM) $(CLASS:Parser.class=BaseListener*.class)
-	$(RM) $(CLASS:Parser.class=Listener*.class)
-	$(RM) $(GRAMMAR:.g4=.tokens)
-	$(RM) $(GRAMMAR:.g4=Lexer.tokens)
-	$(RM) $(GRAMMAR:.g4=Parser.py)
-	$(RM) $(GRAMMAR:.g4=Lexer.py)
-	$(RM) $(GRAMMAR:.g4=Listener.py)
-	$(RM) $(GRAMMAR:.g4=Visitor.py)
+clean:
+	$(RM) -rf $(GRAMMAR)
 	$(RM) -rf __pycache__
 

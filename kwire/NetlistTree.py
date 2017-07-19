@@ -1,7 +1,8 @@
 import antlr4
-from NetlistLexer   import NetlistLexer 
-from NetlistParser  import NetlistParser 
-from NetlistVisitor import NetlistVisitor 
+import heapq
+from Netlist.NetlistLexer   import NetlistLexer 
+from Netlist.NetlistParser  import NetlistParser 
+from Netlist.NetlistVisitor import NetlistVisitor 
  
 class NetlistTree(NetlistVisitor):
     @staticmethod
@@ -152,9 +153,10 @@ class Component:
         self.part=comp["part"]
         self.value=comp["value"]
         self.outputs={}
+        self.propDelay=0
     def addOutput(self,name,net):
         self.outputs[name]=net
-    def setInput(self,context,pin,value):
+    def setInput(self,context,time,pin,value):
         pass
     def __str__(self):
         return self.__dict__.__str__()
@@ -164,64 +166,68 @@ class KwireAND(Component):
         self.A=False
         self.B=False
         super().__init__(ref,comp)
-    def setInput(self,context,pin,value):
+    def setInput(self,context,time,pin,value):
         if pin=='1':
             if value==self.A: return
             self.A=value
         else:
             if value==self.B: return
             self.B=value
-        context.addEvent(context.time,self.outputs["3"],self.A and self.B)
+        context.addEvent(time+self.propDelay,self.outputs["3"],self.A and self.B)
 
 class KwireOR(Component):
     def __init__(self,ref,comp):
         self.A=False
         self.B=False
         super().__init__(ref,comp)
-    def setInput(self,context,pin,value):
+    def setInput(self,context,time,pin,value):
         if pin=='1':
             if value==self.A: return
             self.A=value
         else:
             if value==self.B: return
             self.B=value
-        context.addEvent(context.time,self.outputs["3"],self.A or self.B)
+        context.addEvent(time+self.propDelay,self.outputs["3"],self.A or self.B)
 
 class KwireNOT(Component):
     def __init__(self,ref,comp):
         self.A=False
         super().__init__(ref,comp)
+    def setInput(self,context,time,pin,value):
+        if value==self.A: return
+        self.A=value
+        context.addEvent(time+self.propDelay,self.outputs["2"],not self.A)
 
 class KwireXOR(Component):
     def __init__(self,ref,comp):
         self.A=False
         self.B=False
         super().__init__(ref,comp)
-    def setInput(self,context,pin,value):
+    def setInput(self,context,time,pin,value):
         if pin=='1':
             if value==self.A: return
             self.A=value
         else:
             if value==self.B: return
             self.B=value
-        context.addEvent(context.time,self.outputs["3"],self.A ^ self.B)
+        context.addEvent(time+self.propDelay,self.outputs["3"],self.A ^ self.B)
 
 class KwireCONTROL(Component):
     def __init__(self,ref,comp):
         self.Y=False
         super().__init__(ref,comp)
-    def setInput(self,context,pin,value):
-        if value!=self.Y:
-            self.Y=value
-            context.addEvent(context.time,self.outputs["1"],value)
+    def setInput(self,context,time,pin,value):
+        if value==self.Y: return
+        self.Y=value
+        context.addEvent(time+self.propDelay,self.outputs["1"],value)
 
 class KwireINDICATOR(Component):
     def __init__(self,ref,comp):
         self.A=False
         super().__init__(ref,comp)
-    def setInput(self,context,pin,value):
-        if value!=self.A:
-            self.A=value
+    def setInput(self,context,time,pin,value):
+        if value==self.A: return
+        self.A=value
 
 class Context:
     def __init__(self,infn):
@@ -251,100 +257,45 @@ class Context:
                     net["nodes"].remove(node)
                     
     def dispatchEvent(self):
-        #Find the event with the earliest time
         if len(self.eventList)==0:
             return False
-        event=self.eventList.pop(0)
-        self.time=event["time"]
-        net=event["net"]
+        #Find the event with the earliest time
+        event=heapq.heappop(self.eventList)
+        self.time=event[0]
+        net=event[1]["net"]
         for node in self.nets[net]["nodes"]: 
             comp=self.components[node["ref"]]
-            comp.setInput(context,node["pin"],event["value"])
+            comp.setInput(context,context.time,node["pin"],event[1]["value"])
         return True
     def addEvent(self,time,net=None,value=False):
-        #TODO: Add a check such that if there is another event with the
-        #exact same name and time, then that event is replaced with this one.
-        self.eventList.append({"time":time,"net":net,"value":value})
+        #If there is another event with the
+        #exact same name and time, then that 
+        #event is replaced with this one.
+        for event in self.eventList:
+            if event[0]==time and event[1]["net"]==net:
+                event[1]["value"]=value
+                return
+        heapq.heappush(self.eventList,(time,{"net":net,"value":value}))
     
 if __name__ == '__main__':
     context=Context('../../kicad/kwire/1bitdriver.net')
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SA101"].setInput(context,"1",True)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SB101"].setInput(context,"1",True)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SA101"].setInput(context,"1",False)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SC101"].setInput(context,"1",True)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SA101"].setInput(context,"1",True)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SB101"].setInput(context,"1",False)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SA101"].setInput(context,"1",False)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
-    print(context.time,context.components["SA101"].Y,
-                       context.components["SB101"].Y,
-                       context.components["SC101"].Y,
-                       context.components["DS101"].A,
-                       context.components["DK101"].A)
-    context.components["SC101"].setInput(context,"1",False)
-    while context.dispatchEvent():
-        for event in context.eventList:
-            #print(event)
-            pass
+    inputs=[{"time":1,"ref":"SA101","value":True},
+            {"time":2,"ref":"SB101","value":True},
+            {"time":3,"ref":"SA101","value":False},
+            {"time":4,"ref":"SC101","value":True},
+            {"time":5,"ref":"SA101","value":True},
+            {"time":6,"ref":"SB101","value":False},
+            {"time":7,"ref":"SA101","value":False},
+            {"time":8,"ref":"SC101","value":False}
+            ]
+    for inp in inputs:
+        context.components[inp["ref"]].setInput(context,inp["time"],"1",inp["value"])
+        while context.dispatchEvent():
+            for event in context.eventList:
+                print(event)
+                pass
+        print(context.time,context.components["SA101"].Y,
+                           context.components["SB101"].Y,
+                           context.components["SC101"].Y,
+                           context.components["DS101"].A,
+                           context.components["DK101"].A)
