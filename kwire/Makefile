@@ -13,10 +13,8 @@ py: $(PY)
 $(GRAMMAR) : % :
 	mkdir -v $@
 
-%/__init__.py : %
-	touch $@
-
-%/Parser.py: %.g4 %/__init__.py
+%/Parser.py: %.g4 %
+	touch `basename $< .g4`/__init__.py
 	antlr4 -o `basename $< .g4` -visitor -no-listener -Dlanguage=Python3 $<
 
 clean:

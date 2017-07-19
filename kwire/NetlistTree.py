@@ -228,6 +228,14 @@ class KwireINDICATOR(Component):
     def setInput(self,context,time,pin,value):
         if value==self.A: return
         self.A=value
+        
+class Event:
+    def __init__(self,time,net,value):
+        self.time=time
+        self.net=net
+        self.value=value
+    def __lt__(self,other):
+        return self.time<other.time
 
 class Context:
     def __init__(self,infn):
@@ -261,41 +269,56 @@ class Context:
             return False
         #Find the event with the earliest time
         event=heapq.heappop(self.eventList)
-        self.time=event[0]
-        net=event[1]["net"]
+        self.time=event.time
+        net=event.net
         for node in self.nets[net]["nodes"]: 
             comp=self.components[node["ref"]]
-            comp.setInput(context,context.time,node["pin"],event[1]["value"])
+            comp.setInput(context,context.time,node["pin"],event.value)
         return True
     def addEvent(self,time,net=None,value=False):
+        #HiZ by definition does't affect the net, so they shouldn't 
+        #create an event
+        if value=='Z': return;
         #If there is another event with the
         #exact same name and time, then that 
         #event is replaced with this one.
         for event in self.eventList:
-            if event[0]==time and event[1]["net"]==net:
-                event[1]["value"]=value
+            if event.time==time and event.net==net:
+                event.value=value
                 return
-        heapq.heappush(self.eventList,(time,{"net":net,"value":value}))
+        heapq.heappush(self.eventList,Event(time,net,value))
     
 if __name__ == '__main__':
     context=Context('../../kicad/kwire/1bitdriver.net')
-    inputs=[{"time":1,"ref":"SA101","value":True},
-            {"time":2,"ref":"SB101","value":True},
-            {"time":3,"ref":"SA101","value":False},
-            {"time":4,"ref":"SC101","value":True},
-            {"time":5,"ref":"SA101","value":True},
-            {"time":6,"ref":"SB101","value":False},
-            {"time":7,"ref":"SA101","value":False},
-            {"time":8,"ref":"SC101","value":False}
-            ]
+    inputs=[{"time": 1,"ref":"S101","value":True },
+            {"time": 2,"ref":"S102","value":True },
+            {"time": 3,"ref":"S101","value":False},
+            {"time": 4,"ref":"S103","value":True },
+            {"time": 5,"ref":"S101","value":True },
+            {"time": 6,"ref":"S102","value":False},
+            {"time": 7,"ref":"S101","value":False},
+            {"time": 8,"ref":"S104","value":True },
+            {"time": 9,"ref":"S101","value":True },
+            {"time":10,"ref":"S102","value":True },
+            {"time":11,"ref":"S101","value":False},
+            {"time":12,"ref":"S103","value":False},
+            {"time":13,"ref":"S101","value":True },
+            {"time":14,"ref":"S102","value":False},
+            {"time":15,"ref":"S101","value":False},
+            {"time":16,"ref":"S104","value":False}]
+    print(" T|- C B A|S K")
+    print("--+-------+---")
     for inp in inputs:
         context.components[inp["ref"]].setInput(context,inp["time"],"1",inp["value"])
         while context.dispatchEvent():
-            for event in context.eventList:
-                print(event)
-                pass
-        print(context.time,context.components["SA101"].Y,
-                           context.components["SB101"].Y,
-                           context.components["SC101"].Y,
-                           context.components["DS101"].A,
-                           context.components["DK101"].A)
+#            for event in context.eventList:
+#                print(event)
+#                pass
+            pass
+        print("%2d|%d %d %d %d|%d %d" % (context.time,
+              1 if context.components["S104"].Y else 0,
+              1 if context.components["S103"].Y else 0,
+              1 if context.components["S102"].Y else 0,
+              1 if context.components["S101"].Y else 0,
+              1 if context.components["D101"].A else 0,
+              1 if context.components["D102"].A else 0))
