@@ -1,4 +1,4 @@
-grammar Netlist;
+grammar NetlistFile;
 
 /*
  * Parser Rules
@@ -189,7 +189,7 @@ URI                 : '(uri';
 VALUE               : '(value';
 VERSION             : '(version';
 
-WORD                : [-A-Za-z0-9_/\\.:*~?+]+ ;
+WORD                : [-A-Za-z0-9_/\\.:*~?+#]+ ;
 QUOTEDSTRING        : '"' ~["]* '"';
 
 WHITESPACE          : (' ' | '\t' | '\r' | '\n')+ -> skip;
