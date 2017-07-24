@@ -1,0 +1,226 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:kwire
+LIBS:switches
+LIBS:KwanSystems
+LIBS:xordriver-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 2 2
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L VCC #PWR05
+U 1 1 597217F5
+P 4300 2700
+F 0 "#PWR05" H 4300 2550 50  0001 C CNN
+F 1 "VCC" H 4300 2850 50  0000 C CNN
+F 2 "" H 4300 2700 50  0000 C CNN
+F 3 "" H 4300 2700 50  0000 C CNN
+	1    4300 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR06
+U 1 1 59721809
+P 4300 4250
+F 0 "#PWR06" H 4300 4000 50  0001 C CNN
+F 1 "GND" H 4300 4100 50  0000 C CNN
+F 2 "" H 4300 4250 50  0000 C CNN
+F 3 "" H 4300 4250 50  0000 C CNN
+	1    4300 4250
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4000 3000 4000 3850
+Wire Wire Line
+	4300 3200 4300 3400
+Connection ~ 4300 3300
+Wire Wire Line
+	3650 3300 4000 3300
+Connection ~ 4000 3300
+Text HLabel 3650 3300 0    60   Input ~ 0
+A
+Text HLabel 5850 3300 2    60   Output ~ 0
+Y
+Wire Wire Line
+	4300 2700 4300 2800
+Wire Wire Line
+	4300 3800 4300 4250
+Text HLabel 3650 3950 0    60   Input ~ 0
+B
+Wire Wire Line
+	4300 3300 4500 3300
+Wire Wire Line
+	4500 3300 4500 2800
+Wire Wire Line
+	4500 2800 5000 2800
+Wire Wire Line
+	4700 3950 3650 3950
+Wire Wire Line
+	4700 3000 4700 3950
+Connection ~ 4700 3600
+Wire Wire Line
+	4000 3850 5000 3850
+Wire Wire Line
+	5000 3850 5000 3800
+Connection ~ 4000 3600
+Wire Wire Line
+	5000 3200 5000 3400
+Wire Wire Line
+	5000 3300 5200 3300
+Wire Wire Line
+	5200 3000 5200 3600
+Connection ~ 5000 3300
+Connection ~ 5200 3300
+Wire Wire Line
+	5500 3800 5500 4250
+Wire Wire Line
+	4300 4250 5700 4250
+Wire Wire Line
+	4300 2700 5500 2700
+Wire Wire Line
+	5500 2700 5500 2800
+Wire Wire Line
+	5500 3200 5500 3400
+$Comp
+L LED_Small D201
+U 1 1 59725495
+P 5700 3400
+F 0 "D201" H 5650 3525 50  0000 L CNN
+F 1 "Y" H 5700 3300 50  0000 L CNN
+F 2 "KwanSystems:D_0603" V 5700 3400 50  0001 C CNN
+F 3 "" V 5700 3400 50  0000 C CNN
+	1    5700 3400
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	5500 3300 5850 3300
+Connection ~ 5500 3300
+Connection ~ 5700 3300
+$Comp
+L RESISTOR R201
+U 1 1 59725531
+P 5700 3800
+F 0 "R201" H 5650 3850 45  0000 L BNN
+F 1 "RESISTOR" H 5650 3700 45  0001 L BNN
+F 2 "KwanSystems:SMD_0402" H 5755 3950 20  0001 C CNN
+F 3 "" H 6125 3500 60  0001 C CNN
+	1    5700 3800
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	5700 3500 5700 3700
+Wire Wire Line
+	5700 4250 5700 3900
+Connection ~ 5500 4250
+Text Label 4600 2800 0    60   ~ 0
+#A
+Text Label 5050 3300 0    60   ~ 0
+#Y
+Text Label 5700 3650 0    60   ~ 0
+Y-
+$Comp
+L CD4007 Q201
+U 1 1 59762E49
+P 4200 3000
+F 0 "Q201" H 4300 3030 50  0000 L CNN
+F 1 "CD4007" H 4300 2960 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 4400 3100 50  0001 C CNN
+F 3 "" H 4200 3000 50  0000 C CNN
+	1    4200 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L CD4007 Q201
+U 2 1 59762F17
+P 4200 3600
+F 0 "Q201" H 4300 3630 50  0000 L CNN
+F 1 "CD4007" H 4300 3560 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 4400 3700 50  0001 C CNN
+F 3 "" H 4200 3600 50  0000 C CNN
+	2    4200 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L CD4007 Q201
+U 3 1 59762FC7
+P 4900 3000
+F 0 "Q201" H 5000 3030 50  0000 L CNN
+F 1 "CD4007" H 5000 2960 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 5100 3100 50  0001 C CNN
+F 3 "" H 4900 3000 50  0000 C CNN
+	3    4900 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L CD4007 Q201
+U 4 1 59762FF6
+P 4900 3600
+F 0 "Q201" H 5000 3630 50  0000 L CNN
+F 1 "CD4007" H 5000 3560 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 5100 3700 50  0001 C CNN
+F 3 "" H 4900 3600 50  0000 C CNN
+	4    4900 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L CD4007 Q201
+U 5 1 59763025
+P 5400 3000
+F 0 "Q201" H 5500 3030 50  0000 L CNN
+F 1 "CD4007" H 5500 2960 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 5600 3100 50  0001 C CNN
+F 3 "" H 5400 3000 50  0000 C CNN
+	5    5400 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L CD4007 Q201
+U 6 1 59763054
+P 5400 3600
+F 0 "Q201" H 5500 3630 50  0000 L CNN
+F 1 "CD4007" H 5500 3560 50  0001 L CNN
+F 2 "Housings_SOIC:SOIC-14_3.9x8.7mm_Pitch1.27mm" H 5600 3700 50  0001 C CNN
+F 3 "" H 5400 3600 50  0000 C CNN
+	6    5400 3600
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
