@@ -5,6 +5,7 @@ Created on Jul 21, 2017
 '''
 
 import NetlistTree
+from gi.overrides.keysyms import value
 
 class KwireComponent(NetlistTree.Component):
     @staticmethod
@@ -55,15 +56,19 @@ class KwireNMOS(KwireComponent):
         if pin=='1':
             if value==self.G: return
             self.G=value
+            print(self.ref+" (NMOS) Setting gate to ",value)
         elif pin=='2':
             if value==self.S: return
             self.S=value
+            print(self.ref+" (NMOS) Setting source to ",value)
         else:
             print("Trying to write to transistor drain")
         if self.G==True:
             result=self.S
+            print(self.ref+" (NMOS) is on  (gate=",self.G,"), setting drain to ",result)
         else:
             result='Z'
+            print(self.ref+" (NMOS) is off (gate=",self.G,"), setting drain to ",result)
         context.addEvent(time+self.propDelay,self.outputs["3"],result)
 
 class KwirePMOS(KwireComponent):
@@ -75,15 +80,19 @@ class KwirePMOS(KwireComponent):
         if pin=='1':
             if value==self.G: return
             self.G=value
+            print(self.ref+" (PMOS) Setting gate to ",value)
         elif pin=='2':
             if value==self.S: return
             self.S=value
+            print(self.ref+" (PMOS) Setting source to ",value)
         else:
             print("Trying to write to transistor drain")
         if self.G==False:
             result=self.S
+            print(self.ref+" (PMOS) is on  (gate=",self.G,"), setting drain to ",result)
         else:
             result='Z'
+            print(self.ref+" (PMOS) is off (gate=",self.G,"), setting drain to ",result)
         context.addEvent(time+self.propDelay,self.outputs["3"],result)
 
 class KwireOR(KwireComponent):
@@ -136,10 +145,39 @@ class KwireCONTROL(KwireComponent):
 class Kwire8CONTROL(KwireComponent):
     def __init__(self,ref,comp):
         self.Y=['Z']*(8+1)
+        self.pin1='Z'
+        self.pin8='Z'
         super().__init__(ref,comp)
     def setInput(self,context,time,pin,value):
-        if value==self.Y[17-int(pin)]: return
-        self.Y[17-int(pin)]=value
+        pinnum=int(pin)
+        if pinnum<=8:
+            if pinnum==1:
+                print(self.ref,"Setting pin1 to ",value)
+                self.pin1=value
+            elif pinnum==8:
+                print(self.ref,"Setting pin8 to ",value)
+                self.pin8=value
+            else:
+                print("Input to a NC pin")
+            return
+            for i in range(8):
+                swnum=i+1                
+                if value=='Z':
+                    outval='Z'
+                elif value==True:
+                    outval=self.pin1
+                elif value==False:
+                    outval=self.pin8
+                context.addEvent(time+self.propDelay,self.outputs[pin],value)
+        swnum=17-pinnum
+        if value==self.Y[swnum]: return
+        self.Y[swnum]=value
+        if value=='Z':
+            outval='Z'
+        elif value==True:
+            outval=self.pin1
+        elif value==False:
+            outval=self.pin8
         context.addEvent(time+self.propDelay,self.outputs[pin],value)
         #print(self.ref,self.Y)
 
@@ -150,6 +188,6 @@ class Kwire8INDICATOR(KwireComponent):
     def setInput(self,context,time,pin,value):
         if value==self.A[17-int(pin)]: return
         self.A[17-int(pin)]=value
-        #print(self.ref,self.A)
+        print(self.ref,self.A)
 
 

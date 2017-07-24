@@ -170,15 +170,19 @@ class Component:
         return self.__dict__.__str__()
     
 class DeviceLED_Small(Component):
+    def __str__(self):
+        return self.__dict__.__str__()
     def __init__(self,ref,comp):
         self.A=False
         super().__init__(ref,comp)
     def setInput(self,context,time,pin,value):
         if value==self.A: return
         self.A=value
-        #print(self.ref,self.A)
+        print(self.ref,self.A)
         
 class ConnCONN_01x02(Component):
+    def __str__(self):
+        return self.__dict__.__str__()
     def __init__(self,ref,comp):
         self.Y=[None]*(8+1)
         super().__init__(ref,comp)
@@ -188,7 +192,7 @@ class ConnCONN_01x02(Component):
         if value==self.Y[int(pin)]: return
         self.Y[int(pin)]=value
         context.addEvent(time+self.propDelay,self.outputs[pin],value)
-        #print(self.ref,self.Y)
+        print(self.ref,self.Y)
         
 class Event:
     def __init__(self,time,net,value):
@@ -255,27 +259,17 @@ class Context:
         return self.__dict__.__str__()
     
 if __name__ == '__main__':
-    context=Context('../../kicad/kwire/1bitdriver.net')
-    inputs=[{"time": 0,"ref":"J101","pin":"1","value":False }, #Turn on ground
-            {"time": 0,"ref":"J101","pin":"2","value":True },  #Turn on power
+    context=Context('kicad/xordriver.net')
+    inputs=[{"time": 0,"ref":"J101","pin": "1","value":False}, #Turn on ground
+            {"time": 0,"ref":"J101","pin": "2","value":True },  #Turn on power
+            {"time": 0,"ref":"S101","pin":"16","value":False},
+            {"time": 0,"ref":"S102","pin":"16","value":False},
             {"time": 1,"ref":"S101","pin":"16","value":True },
             {"time": 2,"ref":"S102","pin":"16","value":True },
             {"time": 3,"ref":"S101","pin":"16","value":False},
-            {"time": 4,"ref":"S103","pin":"16","value":True },
-            {"time": 5,"ref":"S101","pin":"16","value":True },
-            {"time": 6,"ref":"S102","pin":"16","value":False},
-            {"time": 7,"ref":"S101","pin":"16","value":False},
-            {"time": 8,"ref":"S103","pin":"15","value":True },
-            {"time": 9,"ref":"S101","pin":"16","value":True },
-            {"time":10,"ref":"S102","pin":"16","value":True },
-            {"time":11,"ref":"S101","pin":"16","value":False},
-            {"time":12,"ref":"S103","pin":"16","value":False},
-            {"time":13,"ref":"S101","pin":"16","value":True },
-            {"time":14,"ref":"S102","pin":"16","value":False},
-            {"time":15,"ref":"S101","pin":"16","value":False},
-            {"time":16,"ref":"S103","pin":"15","value":False}]
-    print(" T|- C B A|K S")
-    print("--+-------+---")
+            {"time": 4,"ref":"S102","pin":"16","value":False}]
+    print(" T|B A|Y")
+    print("--+---+-")
     for inp in inputs:
         context.components[inp["ref"]].setInput(context,inp["time"],inp["pin"],inp["value"])
         while context.dispatchEvent():
@@ -283,10 +277,7 @@ if __name__ == '__main__':
             for event in context.eventList:
                 print(event)
             pass
-        print("%2d|%d %d %d %d|%d %d" % (context.time,
-              1 if context.components["S103"].Y[2] else 0,
-              1 if context.components["S103"].Y[1] else 0,
-              1 if context.components["S102"].Y[1] else 0,
-              1 if context.components["S101"].Y[1] else 0,
-              1 if context.components["D101"].A    else 0,
-              1 if context.components["D102"].A    else 0))
+        print("%2d|%s %s|%s" % (context.time,
+              str(context.components["S102"].Y[1])[0],
+              str(context.components["S101"].Y[1])[0],
+              str(context.components["D201"].A   )[0]))

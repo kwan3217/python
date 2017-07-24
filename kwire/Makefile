@@ -4,7 +4,7 @@ all: py
 #https://stackoverflow.com/questions/4122831/disable-make-builtin-rules-and-variables-from-inside-the-make-file
 .SUFFIXES:
 
-GRAMMAR=NetlistFile SchematicFile
+GRAMMAR=NetlistFile SchematicFile PcbFile S_expr
 G4=$(addsuffix .g4,$(GRAMMAR))
 PY=$(G4:.g4=/Parser.py)
 
