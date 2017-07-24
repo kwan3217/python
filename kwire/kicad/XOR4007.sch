@@ -31,7 +31,6 @@ LIBS:valves
 LIBS:kwire
 LIBS:switches
 LIBS:KwanSystems
-LIBS:xordriver-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268

@@ -1,4 +1,4 @@
-update=Mon 24 Jul 2017 03:26:30 PM MDT
+update=Fri 21 Jul 2017 12:56:35 PM MDT
 version=1
 last_client=eeschema
 [general]
@@ -63,4 +63,3 @@ LibName29=valves
 LibName30=kwire
 LibName31=switches
 LibName32=/home/chrisj/workspace/kicad/KwanSystems
-LibName33=/home/chrisj/workspace/python/kwire/kicad/kwire

@@ -29,6 +29,10 @@ class KwireComponent(NetlistTree.Component):
             return  KwireNMOS(ref,comp)
         elif part=="kwire:PMOS":
             return  KwirePMOS(ref,comp)
+        elif part=="kwire:NMOS_BODY":
+            return  KwireNMOS_BODY(ref,comp)
+        elif part=="kwire:PMOS_BODY":
+            return  KwirePMOS_BODY(ref,comp)
         else:
             print("No model found for "+part)
             return KwireComponent(ref,comp)
@@ -63,12 +67,41 @@ class KwireNMOS(KwireComponent):
             print(self.ref+" (NMOS) Setting source to ",value)
         else:
             print("Trying to write to transistor drain")
-        if self.G==True:
+        if self.G==True and self.S==False:
             result=self.S
-            print(self.ref+" (NMOS) is on  (gate=",self.G,"), setting drain to ",result)
+            print(self.ref+" (NMOS) is on  (gate=",self.G,", source=",self.S,"), setting drain to ",result)
         else:
             result='Z'
-            print(self.ref+" (NMOS) is off (gate=",self.G,"), setting drain to ",result)
+            print(self.ref+" (NMOS) is off (gate=",self.G,", source=",self.S,"), setting drain to ",result)
+        context.addEvent(time+self.propDelay,self.outputs["3"],result)
+
+class KwireNMOS_BODY(KwireComponent):
+    def __init__(self,ref,comp):
+        self.S='Z'
+        self.G='Z'
+        self.B='Z'
+        super().__init__(ref,comp)
+    def setInput(self,context,time,pin,value):
+        if pin=='1':
+            if value==self.B: return
+            self.B=value
+            print(self.ref+" (NMOS_BODY) Setting body to ",value)
+        elif pin=='4':
+            if value==self.G: return
+            self.G=value
+            print(self.ref+" (NMOS_BODY) Setting gate to ",value)
+        elif pin=='2':
+            if value==self.S: return
+            self.S=value
+            print(self.ref+" (NMOS_BODY) Setting source to ",value)
+        else:
+            print("Trying to write to transistor drain")
+        if self.G==True and self.B==False:
+            result=self.S
+            print(self.ref+" (NMOS_BODY) is on  (gate=",self.G,", body=",self.B,"), setting drain to ",result)
+        else:
+            result='Z'
+            print(self.ref+" (NMOS_BODY) is off (gate=",self.G,", body=",self.B,"), setting drain to ",result)
         context.addEvent(time+self.propDelay,self.outputs["3"],result)
 
 class KwirePMOS(KwireComponent):
@@ -87,14 +120,43 @@ class KwirePMOS(KwireComponent):
             print(self.ref+" (PMOS) Setting source to ",value)
         else:
             print("Trying to write to transistor drain")
-        if self.G==False:
+        if self.G==False and self.S==True:
             result=self.S
-            print(self.ref+" (PMOS) is on  (gate=",self.G,"), setting drain to ",result)
+            print(self.ref+" (PMOS) is on  (gate=",self.G,", source=",self.S,"), setting drain to ",result)
         else:
             result='Z'
-            print(self.ref+" (PMOS) is off (gate=",self.G,"), setting drain to ",result)
+            print(self.ref+" (PMOS) is off (gate=",self.G,", source=",self.S,"), setting drain to ",result)
         context.addEvent(time+self.propDelay,self.outputs["3"],result)
 
+class KwirePMOS_BODY(KwireComponent):
+    def __init__(self,ref,comp):
+        self.S='Z'
+        self.G='Z'
+        self.B='Z'
+        super().__init__(ref,comp)
+    def setInput(self,context,time,pin,value):
+        if pin=='1':
+            if value==self.B: return
+            self.B=value
+            print(self.ref+" (PMOS) Setting body to ",value)
+        elif pin=='3':
+            if value==self.G: return
+            self.G=value
+            print(self.ref+" (PMOS) Setting gate to ",value)
+        elif pin=='4':
+            if value==self.S: return
+            self.S=value
+            print(self.ref+" (PMOS) Setting source to ",value)
+        else:
+            print("Trying to write to transistor drain")
+        if self.G==False and self.B==True:
+            result=self.S
+            print(self.ref+" (PMOS_BODY) is on  (gate=",self.G,", body=",self.B,"), setting drain to ",result)
+        else:
+            result='Z'
+            print(self.ref+" (PMOS_BODY) is off (gate=",self.G,", body=",self.B,"), setting drain to ",result)
+        context.addEvent(time+self.propDelay,self.outputs["2"],result)
+        
 class KwireOR(KwireComponent):
     def __init__(self,ref,comp):
         self.A='Z'

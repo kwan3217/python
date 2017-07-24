@@ -258,16 +258,29 @@ class Context:
     def __str__(self):
         return self.__dict__.__str__()
     
+def toggleGrayCode(pins,tfirst):
+    code=0
+    result=[]
+    for i in range(1,2**len(pins)+1):
+        for j in range(32):
+            if i and 2<<j:
+                minbit=j
+                break
+        oldbit=(code>>j) and 1
+        newbit=not oldbit
+        code=(code and not (1<<minbit)) or (newbit<<minbit)
+        result.append({"time":tfirst+i,"ref":pins[newbit]["ref"],"pin":pins[newbit]["pin"],"value":newbit==1})
+    return result
+
 if __name__ == '__main__':
     context=Context('kicad/xordriver.net')
     inputs=[{"time": 0,"ref":"J101","pin": "1","value":False}, #Turn on ground
-            {"time": 0,"ref":"J101","pin": "2","value":True },  #Turn on power
-            {"time": 0,"ref":"S101","pin":"16","value":False},
-            {"time": 0,"ref":"S102","pin":"16","value":False},
-            {"time": 1,"ref":"S101","pin":"16","value":True },
-            {"time": 2,"ref":"S102","pin":"16","value":True },
-            {"time": 3,"ref":"S101","pin":"16","value":False},
-            {"time": 4,"ref":"S102","pin":"16","value":False}]
+            {"time": 0,"ref":"J101","pin": "2","value":True }]  #Turn on power
+    inputs=inputs+toggleGrayCode([
+            {"ref":"S101","pin":"16"},
+            {"ref":"S102","pin":"16"}],0)
+    for inp in inputs:
+        print(inp)
     print(" T|B A|Y")
     print("--+---+-")
     for inp in inputs:
