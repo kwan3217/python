@@ -1,0 +1,2463 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xtce:SpaceSystem name="EMM" xmlns:xtce="http://www.omg.org/space/xtce">
+    <xtce:Header classification="BuildType=EXI,CreatedBy=XTCEEditor" version="XTCEEditorVersion=0.35" date="Created=2017/07/31 14:48:51 UTC,Modified=2017/07/31 20:30:51 UTC"/>
+    <xtce:TelemetryMetaData>
+        <xtce:ParameterTypeSet>
+            <xtce:IntegerParameterType name="VERSION_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="TYPE_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SEC_HDR_FLG_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="PKT_APID_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="11" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SEQ_FLGS_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SRC_SEQ_CTR_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="14" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="PKT_LEN_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="SHCOARSE_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SHFINE_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="CHECKSUM_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="VERSION__HW_TYPE_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="LOGOMATIC"/>
+                    <xtce:Enumeration value="1" label="LOGINATOR"/>
+                    <xtce:Enumeration value="2" label="ROCKETOMETER"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="VERSION__HW_SERIAL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="VERSION__MAMCR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="MAM_DISABLED"/>
+                    <xtce:Enumeration value="1" label="MAM_PARTIAL"/>
+                    <xtce:Enumeration value="2" label="MAM_FULL"/>
+                    <xtce:Enumeration value="3" label="RESERVED"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="RESERVED" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="VERSION__MAMTIM_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="RESERVED"/>
+                    <xtce:Enumeration value="1" label="MAM_1_CCLK"/>
+                    <xtce:Enumeration value="2" label="MAM_2_CCLK"/>
+                    <xtce:Enumeration value="3" label="MAM_3_CCLK"/>
+                    <xtce:Enumeration value="4" label="MAM_4_CCLK"/>
+                    <xtce:Enumeration value="5" label="MAM_5_CCLK"/>
+                    <xtce:Enumeration value="6" label="MAM_6_CCLK"/>
+                    <xtce:Enumeration value="7" label="MAM_7_CCLK"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="RESERVED" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="VERSION__PLL0_MSEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="5" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PLL0_PSEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="VERSION__PLL0_E_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PLL0_C_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PLL0_LOCK_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_5_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="5" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:EnumeratedParameterType name="VERSION__VPBDIV_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="APB_1_4"/>
+                    <xtce:Enumeration value="1" label="APB_1_1"/>
+                    <xtce:Enumeration value="2" label="APB_1_2"/>
+                    <xtce:Enumeration value="3" label="RESERVED"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="RESERVED" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="VERSION__FOSC_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>hz</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__CCLK_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>hz</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PCLK_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>hz</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PREINT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__PREFRAC_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__CLKEN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__CTCRST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__CTTEST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="VERSION__CLKSRC_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:StringParameterType name="VERSION__VERSION_STRING_Type">
+                <xtce:UnitSet/>
+                <xtce:StringDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:Fixed>
+                            <xtce:FixedValue>8</xtce:FixedValue>
+                        </xtce:Fixed>
+                    </xtce:SizeInBits>
+                </xtce:StringDataEncoding>
+            </xtce:StringParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_3_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="DUMP__START_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="DUMP__END_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="DUMP__BASE_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:BinaryParameterType name="DUMP__DATA_Type">
+                <xtce:UnitSet/>
+                <xtce:BinaryDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:FixedValue>8</xtce:FixedValue>
+                    </xtce:SizeInBits>
+                </xtce:BinaryDataEncoding>
+            </xtce:BinaryParameterType>
+            <xtce:BinaryParameterType name="CONFIG__DIRENTRY_Type">
+                <xtce:UnitSet/>
+                <xtce:BinaryDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:FixedValue>256</xtce:FixedValue>
+                    </xtce:SizeInBits>
+                </xtce:BinaryDataEncoding>
+            </xtce:BinaryParameterType>
+            <xtce:StringParameterType name="CONFIG__DATA_Type">
+                <xtce:UnitSet/>
+                <xtce:StringDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:Fixed>
+                            <xtce:FixedValue>8</xtce:FixedValue>
+                        </xtce:Fixed>
+                    </xtce:SizeInBits>
+                </xtce:StringDataEncoding>
+            </xtce:StringParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_ADDR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SELF_TEST_X_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SELF_TEST_Y_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SELF_TEST_Z_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SELF_TEST_A_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SMPLRT_DIV_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="MPUCONFIG__DLPF_CFG_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="BW_260"/>
+                    <xtce:Enumeration value="1" label="BW_184"/>
+                    <xtce:Enumeration value="2" label="BW_94"/>
+                    <xtce:Enumeration value="3" label="BW_44"/>
+                    <xtce:Enumeration value="4" label="BW_21"/>
+                    <xtce:Enumeration value="5" label="BW_10"/>
+                    <xtce:Enumeration value="6" label="BW_5"/>
+                    <xtce:Enumeration value="7" label="RESERVED"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="RESERVED" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="MPUCONFIG__EXT_SYNC_SET_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="INPUT_DISABLED"/>
+                    <xtce:Enumeration value="1" label="TEMP"/>
+                    <xtce:Enumeration value="2" label="GYRO_X"/>
+                    <xtce:Enumeration value="3" label="GYRO_Y"/>
+                    <xtce:Enumeration value="4" label="GYRO_Z"/>
+                    <xtce:Enumeration value="5" label="ACC_X"/>
+                    <xtce:Enumeration value="6" label="ACC_Y"/>
+                    <xtce:Enumeration value="7" label="ACC_Z"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__XG_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__YG_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__ZG_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="MPUCONFIG__FS_SEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="FS_250"/>
+                    <xtce:Enumeration value="1" label="FS_500"/>
+                    <xtce:Enumeration value="2" label="FS_1000"/>
+                    <xtce:Enumeration value="3" label="FS_2000"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FS_SEL2_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>degs</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__XA_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__YA_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__ZA_ST_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="MPUCONFIG__AFS_SEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="AFS_2"/>
+                    <xtce:Enumeration value="1" label="AFS_4"/>
+                    <xtce:Enumeration value="2" label="AFS_8"/>
+                    <xtce:Enumeration value="3" label="AFS_16"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__MOT_THR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__INT_LEVEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__INT_OPEN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__LATCH_INT_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__INT_RD_CLEAR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FSYNC_INT_LEVEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FSYNC_INT_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_BYPASS_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FIFO_OFLOW_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_MST_INT_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__DATA_RDY_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FIFO_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_MST_EN_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_IF_DIS_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__FIFO_RESET_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__I2C_MST_RESET_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SIG_COND_RESET_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__DEVICE_RESET_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__SLEEP_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__CYCLE_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__TEMP_DIS_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="MPUCONFIG__CLKSEL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="INT_8MHz"/>
+                    <xtce:Enumeration value="1" label="PLL_XG"/>
+                    <xtce:Enumeration value="2" label="PLL_YG"/>
+                    <xtce:Enumeration value="3" label="PLL_ZG"/>
+                    <xtce:Enumeration value="4" label="PLL_EXT_32KIHZ"/>
+                    <xtce:Enumeration value="5" label="PLL_EXT_19_2MHZ"/>
+                    <xtce:Enumeration value="6" label="RESERVED"/>
+                    <xtce:Enumeration value="7" label="STOP"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="RESERVED" alarmLevel="critical"/>
+                        <xtce:EnumerationAlarm enumerationLabel="STOP" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="MPUCONFIG__WHOAMI_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__INFO_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__ASAX_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__ASAY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__ASAZ_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__I2C_ADDR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="AKCONFIG__WHOAMI_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC3_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC4_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC5_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__AC6_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__B1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__B2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__MB_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__MC_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPCONFIG__MD_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__MANUFACTURER_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:StringParameterType name="SDCARD__OEM_Type">
+                <xtce:UnitSet/>
+                <xtce:StringDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:Fixed>
+                            <xtce:FixedValue>24</xtce:FixedValue>
+                        </xtce:Fixed>
+                    </xtce:SizeInBits>
+                </xtce:StringDataEncoding>
+            </xtce:StringParameterType>
+            <xtce:StringParameterType name="SDCARD__PRODUCT_Type">
+                <xtce:UnitSet/>
+                <xtce:StringDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:Fixed>
+                            <xtce:FixedValue>48</xtce:FixedValue>
+                        </xtce:Fixed>
+                    </xtce:SizeInBits>
+                </xtce:StringDataEncoding>
+            </xtce:StringParameterType>
+            <xtce:FloatParameterType name="SDCARD__REVISION_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__SERIAL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__MFG_YEAR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__MFG_MONTH_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__CAPACITY_H_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__CAPACITY_L_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__FLAG_COPY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__FLAG_WRITE_PROT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__FLAG_WRITE_PROT__Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SDCARD__FORMAT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SECHDR__TC_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>us</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned">
+                    <xtce:DefaultCalibrator>
+                        <xtce:PolynomialCalibrator>
+                            <xtce:Term exponent="0" coefficient="0"/>
+                            <xtce:Term exponent="1" coefficient="0.0166667"/>
+                        </xtce:PolynomialCalibrator>
+                    </xtce:DefaultCalibrator>
+                </xtce:IntegerDataEncoding>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__AX_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__AY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__AZ_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__GX_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__GY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__GZ_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MPUDATA__MT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="MPUDATA__TRIGGER_ON_INT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NOT_INT"/>
+                    <xtce:Enumeration value="1" label="INT"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="MPUDATA__TRIGGER_ON_TMOUT_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NOT_TIMEOUT"/>
+                    <xtce:Enumeration value="1" label="TIMEOUT"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="MAGDATA__BX_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MAGDATA__BY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="MAGDATA__BZ_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_6_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="6" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:EnumeratedParameterType name="MAGDATA__DRDY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NORMAL"/>
+                    <xtce:Enumeration value="1" label="DATA_READY"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="MAGDATA__DOR_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NORMAL"/>
+                    <xtce:Enumeration value="1" label="DATA_OVERRUN"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="DATA_OVERRUN" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="MAGDATA__BITM_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="BIT14"/>
+                    <xtce:Enumeration value="1" label="BIT16"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="MAGDATA__HOFL_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NORMAL"/>
+                    <xtce:Enumeration value="1" label="MAG_OVERFLOW"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="MAG_OVERFLOW" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="BMPDATA__TEMP_RAW_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPDATA__PRES_RAW_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPDATA__PRES_CAL_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>nm2</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="BMPDATA__TEMP_CAL_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>C</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:StringParameterType name="NMEADATA__NMEA_Type">
+                <xtce:UnitSet/>
+                <xtce:StringDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:Fixed>
+                            <xtce:FixedValue>8</xtce:FixedValue>
+                        </xtce:Fixed>
+                    </xtce:SizeInBits>
+                </xtce:StringDataEncoding>
+            </xtce:StringParameterType>
+            <xtce:FloatParameterType name="GGADATA__HMS_Type">
+                <xtce:UnitSet/>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="GGADATA__LAT_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>deg</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="GGADATA__LON_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>deg</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="GGADATA__ALT_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>m</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="RMCDATA__SPD_Type">
+                <xtce:UnitSet/>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="RMCDATA__HDG_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>deg</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:FloatDataEncoding sizeInBits="32"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="RMCDATA__DMY_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+        </xtce:ParameterTypeSet>
+        <xtce:ParameterSet>
+            <xtce:Parameter name="VERSION" parameterTypeRef="VERSION_Type"/>
+            <xtce:Parameter name="TYPE" parameterTypeRef="TYPE_Type"/>
+            <xtce:Parameter name="SEC_HDR_FLG" parameterTypeRef="SEC_HDR_FLG_Type"/>
+            <xtce:Parameter name="PKT_APID" parameterTypeRef="PKT_APID_Type"/>
+            <xtce:Parameter name="SEQ_FLGS" parameterTypeRef="SEQ_FLGS_Type"/>
+            <xtce:Parameter name="SRC_SEQ_CTR" parameterTypeRef="SRC_SEQ_CTR_Type"/>
+            <xtce:Parameter name="PKT_LEN" parameterTypeRef="PKT_LEN_Type"/>
+            <xtce:Parameter name="SHCOARSE" parameterTypeRef="SHCOARSE_Type" shortDescription="Secondary Header Coarse Time">
+                <xtce:LongDescription>CCSDS Packet 2nd Header Coarse Time</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SHCOARSE" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SHFINE" parameterTypeRef="SHFINE_Type" shortDescription="Secondary Header Fine Time">
+                <xtce:LongDescription>CCSDS Packet 2nd Header Fine Time</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SHFINE" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="CHECKSUM" parameterTypeRef="CHECKSUM_Type" shortDescription="Fletcher 32 Checksum">
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__HW_TYPE" parameterTypeRef="VERSION__HW_TYPE_Type" shortDescription="Hardware Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="HW_TYPE" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__HW_SERIAL" parameterTypeRef="VERSION__HW_SERIAL_Type" shortDescription="Hardware Serial Number">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="HW_SERIAL" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__MAMCR" parameterTypeRef="VERSION__MAMCR_Type" shortDescription="MAM Control Register">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAMCR" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__MAMTIM" parameterTypeRef="VERSION__MAMTIM_Type" shortDescription="MAM Timing Register">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAMTIM" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PLL0_MSEL" parameterTypeRef="VERSION__PLL0_MSEL_Type" shortDescription="PLL0 Multiplier">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PLL0_MSEL" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PLL0_PSEL" parameterTypeRef="VERSION__PLL0_PSEL_Type" shortDescription="PLL0 Divisor">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PLL0_PSEL" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="REUSABLE__SPARE_1" parameterTypeRef="REUSABLE__SPARE_1_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="REUSABLE" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPARE_1" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PLL0_E" parameterTypeRef="VERSION__PLL0_E_Type" shortDescription="PLL0 Enabled">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PLL0_E" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PLL0_C" parameterTypeRef="VERSION__PLL0_C_Type" shortDescription="PLL0 Connected">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PLL0_C" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PLL0_LOCK" parameterTypeRef="VERSION__PLL0_LOCK_Type" shortDescription="PLL0 Locked">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PLL0_LOCK" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="REUSABLE__SPARE_5" parameterTypeRef="REUSABLE__SPARE_5_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="REUSABLE" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPARE_5" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__VPBDIV" parameterTypeRef="VERSION__VPBDIV_Type" shortDescription="Peripheral bus divisor">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="VPBDIV" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__FOSC" parameterTypeRef="VERSION__FOSC_Type" shortDescription="Crystal Frequency">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="FOSC" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__CCLK" parameterTypeRef="VERSION__CCLK_Type" shortDescription="Core Clock Frequency">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CCLK" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PCLK" parameterTypeRef="VERSION__PCLK_Type" shortDescription="Peripheral Clock Frequency">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PCLK" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PREINT" parameterTypeRef="VERSION__PREINT_Type" shortDescription="RTC Prescaler integer portion">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PREINT" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__PREFRAC" parameterTypeRef="VERSION__PREFRAC_Type" shortDescription="RTC Prescaler fractional portion">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="PREFRAC" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__CLKEN" parameterTypeRef="VERSION__CLKEN_Type" shortDescription="RTC Enabled">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CLKEN" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__CTCRST" parameterTypeRef="VERSION__CTCRST_Type" shortDescription="RTC Reset">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CTCRST" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__CTTEST" parameterTypeRef="VERSION__CTTEST_Type" shortDescription="RTC Test">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CTTEST" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__CLKSRC" parameterTypeRef="VERSION__CLKSRC_Type" shortDescription="RTC Source">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CLKSRC" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="VERSION__VERSION_STRING" parameterTypeRef="VERSION__VERSION_STRING_Type" shortDescription="Software version string">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="VERSION_STRING" nameSpace="itemName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="REUSABLE__SPARE_3" parameterTypeRef="REUSABLE__SPARE_3_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="REUSABLE" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPARE_3" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="DUMP__START" parameterTypeRef="DUMP__START_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="DUMP" nameSpace="externalElement"/>
+                    <xtce:Alias alias="START" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="DUMP__END" parameterTypeRef="DUMP__END_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="DUMP" nameSpace="externalElement"/>
+                    <xtce:Alias alias="END" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="DUMP__BASE" parameterTypeRef="DUMP__BASE_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="DUMP" nameSpace="externalElement"/>
+                    <xtce:Alias alias="BASE" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="DUMP__DATA" parameterTypeRef="DUMP__DATA_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="DUMP" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DATA" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="CONFIG__DIRENTRY" parameterTypeRef="CONFIG__DIRENTRY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DIRENTRY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="CONFIG__DATA" parameterTypeRef="CONFIG__DATA_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DATA" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_ADDR" parameterTypeRef="MPUCONFIG__I2C_ADDR_Type" shortDescription="I2C Address">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_ADDR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SELF_TEST_X" parameterTypeRef="MPUCONFIG__SELF_TEST_X_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SELF_TEST_X" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x0D</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SELF_TEST_Y" parameterTypeRef="MPUCONFIG__SELF_TEST_Y_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SELF_TEST_Y" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x0E</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SELF_TEST_Z" parameterTypeRef="MPUCONFIG__SELF_TEST_Z_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SELF_TEST_Z" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x0F</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SELF_TEST_A" parameterTypeRef="MPUCONFIG__SELF_TEST_A_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SELF_TEST_A" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x10</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SMPLRT_DIV" parameterTypeRef="MPUCONFIG__SMPLRT_DIV_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SMPLRT_DIV" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x19</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__DLPF_CFG" parameterTypeRef="MPUCONFIG__DLPF_CFG_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DLPF_CFG" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__EXT_SYNC_SET" parameterTypeRef="MPUCONFIG__EXT_SYNC_SET_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="EXT_SYNC_SET" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="REUSABLE__SPARE_2" parameterTypeRef="REUSABLE__SPARE_2_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="REUSABLE" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPARE_2" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__XG_ST" parameterTypeRef="MPUCONFIG__XG_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="XG_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__YG_ST" parameterTypeRef="MPUCONFIG__YG_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="YG_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__ZG_ST" parameterTypeRef="MPUCONFIG__ZG_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ZG_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FS_SEL" parameterTypeRef="MPUCONFIG__FS_SEL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FS_SEL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FS_SEL2" parameterTypeRef="MPUCONFIG__FS_SEL2_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FS_SEL2" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__XA_ST" parameterTypeRef="MPUCONFIG__XA_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="XA_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1C</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__YA_ST" parameterTypeRef="MPUCONFIG__YA_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="YA_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1C</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__ZA_ST" parameterTypeRef="MPUCONFIG__ZA_ST_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ZA_ST" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1C</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__AFS_SEL" parameterTypeRef="MPUCONFIG__AFS_SEL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AFS_SEL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1C</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__MOT_THR" parameterTypeRef="MPUCONFIG__MOT_THR_Type" shortDescription="Wake-on-motion Threshold">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MOT_THR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x1F</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__INT_LEVEL" parameterTypeRef="MPUCONFIG__INT_LEVEL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="INT_LEVEL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__INT_OPEN" parameterTypeRef="MPUCONFIG__INT_OPEN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="INT_OPEN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__LATCH_INT_EN" parameterTypeRef="MPUCONFIG__LATCH_INT_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="LATCH_INT_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__INT_RD_CLEAR" parameterTypeRef="MPUCONFIG__INT_RD_CLEAR_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="INT_RD_CLEAR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FSYNC_INT_LEVEL" parameterTypeRef="MPUCONFIG__FSYNC_INT_LEVEL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FSYNC_INT_LEVEL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FSYNC_INT_EN" parameterTypeRef="MPUCONFIG__FSYNC_INT_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FSYNC_INT_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_BYPASS_EN" parameterTypeRef="MPUCONFIG__I2C_BYPASS_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_BYPASS_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x37</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FIFO_OFLOW_EN" parameterTypeRef="MPUCONFIG__FIFO_OFLOW_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FIFO_OFLOW_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x38</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_MST_INT_EN" parameterTypeRef="MPUCONFIG__I2C_MST_INT_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_MST_INT_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x38</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__DATA_RDY_EN" parameterTypeRef="MPUCONFIG__DATA_RDY_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DATA_RDY_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x38</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FIFO_EN" parameterTypeRef="MPUCONFIG__FIFO_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FIFO_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_MST_EN" parameterTypeRef="MPUCONFIG__I2C_MST_EN_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_MST_EN" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_IF_DIS" parameterTypeRef="MPUCONFIG__I2C_IF_DIS_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_IF_DIS" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__FIFO_RESET" parameterTypeRef="MPUCONFIG__FIFO_RESET_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FIFO_RESET" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__I2C_MST_RESET" parameterTypeRef="MPUCONFIG__I2C_MST_RESET_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_MST_RESET" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SIG_COND_RESET" parameterTypeRef="MPUCONFIG__SIG_COND_RESET_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SIG_COND_RESET" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6A</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__DEVICE_RESET" parameterTypeRef="MPUCONFIG__DEVICE_RESET_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DEVICE_RESET" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__SLEEP" parameterTypeRef="MPUCONFIG__SLEEP_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SLEEP" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__CYCLE" parameterTypeRef="MPUCONFIG__CYCLE_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="CYCLE" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__TEMP_DIS" parameterTypeRef="MPUCONFIG__TEMP_DIS_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TEMP_DIS" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__CLKSEL" parameterTypeRef="MPUCONFIG__CLKSEL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="CLKSEL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x6B</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUCONFIG__WHOAMI" parameterTypeRef="MPUCONFIG__WHOAMI_Type" shortDescription="Device Identification">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="WHOAMI" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x75</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__INFO" parameterTypeRef="AKCONFIG__INFO_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="INFO" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x01</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__ASAX" parameterTypeRef="AKCONFIG__ASAX_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ASAX" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x10</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__ASAY" parameterTypeRef="AKCONFIG__ASAY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ASAY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x11</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__ASAZ" parameterTypeRef="AKCONFIG__ASAZ_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ASAZ" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x12</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__I2C_ADDR" parameterTypeRef="AKCONFIG__I2C_ADDR_Type" shortDescription="I2C Address">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="I2C_ADDR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="AKCONFIG__WHOAMI" parameterTypeRef="AKCONFIG__WHOAMI_Type" shortDescription="Device Identification">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="WHOAMI" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x00</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC1" parameterTypeRef="BMPCONFIG__AC1_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC1" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xAA</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC2" parameterTypeRef="BMPCONFIG__AC2_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC2" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xAC</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC3" parameterTypeRef="BMPCONFIG__AC3_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC3" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xAE</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC4" parameterTypeRef="BMPCONFIG__AC4_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC4" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xB0</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC5" parameterTypeRef="BMPCONFIG__AC5_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC5" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xB2</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__AC6" parameterTypeRef="BMPCONFIG__AC6_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AC6" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xB4</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__B1" parameterTypeRef="BMPCONFIG__B1_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="B1" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xB6</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__B2" parameterTypeRef="BMPCONFIG__B2_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="B2" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xB8</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__MB" parameterTypeRef="BMPCONFIG__MB_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MB" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xBA</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__MC" parameterTypeRef="BMPCONFIG__MC_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MC" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xBC</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPCONFIG__MD" parameterTypeRef="BMPCONFIG__MD_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPCONFIG" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MD" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0xBE</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__MANUFACTURER" parameterTypeRef="SDCARD__MANUFACTURER_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MANUFACTURER" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__OEM" parameterTypeRef="SDCARD__OEM_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="OEM" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__PRODUCT" parameterTypeRef="SDCARD__PRODUCT_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="PRODUCT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__REVISION" parameterTypeRef="SDCARD__REVISION_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="REVISION" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__SERIAL" parameterTypeRef="SDCARD__SERIAL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SERIAL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__MFG_YEAR" parameterTypeRef="SDCARD__MFG_YEAR_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MFG_YEAR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__MFG_MONTH" parameterTypeRef="SDCARD__MFG_MONTH_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MFG_MONTH" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__CAPACITY_H" parameterTypeRef="SDCARD__CAPACITY_H_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="CAPACITY_H" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__CAPACITY_L" parameterTypeRef="SDCARD__CAPACITY_L_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="CAPACITY_L" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__FLAG_COPY" parameterTypeRef="SDCARD__FLAG_COPY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FLAG_COPY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__FLAG_WRITE_PROT" parameterTypeRef="SDCARD__FLAG_WRITE_PROT_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FLAG_WRITE_PROT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__FLAG_WRITE_PROT_" parameterTypeRef="SDCARD__FLAG_WRITE_PROT__Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FLAG_WRITE_PROT_" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SDCARD__FORMAT" parameterTypeRef="SDCARD__FORMAT_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="externalElement"/>
+                    <xtce:Alias alias="FORMAT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="SECHDR__TC" parameterTypeRef="SECHDR__TC_Type" shortDescription="Timestamp">
+                <xtce:LongDescription>Count of microseconds (raw number is number of PCLK ticks) from the beginning of the most recent minute epoch</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SECHDR" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TC" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__AX" parameterTypeRef="MPUDATA__AX_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AX" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__AY" parameterTypeRef="MPUDATA__AY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__AZ" parameterTypeRef="MPUDATA__AZ_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="AZ" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__GX" parameterTypeRef="MPUDATA__GX_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="GX" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__GY" parameterTypeRef="MPUDATA__GY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="GY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__GZ" parameterTypeRef="MPUDATA__GZ_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="GZ" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__MT" parameterTypeRef="MPUDATA__MT_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="MT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__TRIGGER_ON_INT" parameterTypeRef="MPUDATA__TRIGGER_ON_INT_Type">
+                <xtce:LongDescription>1 if measurement was triggered by an interrupt, 0 otherwise. If it was triggered by an interrupt, the timestamp is the captured timestamp of the interrupt and therefore the most accurate value.</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TRIGGER_ON_INT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MPUDATA__TRIGGER_ON_TMOUT" parameterTypeRef="MPUDATA__TRIGGER_ON_TMOUT_Type">
+                <xtce:LongDescription>1 if measurement was triggered by timeout, 0 otherwise. If 1, the timestamp is the time that the I2C readout began, and therefore after the true time of the measurement.</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPUDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TRIGGER_ON_TMOUT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__BX" parameterTypeRef="MAGDATA__BX_Type" shortDescription="Magnetic Field X">
+                <xtce:LongDescription>Magnetic field in MPU +X direction (AK +Y direction)</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="BX" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x03</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__BY" parameterTypeRef="MAGDATA__BY_Type" shortDescription="Magnetic Field Y">
+                <xtce:LongDescription>Magnetic field in MPU +Y direction (AK +X direction)</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="BY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x05</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__BZ" parameterTypeRef="MAGDATA__BZ_Type" shortDescription="Magnetic Field Z">
+                <xtce:LongDescription>Magnetic field in MPU +Z direction (AK -Z direction)</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="BZ" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x07</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="REUSABLE__SPARE_6" parameterTypeRef="REUSABLE__SPARE_6_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="REUSABLE" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPARE_6" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__DRDY" parameterTypeRef="MAGDATA__DRDY_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DRDY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x02</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__DOR" parameterTypeRef="MAGDATA__DOR_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DOR" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x02</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__BITM" parameterTypeRef="MAGDATA__BITM_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="BITM" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x09</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="MAGDATA__HOFL" parameterTypeRef="MAGDATA__HOFL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="HOFL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="source">0x09</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPDATA__TEMP_RAW" parameterTypeRef="BMPDATA__TEMP_RAW_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TEMP_RAW" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPDATA__PRES_RAW" parameterTypeRef="BMPDATA__PRES_RAW_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="PRES_RAW" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPDATA__PRES_CAL" parameterTypeRef="BMPDATA__PRES_CAL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="PRES_CAL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="BMPDATA__TEMP_CAL" parameterTypeRef="BMPDATA__TEMP_CAL_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMPDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="TEMP_CAL" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="NMEADATA__NMEA" parameterTypeRef="NMEADATA__NMEA_Type">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="NMEADATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="NMEA" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="GGADATA__HMS" parameterTypeRef="GGADATA__HMS_Type" shortDescription="Hours, minutes, seconds">
+                <xtce:LongDescription>(UTC Hours times 100^2)+(UTC Minutes times 100)+(UTC Seconds)</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="HMS" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="GGADATA__LAT" parameterTypeRef="GGADATA__LAT_Type" shortDescription="Latitude">
+                <xtce:LongDescription>WGS-84 latitude</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="LAT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="GGADATA__LON" parameterTypeRef="GGADATA__LON_Type" shortDescription="Longitude">
+                <xtce:LongDescription>WGS-84 Longitude</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="LON" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="GGADATA__ALT" parameterTypeRef="GGADATA__ALT_Type" shortDescription="Altitude">
+                <xtce:LongDescription>Altitude above WGS-84 ellipsoid</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="ALT" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="RMCDATA__SPD" parameterTypeRef="RMCDATA__SPD_Type" shortDescription="Speed">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="SPD" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="RMCDATA__HDG" parameterTypeRef="RMCDATA__HDG_Type" shortDescription="Heading">
+                <xtce:LongDescription>Heading east of true North</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="HDG" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter name="RMCDATA__DMY" parameterTypeRef="RMCDATA__DMY_Type" shortDescription="Day, Month, Year">
+                <xtce:LongDescription>(Day times 100^2)+(Month times 100)+(Year%100)</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
+                    <xtce:Alias alias="DMY" nameSpace="itemName"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+        </xtce:ParameterSet>
+        <xtce:ContainerSet>
+            <xtce:SequenceContainer name="CCSDSPacket" abstract="true">
+                <xtce:LongDescription>Super-container for telemetry and command packets</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="VERSION"/>
+                    <xtce:ParameterRefEntry parameterRef="TYPE"/>
+                    <xtce:ParameterRefEntry parameterRef="SEC_HDR_FLG"/>
+                    <xtce:ParameterRefEntry parameterRef="PKT_APID"/>
+                    <xtce:ParameterRefEntry parameterRef="SEQ_FLGS"/>
+                    <xtce:ParameterRefEntry parameterRef="SRC_SEQ_CTR"/>
+                    <xtce:ParameterRefEntry parameterRef="PKT_LEN"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="CCSDSTelemetryPacket" abstract="true">
+                <xtce:LongDescription>Super-container for all telemetry packets</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList/>
+                <xtce:BaseContainer containerRef="CCSDSPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="0" parameterRef="VERSION"/>
+                            <xtce:Comparison value="0" parameterRef="TYPE"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="SecondaryHeaderContainer" abstract="true">
+                <xtce:LongDescription>Container for telemetry secondary header items</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SHCOARSE"/>
+                    <xtce:ParameterRefEntry parameterRef="SHFINE"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="TrailerContainer" abstract="true">
+                <xtce:LongDescription>Container for telemetry packet trailer</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="CHECKSUM"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="VERSION">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="VERSION" nameSpace="streamName"/>
+                    <xtce:Alias alias="VERSION" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__HW_TYPE"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__HW_SERIAL"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__MAMCR"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__MAMTIM"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_1"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PLL0_PSEL"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PLL0_MSEL"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_5"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PLL0_LOCK"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PLL0_C"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PLL0_E"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__VPBDIV"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__FOSC"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CCLK"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PCLK"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PREINT"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__PREFRAC"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CTCRST"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CTTEST"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CTCRST"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CLKEN"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__VERSION_STRING">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="1" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="SOURCE">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SOURCE" nameSpace="streamName"/>
+                    <xtce:Alias alias="SOURCE" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__START"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__END"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__BASE"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__DATA">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="2" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="IMAGE">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="IMAGE" nameSpace="streamName"/>
+                    <xtce:Alias alias="IMAGE" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__START"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__END"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__BASE"/>
+                    <xtce:ParameterRefEntry parameterRef="DUMP__DATA">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="3" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="CONFIG">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="CONFIG" nameSpace="streamName"/>
+                    <xtce:Alias alias="CONFIG" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="CONFIG__DIRENTRY"/>
+                    <xtce:ParameterRefEntry parameterRef="CONFIG__DATA">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="4" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="MPU_CONFIG">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPU_CONFIG" nameSpace="streamName"/>
+                    <xtce:Alias alias="MPU_CONFIG" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_ADDR"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SELF_TEST_X"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SELF_TEST_Y"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SELF_TEST_Z"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SELF_TEST_A"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SMPLRT_DIV"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_2"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__EXT_SYNC_SET"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__DLPF_CFG"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__XG_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__YG_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__ZG_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FS_SEL"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__XA_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__YA_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__ZA_ST"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__AFS_SEL"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__MOT_THR"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__INT_LEVEL"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__INT_OPEN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__LATCH_INT_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__INT_RD_CLEAR"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FSYNC_INT_LEVEL"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FSYNC_INT_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_BYPASS_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_1"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FIFO_OFLOW_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_MST_INT_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_2"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__DATA_RDY_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_1"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FIFO_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_MST_EN"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_IF_DIS"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_1"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__FIFO_RESET"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_MST_RESET"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SIG_COND_RESET"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__DEVICE_RESET"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__SLEEP"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__CYCLE"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_1"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__TEMP_DIS"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__CLKSEL"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__WHOAMI"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="5" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="MAG_CONFIG">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAG_CONFIG" nameSpace="streamName"/>
+                    <xtce:Alias alias="MAG_CONFIG" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__I2C_ADDR"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUCONFIG__WHOAMI"/>
+                    <xtce:ParameterRefEntry parameterRef="AKCONFIG__INFO"/>
+                    <xtce:ParameterRefEntry parameterRef="AKCONFIG__ASAX"/>
+                    <xtce:ParameterRefEntry parameterRef="AKCONFIG__ASAY"/>
+                    <xtce:ParameterRefEntry parameterRef="AKCONFIG__ASAZ"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="6" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="BMP_CAL">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMP_CAL" nameSpace="streamName"/>
+                    <xtce:Alias alias="BMP_CAL" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC1"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC2"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC3"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC4"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC5"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__AC6"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__B1"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__B2"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__MB"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__MC"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPCONFIG__MD"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="7" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="SDCARD">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="SDCARD" nameSpace="streamName"/>
+                    <xtce:Alias alias="SDCARD" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__MANUFACTURER"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__OEM"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__PRODUCT"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__REVISION"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__SERIAL"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__MFG_YEAR"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__MFG_MONTH"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__CAPACITY_H"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__CAPACITY_L"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__FLAG_COPY"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__FLAG_WRITE_PROT"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__FLAG_WRITE_PROT_"/>
+                    <xtce:ParameterRefEntry parameterRef="SDCARD__FORMAT"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="8" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="MPU_DATA" shortDescription="Accelerometer Fast Packet">
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MPU_DATA" nameSpace="streamName"/>
+                    <xtce:Alias alias="MPU_DATA" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__AX"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__AY"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__AZ"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__GX"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__GY"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__GZ"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__MT"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__TRIGGER_ON_INT"/>
+                    <xtce:ParameterRefEntry parameterRef="MPUDATA__TRIGGER_ON_TMOUT"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="9" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="MAG_DATA" shortDescription="Magnetometer Packet">
+                <xtce:LongDescription>Timestamp is from just after single-shot readout is commanded</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="MAG_DATA" nameSpace="streamName"/>
+                    <xtce:Alias alias="MAG_DATA" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_6"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__DOR"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__DRDY"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__BX"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__BY"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__BZ"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__BITM"/>
+                    <xtce:ParameterRefEntry parameterRef="MAGDATA__HOFL"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="10" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="BMP_DATA" shortDescription="Temperature/Pressure packet">
+                <xtce:LongDescription>Timestamp is after loop() notices that a complete temperature/pressure measurement is finished</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="BMP_DATA" nameSpace="streamName"/>
+                    <xtce:Alias alias="BMP_DATA" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPDATA__TEMP_RAW"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPDATA__PRES_RAW"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPDATA__TEMP_CAL"/>
+                    <xtce:ParameterRefEntry parameterRef="BMPDATA__PRES_CAL"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="11" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="NMEA" shortDescription="NMEA Sentence">
+                <xtce:LongDescription>Timestamp is that of the time that loop() noticed it has a '$' to process, so the timestamp of the start of the *next* NMEA sentence</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="NMEA" nameSpace="streamName"/>
+                    <xtce:Alias alias="NMEA" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="NMEADATA__NMEA">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="13" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="GGA" shortDescription="GPS Latitude, Longitude, and Altitude">
+                <xtce:LongDescription>Timestamp is that of the time that loop() noticed that a GGA sentence has been parsed</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="GGA" nameSpace="streamName"/>
+                    <xtce:Alias alias="GGA" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__HMS"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__LAT"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__LON"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__ALT"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="14" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="RMC" shortDescription="GPS Recommended Minimum">
+                <xtce:LongDescription>Timestamp is that of the time that loop() noticed that an RMC sentence has been parsed</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias alias="RMC" nameSpace="streamName"/>
+                    <xtce:Alias alias="RMC" nameSpace="packetElement"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SECHDR__TC"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__HMS"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__LAT"/>
+                    <xtce:ParameterRefEntry parameterRef="GGADATA__LON"/>
+                    <xtce:ParameterRefEntry parameterRef="RMCDATA__SPD"/>
+                    <xtce:ParameterRefEntry parameterRef="RMCDATA__HDG"/>
+                    <xtce:ParameterRefEntry parameterRef="RMCDATA__DMY"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="15" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+        </xtce:ContainerSet>
+    </xtce:TelemetryMetaData>
+    <xtce:CommandMetaData>
+        <xtce:ArgumentTypeSet>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__VERSIONNUM_Type" sizeInBits="3" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__TYPE_Type" sizeInBits="1" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SECHDRFLAG_Type" sizeInBits="1" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__APID_Type" sizeInBits="11" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="11" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SEQFLAGS_Type" sizeInBits="2" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SEQCNT_Type" sizeInBits="14" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="14" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__DATALENGTH_Type" sizeInBits="16" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_SEC_HDR__FUNCTION_CODE_Type" sizeInBits="8" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+        </xtce:ArgumentTypeSet>
+        <xtce:MetaCommandSet>
+            <xtce:MetaCommand name="CMD_PKT_HDR" abstract="true">
+                <xtce:LongDescription>This is the CCSDS packet header for all commands</xtce:LongDescription>
+                <xtce:ArgumentList>
+                    <xtce:Argument name="CMD_PKT_HDR__VERSIONNUM" argumentTypeRef="CMD_PKT_HDR__VERSIONNUM_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__TYPE" argumentTypeRef="CMD_PKT_HDR__TYPE_Type" initialValue="1"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SECHDRFLAG" argumentTypeRef="CMD_PKT_HDR__SECHDRFLAG_Type" initialValue="1"/>
+                    <xtce:Argument name="CMD_PKT_HDR__APID" argumentTypeRef="CMD_PKT_HDR__APID_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SEQFLAGS" argumentTypeRef="CMD_PKT_HDR__SEQFLAGS_Type" initialValue="3"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SEQCNT" argumentTypeRef="CMD_PKT_HDR__SEQCNT_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__DATALENGTH" argumentTypeRef="CMD_PKT_HDR__DATALENGTH_Type" initialValue="0"/>
+                </xtce:ArgumentList>
+                <xtce:CommandContainer name="CMD_PKT_HDR">
+                    <xtce:EntryList>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__VERSIONNUM"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__TYPE"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SECHDRFLAG"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__APID"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SEQFLAGS"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SEQCNT"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__DATALENGTH"/>
+                    </xtce:EntryList>
+                </xtce:CommandContainer>
+            </xtce:MetaCommand>
+            <xtce:MetaCommand name="CMD_SEC_HDR" abstract="true">
+                <xtce:LongDescription>This is the command secondary header</xtce:LongDescription>
+                <xtce:ArgumentList>
+                    <xtce:Argument name="CMD_SEC_HDR__FUNCTION_CODE" argumentTypeRef="CMD_SEC_HDR__FUNCTION_CODE_Type" initialValue="0"/>
+                </xtce:ArgumentList>
+                <xtce:CommandContainer name="CMD_SEC_HDR">
+                    <xtce:EntryList>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_SEC_HDR__FUNCTION_CODE"/>
+                        <xtce:FixedValueEntry sizeInBits="8" binaryValue="00"/>
+                    </xtce:EntryList>
+                </xtce:CommandContainer>
+            </xtce:MetaCommand>
+        </xtce:MetaCommandSet>
+    </xtce:CommandMetaData>
+</xtce:SpaceSystem>
