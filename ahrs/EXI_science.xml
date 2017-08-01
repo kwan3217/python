@@ -1,0 +1,1340 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xtce:SpaceSystem name="EMM" xmlns:xtce="http://www.omg.org/space/xtce">
+    <xtce:Header classification="BuildType=EXI_EM,CreatedBy=XTCEEditor" version="LASPXTCESchemaVersion=1.2,XTCEEditorVersion=0.31" date="Created=2017/06/01 16:53:05"/>
+    <xtce:TelemetryMetaData>
+        <xtce:ParameterTypeSet>
+            <xtce:IntegerParameterType name="VERSION_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="TYPE_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SEC_HDR_FLG_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="PKT_APID_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="11" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SEQ_FLGS_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="SRC_SEQ_CTR_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="14" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:IntegerParameterType name="PKT_LEN_Type" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="SHCOARSE_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="SHFINE_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="CHECKSUM_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>dn</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__header_ver_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="6" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__test_mode_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="REAL_DATA"/>
+                    <xtce:Enumeration value="1" label="DET_TEST"/>
+                    <xtce:Enumeration value="2" label="FPGA_TEST"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__error_free_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="HAS_ERRORS"/>
+                    <xtce:Enumeration value="1" label="NO_KNOWN_ERRORS"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="HAS_ERRORS" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__channel_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="UV"/>
+                    <xtce:Enumeration value="1" label="VIS"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__fw_state_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="UNKNOWN"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="UNKNOWN" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__compression_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="UNCOMPRESSED"/>
+                    <xtce:Enumeration value="1" label="COMPRESSED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__bin_fpga_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NO_BIN"/>
+                    <xtce:Enumeration value="1" label="BIN_2x2"/>
+                    <xtce:Enumeration value="2" label="BIN_4x4"/>
+                    <xtce:Enumeration value="3" label="BIN_8x8"/>
+                    <xtce:Enumeration value="4" label="BIN_16x16"/>
+                    <xtce:Enumeration value="5" label="BIN_32x32"/>
+                    <xtce:Enumeration value="6" label="UNKNOWN_6"/>
+                    <xtce:Enumeration value="7" label="UNKNOWN_7"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="UNKNOWN_6" alarmLevel="critical"/>
+                        <xtce:EnumerationAlarm enumerationLabel="UNKNOWN_7" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__co_added_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="4" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="NO"/>
+                    <xtce:Enumeration value="1" label="YES"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__inst_mode_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="5" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DEFAULTLABEL"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__error_desc_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DEFAULTLABEL"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_16_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__ts_sec_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>sec</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__ts_ssec_Type">
+                <xtce:UnitSet>
+                    <xtce:Unit>sec</xtce:Unit>
+                </xtce:UnitSet>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned">
+                    <xtce:DefaultCalibrator>
+                        <xtce:PolynomialCalibrator>
+                            <xtce:Term exponent="0" coefficient="0"/>
+                            <xtce:Term exponent="1" coefficient="1.52587e-05"/>
+                        </xtce:PolynomialCalibrator>
+                    </xtce:DefaultCalibrator>
+                </xtce:IntegerDataEncoding>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__obs_id_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__sun_x_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__sun_y_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__sun_z_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_57_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_58_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_59_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_6D_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_66_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_6C_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__detreg_spare1_en_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_spare1_ad_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="7" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_spare1_va_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__detreg_spare2_en_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_spare2_ad_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="7" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_spare2_va_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__detreg_7F_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__det_sn_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__det_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__pwb_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__magic_rev_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="1" label="PROTO"/>
+                    <xtce:Enumeration value="2" label="EM_OR_FLIGHT"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__uv_stim_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__vis_stim_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__door_state_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="UNKNOWN"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="UNKNOWN" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__lens_temp1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__lens_temp2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_8_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__bunny_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__door_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__rad_temp1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__rad_temp2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__topcan_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__botcan_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__magic_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__presto_temp_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__door_raw_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__fw_raw_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_32_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__fsw_ver_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__cmd_seq_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__cmd_addr1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__cmd_val1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__cmd_addr2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__cmd_val2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__time_freewheel_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="LOCKED"/>
+                    <xtce:Enumeration value="1" label="FREEWHEELING"/>
+                </xtce:EnumerationList>
+                <xtce:DefaultAlarm>
+                    <xtce:EnumerationAlarmList>
+                        <xtce:EnumerationAlarm enumerationLabel="FREEWHEELING" alarmLevel="critical"/>
+                    </xtce:EnumerationAlarmList>
+                </xtce:DefaultAlarm>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__img_src_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="SENT_NOT_STORED"/>
+                    <xtce:Enumeration value="2" label="SENT_ALSO_STORED"/>
+                    <xtce:Enumeration value="3" label="PREV_STORED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__obs_id1_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="28" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__obs_id2_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__int_time_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__fpga_ver_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:IntegerParameterType name="REUSABLE__SPARE_3_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="twosComplement"/>
+            </xtce:IntegerParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__rect_roi_ena_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__circ_roi_ena_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__circ_roi_rad_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="11" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__circ_roi_x_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__circ_roi_y_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__div_ena_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__div_val_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__int_fpga_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="FPGA_TIMING"/>
+                    <xtce:Enumeration value="1" label="DET_TIMING"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__det_imsize_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="IMG_2048x1536"/>
+                    <xtce:Enumeration value="1" label="IMG_4096x3072"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__lvds_train_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="FSW_RETRAIN"/>
+                    <xtce:Enumeration value="1" label="FPGA_RETRAIN"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:EnumeratedParameterType name="EXI_SCIENCE__thresh_ena_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="twosComplement"/>
+                <xtce:EnumerationList>
+                    <xtce:Enumeration value="0" label="DISABLED"/>
+                    <xtce:Enumeration value="1" label="ENABLED"/>
+                </xtce:EnumerationList>
+            </xtce:EnumeratedParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__thresh_val_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="12" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__pkt_img_seq_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:FloatParameterType>
+            <xtce:FloatParameterType name="EXI_SCIENCE__sun_angle_Type">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="twosComplement"/>
+            </xtce:FloatParameterType>
+            <xtce:BinaryParameterType name="EXI_SCIENCE__pixels_Type">
+                <xtce:UnitSet/>
+                <xtce:BinaryDataEncoding>
+                    <xtce:SizeInBits>
+                        <xtce:FixedValue>32</xtce:FixedValue>
+                    </xtce:SizeInBits>
+                </xtce:BinaryDataEncoding>
+            </xtce:BinaryParameterType>
+        </xtce:ParameterTypeSet>
+        <xtce:ParameterSet>
+            <xtce:Parameter parameterTypeRef="VERSION_Type" name="VERSION"/>
+            <xtce:Parameter parameterTypeRef="TYPE_Type" name="TYPE"/>
+            <xtce:Parameter parameterTypeRef="SEC_HDR_FLG_Type" name="SEC_HDR_FLG"/>
+            <xtce:Parameter parameterTypeRef="PKT_APID_Type" name="PKT_APID"/>
+            <xtce:Parameter parameterTypeRef="SEQ_FLGS_Type" name="SEQ_FLGS"/>
+            <xtce:Parameter parameterTypeRef="SRC_SEQ_CTR_Type" name="SRC_SEQ_CTR"/>
+            <xtce:Parameter parameterTypeRef="PKT_LEN_Type" name="PKT_LEN"/>
+            <xtce:Parameter parameterTypeRef="SHCOARSE_Type" name="SHCOARSE" shortDescription="Secondary Header Coarse Time">
+                <xtce:LongDescription>CCSDS Packet 2nd Header Coarse Time</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="itemName" alias="SHCOARSE"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="SHFINE_Type" name="SHFINE" shortDescription="Secondary Header Fine Time">
+                <xtce:LongDescription>CCSDS Packet 2nd Header Fine Time</xtce:LongDescription>
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="itemName" alias="SHFINE"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="CHECKSUM_Type" name="CHECKSUM" shortDescription="Fletcher 32 Checksum">
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__header_ver_Type" name="EXI_SCIENCE__header_ver">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="header_ver"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__test_mode_Type" name="EXI_SCIENCE__test_mode">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="test_mode"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__error_free_Type" name="EXI_SCIENCE__error_free">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="error_free"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__channel_Type" name="EXI_SCIENCE__channel">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="channel"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__fw_state_Type" name="EXI_SCIENCE__fw_state">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="fw_state"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__compression_Type" name="EXI_SCIENCE__compression">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="compression"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__bin_fpga_Type" name="EXI_SCIENCE__bin_fpga">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="bin_fpga"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__co_added_Type" name="EXI_SCIENCE__co_added">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="co_added"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__inst_mode_Type" name="EXI_SCIENCE__inst_mode">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="inst_mode"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__error_desc_Type" name="EXI_SCIENCE__error_desc">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="error_desc"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="REUSABLE__SPARE_16_Type" name="REUSABLE__SPARE_16">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="REUSABLE"/>
+                    <xtce:Alias nameSpace="itemName" alias="SPARE_16"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__ts_sec_Type" name="EXI_SCIENCE__ts_sec">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="ts_sec"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__ts_ssec_Type" name="EXI_SCIENCE__ts_ssec">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="ts_ssec"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__obs_id_Type" name="EXI_SCIENCE__obs_id">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="obs_id"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__sun_x_Type" name="EXI_SCIENCE__sun_x">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="sun_x"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__sun_y_Type" name="EXI_SCIENCE__sun_y">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="sun_y"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__sun_z_Type" name="EXI_SCIENCE__sun_z">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="sun_z"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_57_Type" name="EXI_SCIENCE__detreg_57">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_57"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_58_Type" name="EXI_SCIENCE__detreg_58">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_58"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_59_Type" name="EXI_SCIENCE__detreg_59">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_59"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_6D_Type" name="EXI_SCIENCE__detreg_6D">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_6D"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_66_Type" name="EXI_SCIENCE__detreg_66">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_66"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_6C_Type" name="EXI_SCIENCE__detreg_6C">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_6C"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare1_en_Type" name="EXI_SCIENCE__detreg_spare1_en">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare1_en"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare1_ad_Type" name="EXI_SCIENCE__detreg_spare1_ad">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare1_ad"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare1_va_Type" name="EXI_SCIENCE__detreg_spare1_va">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare1_va"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare2_en_Type" name="EXI_SCIENCE__detreg_spare2_en">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare2_en"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare2_ad_Type" name="EXI_SCIENCE__detreg_spare2_ad">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare2_ad"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_spare2_va_Type" name="EXI_SCIENCE__detreg_spare2_va">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_spare2_va"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__detreg_7F_Type" name="EXI_SCIENCE__detreg_7F">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="detreg_7F"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__det_sn_Type" name="EXI_SCIENCE__det_sn">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="det_sn"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__det_temp_Type" name="EXI_SCIENCE__det_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="det_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__pwb_temp_Type" name="EXI_SCIENCE__pwb_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="pwb_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__magic_rev_Type" name="EXI_SCIENCE__magic_rev">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="magic_rev"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__uv_stim_Type" name="EXI_SCIENCE__uv_stim">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="uv_stim"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__vis_stim_Type" name="EXI_SCIENCE__vis_stim">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="vis_stim"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__door_state_Type" name="EXI_SCIENCE__door_state">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="door_state"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__lens_temp1_Type" name="EXI_SCIENCE__lens_temp1">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="lens_temp1"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__lens_temp2_Type" name="EXI_SCIENCE__lens_temp2">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="lens_temp2"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="REUSABLE__SPARE_8_Type" name="REUSABLE__SPARE_8">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="REUSABLE"/>
+                    <xtce:Alias nameSpace="itemName" alias="SPARE_8"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__bunny_temp_Type" name="EXI_SCIENCE__bunny_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="bunny_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__door_temp_Type" name="EXI_SCIENCE__door_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="door_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__rad_temp1_Type" name="EXI_SCIENCE__rad_temp1">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="rad_temp1"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__rad_temp2_Type" name="EXI_SCIENCE__rad_temp2">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="rad_temp2"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__topcan_temp_Type" name="EXI_SCIENCE__topcan_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="topcan_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__botcan_temp_Type" name="EXI_SCIENCE__botcan_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="botcan_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__magic_temp_Type" name="EXI_SCIENCE__magic_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="magic_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__presto_temp_Type" name="EXI_SCIENCE__presto_temp">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="presto_temp"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__door_raw_Type" name="EXI_SCIENCE__door_raw">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="door_raw"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__fw_raw_Type" name="EXI_SCIENCE__fw_raw">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="fw_raw"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="REUSABLE__SPARE_32_Type" name="REUSABLE__SPARE_32">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="REUSABLE"/>
+                    <xtce:Alias nameSpace="itemName" alias="SPARE_32"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__fsw_ver_Type" name="EXI_SCIENCE__fsw_ver">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="fsw_ver"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__cmd_seq_Type" name="EXI_SCIENCE__cmd_seq">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="cmd_seq"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__cmd_addr1_Type" name="EXI_SCIENCE__cmd_addr1">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="cmd_addr1"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__cmd_val1_Type" name="EXI_SCIENCE__cmd_val1">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="cmd_val1"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__cmd_addr2_Type" name="EXI_SCIENCE__cmd_addr2">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="cmd_addr2"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__cmd_val2_Type" name="EXI_SCIENCE__cmd_val2">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="cmd_val2"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__time_freewheel_Type" name="EXI_SCIENCE__time_freewheel">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="time_freewheel"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__img_src_Type" name="EXI_SCIENCE__img_src">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="img_src"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__obs_id1_Type" name="EXI_SCIENCE__obs_id1">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="obs_id1"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__obs_id2_Type" name="EXI_SCIENCE__obs_id2">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="obs_id2"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__int_time_Type" name="EXI_SCIENCE__int_time">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="int_time"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__fpga_ver_Type" name="EXI_SCIENCE__fpga_ver">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="fpga_ver"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="REUSABLE__SPARE_3_Type" name="REUSABLE__SPARE_3">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="REUSABLE"/>
+                    <xtce:Alias nameSpace="itemName" alias="SPARE_3"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__rect_roi_ena_Type" name="EXI_SCIENCE__rect_roi_ena">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="rect_roi_ena"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__circ_roi_ena_Type" name="EXI_SCIENCE__circ_roi_ena">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="circ_roi_ena"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__circ_roi_rad_Type" name="EXI_SCIENCE__circ_roi_rad">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="circ_roi_rad"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__circ_roi_x_Type" name="EXI_SCIENCE__circ_roi_x">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="circ_roi_x"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__circ_roi_y_Type" name="EXI_SCIENCE__circ_roi_y">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="circ_roi_y"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__div_ena_Type" name="EXI_SCIENCE__div_ena">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="div_ena"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__div_val_Type" name="EXI_SCIENCE__div_val">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="div_val"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__int_fpga_Type" name="EXI_SCIENCE__int_fpga">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="int_fpga"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__det_imsize_Type" name="EXI_SCIENCE__det_imsize">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="det_imsize"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__lvds_train_Type" name="EXI_SCIENCE__lvds_train">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="lvds_train"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__thresh_ena_Type" name="EXI_SCIENCE__thresh_ena">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="thresh_ena"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__thresh_val_Type" name="EXI_SCIENCE__thresh_val">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="thresh_val"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__pkt_img_seq_Type" name="EXI_SCIENCE__pkt_img_seq">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="pkt_img_seq"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__sun_angle_Type" name="EXI_SCIENCE__sun_angle">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="sun_angle"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+            <xtce:Parameter parameterTypeRef="EXI_SCIENCE__pixels_Type" name="EXI_SCIENCE__pixels">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="pixels"/>
+                </xtce:AliasSet>
+                <xtce:ParameterProperties dataSource="telemetered"/>
+            </xtce:Parameter>
+        </xtce:ParameterSet>
+        <xtce:ContainerSet>
+            <xtce:SequenceContainer name="CCSDSPacket" abstract="true">
+                <xtce:LongDescription>
+                        Super-container for telemetry and command packets</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="VERSION"/>
+                    <xtce:ParameterRefEntry parameterRef="TYPE"/>
+                    <xtce:ParameterRefEntry parameterRef="SEC_HDR_FLG"/>
+                    <xtce:ParameterRefEntry parameterRef="PKT_APID"/>
+                    <xtce:ParameterRefEntry parameterRef="SEQ_FLGS"/>
+                    <xtce:ParameterRefEntry parameterRef="SRC_SEQ_CTR"/>
+                    <xtce:ParameterRefEntry parameterRef="PKT_LEN"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="CCSDSTelemetryPacket" abstract="true">
+                <xtce:LongDescription>
+                        Super-container for all telemetry packets</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList/>
+                <xtce:BaseContainer containerRef="CCSDSPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="0" parameterRef="VERSION"/>
+                            <xtce:Comparison value="0" parameterRef="TYPE"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="SecondaryHeaderContainer" abstract="true">
+                <xtce:LongDescription>Container for telemetry secondary header items</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="SHCOARSE"/>
+                    <xtce:ParameterRefEntry parameterRef="SHFINE"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="TrailerContainer" abstract="true">
+                <xtce:LongDescription>Container for telemetry packet trailer</xtce:LongDescription>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ParameterRefEntry parameterRef="CHECKSUM"/>
+                </xtce:EntryList>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="FIRST_IMG">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="streamName" alias="FIRST_IMG"/>
+                    <xtce:Alias nameSpace="packetElement" alias="EXI_SCIENCE"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">true</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList>
+                    <xtce:ContainerRefEntry containerRef="SecondaryHeaderContainer"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__pkt_img_seq"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_16"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__header_ver"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__test_mode"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__error_free"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__channel"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__fw_state"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__compression"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__bin_fpga"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__co_added"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__inst_mode"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__error_desc"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_16"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__ts_sec"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__ts_ssec"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__obs_id"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__sun_x"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__sun_y"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__sun_z"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__sun_angle"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_57"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_58"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_59"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_6D"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_66"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_6C"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare1_en"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare1_ad"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare1_va"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare2_en"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare2_ad"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_spare2_va"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__detreg_7F"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__det_sn"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__det_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__pwb_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__magic_rev"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__uv_stim"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__vis_stim"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__door_state"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__lens_temp1"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__lens_temp2"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_8"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__bunny_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__door_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_8"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__rad_temp1"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__rad_temp2"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_8"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__topcan_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__botcan_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_8"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__magic_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__presto_temp"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__door_raw"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__fw_raw"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_32"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__fsw_ver"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__cmd_seq"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__cmd_addr1"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__cmd_val1"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__cmd_addr2"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__cmd_val2"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__time_freewheel"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__img_src"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__obs_id1"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__obs_id2"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_32"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_32"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__int_time"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__fpga_ver"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__rect_roi_ena"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__circ_roi_ena"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__circ_roi_rad"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_8"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__circ_roi_x"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__circ_roi_y"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__div_ena"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__div_val"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__int_fpga"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__det_imsize"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__lvds_train"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__thresh_ena"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__thresh_val"/>
+                    <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_32"/>
+                    <xtce:ParameterRefEntry parameterRef="EXI_SCIENCE__pixels">
+                        <xtce:RepeatEntry>
+                            <xtce:Count>
+                                <xtce:FixedValue>-1</xtce:FixedValue>
+                            </xtce:Count>
+                        </xtce:RepeatEntry>
+                    </xtce:ParameterRefEntry>
+                    <xtce:ContainerRefEntry containerRef="TrailerContainer"/>
+                </xtce:EntryList>
+                <xtce:BaseContainer containerRef="CCSDSTelemetryPacket">
+                    <xtce:RestrictionCriteria>
+                        <xtce:ComparisonList>
+                            <xtce:Comparison value="1157" parameterRef="PKT_APID"/>
+                        </xtce:ComparisonList>
+                    </xtce:RestrictionCriteria>
+                </xtce:BaseContainer>
+            </xtce:SequenceContainer>
+            <xtce:SequenceContainer name="EXI_SCIENCE__PIXEL">
+                <xtce:AliasSet>
+                    <xtce:Alias nameSpace="externalElement" alias="EXI_SCIENCE"/>
+                    <xtce:Alias nameSpace="itemName" alias="PIXEL"/>
+                </xtce:AliasSet>
+                <xtce:AncillaryDataSet>
+                    <xtce:AncillaryData name="topLevelPacket">false</xtce:AncillaryData>
+                </xtce:AncillaryDataSet>
+                <xtce:EntryList/>
+            </xtce:SequenceContainer>
+        </xtce:ContainerSet>
+    </xtce:TelemetryMetaData>
+    <xtce:CommandMetaData>
+        <xtce:ArgumentTypeSet>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__VERSIONNUM_Type" sizeInBits="3" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="3" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__TYPE_Type" sizeInBits="1" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SECHDRFLAG_Type" sizeInBits="1" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="1" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__APID_Type" sizeInBits="11" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="11" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SEQFLAGS_Type" sizeInBits="2" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="2" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__SEQCNT_Type" sizeInBits="14" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="14" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_PKT_HDR__DATALENGTH_Type" sizeInBits="16" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+            <xtce:IntegerArgumentType name="CMD_SEC_HDR__FUNCTION_CODE_Type" sizeInBits="8" signed="false">
+                <xtce:UnitSet/>
+                <xtce:IntegerDataEncoding sizeInBits="8" encoding="unsigned"/>
+            </xtce:IntegerArgumentType>
+        </xtce:ArgumentTypeSet>
+        <xtce:MetaCommandSet>
+            <xtce:MetaCommand name="CMD_PKT_HDR" abstract="true">
+                <xtce:LongDescription>This is the CCSDS packet header for all commands</xtce:LongDescription>
+                <xtce:ArgumentList>
+                    <xtce:Argument name="CMD_PKT_HDR__VERSIONNUM" argumentTypeRef="CMD_PKT_HDR__VERSIONNUM_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__TYPE" argumentTypeRef="CMD_PKT_HDR__TYPE_Type" initialValue="1"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SECHDRFLAG" argumentTypeRef="CMD_PKT_HDR__SECHDRFLAG_Type" initialValue="1"/>
+                    <xtce:Argument name="CMD_PKT_HDR__APID" argumentTypeRef="CMD_PKT_HDR__APID_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SEQFLAGS" argumentTypeRef="CMD_PKT_HDR__SEQFLAGS_Type" initialValue="3"/>
+                    <xtce:Argument name="CMD_PKT_HDR__SEQCNT" argumentTypeRef="CMD_PKT_HDR__SEQCNT_Type" initialValue="0"/>
+                    <xtce:Argument name="CMD_PKT_HDR__DATALENGTH" argumentTypeRef="CMD_PKT_HDR__DATALENGTH_Type" initialValue="0"/>
+                </xtce:ArgumentList>
+                <xtce:CommandContainer name="CMD_PKT_HDR">
+                    <xtce:EntryList>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__VERSIONNUM"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__TYPE"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SECHDRFLAG"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__APID"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SEQFLAGS"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__SEQCNT"/>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_PKT_HDR__DATALENGTH"/>
+                    </xtce:EntryList>
+                </xtce:CommandContainer>
+            </xtce:MetaCommand>
+            <xtce:MetaCommand name="CMD_SEC_HDR" abstract="true">
+                <xtce:LongDescription>This is the command secondary header</xtce:LongDescription>
+                <xtce:ArgumentList>
+                    <xtce:Argument name="CMD_SEC_HDR__FUNCTION_CODE" argumentTypeRef="CMD_SEC_HDR__FUNCTION_CODE_Type" initialValue="0"/>
+                </xtce:ArgumentList>
+                <xtce:CommandContainer name="CMD_SEC_HDR">
+                    <xtce:EntryList>
+                        <xtce:ArgumentRefEntry argumentRef="CMD_SEC_HDR__FUNCTION_CODE"/>
+                        <xtce:FixedValueEntry sizeInBits="8" binaryValue="00"/>
+                    </xtce:EntryList>
+                </xtce:CommandContainer>
+            </xtce:MetaCommand>
+        </xtce:MetaCommandSet>
+    </xtce:CommandMetaData>
+</xtce:SpaceSystem>
