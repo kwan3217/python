@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <xtce:SpaceSystem name="EMM" xmlns:xtce="http://www.omg.org/space/xtce">
-    <xtce:Header classification="BuildType=EXI,CreatedBy=XTCEEditor" version="XTCEEditorVersion=0.35" date="Created=2017/07/31 14:48:51 UTC,Modified=2017/07/31 20:30:51 UTC"/>
+    <xtce:Header version="XTCEEditorVersion=0.35" classification="BuildType=EXI,CreatedBy=XTCEEditor" date="Created=2017/07/31 14:48:51 UTC,Modified=2017/08/01 21:32:23 UTC"/>
     <xtce:TelemetryMetaData>
         <xtce:ParameterTypeSet>
             <xtce:IntegerParameterType name="VERSION_Type" signed="false">
@@ -774,59 +774,59 @@
             <xtce:Parameter name="SEQ_FLGS" parameterTypeRef="SEQ_FLGS_Type"/>
             <xtce:Parameter name="SRC_SEQ_CTR" parameterTypeRef="SRC_SEQ_CTR_Type"/>
             <xtce:Parameter name="PKT_LEN" parameterTypeRef="PKT_LEN_Type"/>
-            <xtce:Parameter name="SHCOARSE" parameterTypeRef="SHCOARSE_Type" shortDescription="Secondary Header Coarse Time">
+            <xtce:Parameter shortDescription="Secondary Header Coarse Time" name="SHCOARSE" parameterTypeRef="SHCOARSE_Type">
                 <xtce:LongDescription>CCSDS Packet 2nd Header Coarse Time</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="SHCOARSE" nameSpace="itemName"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="SHFINE" parameterTypeRef="SHFINE_Type" shortDescription="Secondary Header Fine Time">
+            <xtce:Parameter shortDescription="Secondary Header Fine Time" name="SHFINE" parameterTypeRef="SHFINE_Type">
                 <xtce:LongDescription>CCSDS Packet 2nd Header Fine Time</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="SHFINE" nameSpace="itemName"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="CHECKSUM" parameterTypeRef="CHECKSUM_Type" shortDescription="Fletcher 32 Checksum">
+            <xtce:Parameter shortDescription="Fletcher 32 Checksum" name="CHECKSUM" parameterTypeRef="CHECKSUM_Type">
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__HW_TYPE" parameterTypeRef="VERSION__HW_TYPE_Type" shortDescription="Hardware Type">
+            <xtce:Parameter shortDescription="Hardware Type" name="VERSION__HW_TYPE" parameterTypeRef="VERSION__HW_TYPE_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="HW_TYPE" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__HW_SERIAL" parameterTypeRef="VERSION__HW_SERIAL_Type" shortDescription="Hardware Serial Number">
+            <xtce:Parameter shortDescription="Hardware Serial Number" name="VERSION__HW_SERIAL" parameterTypeRef="VERSION__HW_SERIAL_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="HW_SERIAL" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__MAMCR" parameterTypeRef="VERSION__MAMCR_Type" shortDescription="MAM Control Register">
+            <xtce:Parameter shortDescription="MAM Control Register" name="VERSION__MAMCR" parameterTypeRef="VERSION__MAMCR_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAMCR" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__MAMTIM" parameterTypeRef="VERSION__MAMTIM_Type" shortDescription="MAM Timing Register">
+            <xtce:Parameter shortDescription="MAM Timing Register" name="VERSION__MAMTIM" parameterTypeRef="VERSION__MAMTIM_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAMTIM" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PLL0_MSEL" parameterTypeRef="VERSION__PLL0_MSEL_Type" shortDescription="PLL0 Multiplier">
+            <xtce:Parameter shortDescription="PLL0 Multiplier" name="VERSION__PLL0_MSEL" parameterTypeRef="VERSION__PLL0_MSEL_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PLL0_MSEL" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PLL0_PSEL" parameterTypeRef="VERSION__PLL0_PSEL_Type" shortDescription="PLL0 Divisor">
+            <xtce:Parameter shortDescription="PLL0 Divisor" name="VERSION__PLL0_PSEL" parameterTypeRef="VERSION__PLL0_PSEL_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PLL0_PSEL" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
@@ -840,21 +840,21 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PLL0_E" parameterTypeRef="VERSION__PLL0_E_Type" shortDescription="PLL0 Enabled">
+            <xtce:Parameter shortDescription="PLL0 Enabled" name="VERSION__PLL0_E" parameterTypeRef="VERSION__PLL0_E_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PLL0_E" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PLL0_C" parameterTypeRef="VERSION__PLL0_C_Type" shortDescription="PLL0 Connected">
+            <xtce:Parameter shortDescription="PLL0 Connected" name="VERSION__PLL0_C" parameterTypeRef="VERSION__PLL0_C_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PLL0_C" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PLL0_LOCK" parameterTypeRef="VERSION__PLL0_LOCK_Type" shortDescription="PLL0 Locked">
+            <xtce:Parameter shortDescription="PLL0 Locked" name="VERSION__PLL0_LOCK" parameterTypeRef="VERSION__PLL0_LOCK_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PLL0_LOCK" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
@@ -868,77 +868,77 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__VPBDIV" parameterTypeRef="VERSION__VPBDIV_Type" shortDescription="Peripheral bus divisor">
+            <xtce:Parameter shortDescription="Peripheral bus divisor" name="VERSION__VPBDIV" parameterTypeRef="VERSION__VPBDIV_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="VPBDIV" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__FOSC" parameterTypeRef="VERSION__FOSC_Type" shortDescription="Crystal Frequency">
+            <xtce:Parameter shortDescription="Crystal Frequency" name="VERSION__FOSC" parameterTypeRef="VERSION__FOSC_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="FOSC" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__CCLK" parameterTypeRef="VERSION__CCLK_Type" shortDescription="Core Clock Frequency">
+            <xtce:Parameter shortDescription="Core Clock Frequency" name="VERSION__CCLK" parameterTypeRef="VERSION__CCLK_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="CCLK" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PCLK" parameterTypeRef="VERSION__PCLK_Type" shortDescription="Peripheral Clock Frequency">
+            <xtce:Parameter shortDescription="Peripheral Clock Frequency" name="VERSION__PCLK" parameterTypeRef="VERSION__PCLK_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PCLK" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PREINT" parameterTypeRef="VERSION__PREINT_Type" shortDescription="RTC Prescaler integer portion">
+            <xtce:Parameter shortDescription="RTC Prescaler integer portion" name="VERSION__PREINT" parameterTypeRef="VERSION__PREINT_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PREINT" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__PREFRAC" parameterTypeRef="VERSION__PREFRAC_Type" shortDescription="RTC Prescaler fractional portion">
+            <xtce:Parameter shortDescription="RTC Prescaler fractional portion" name="VERSION__PREFRAC" parameterTypeRef="VERSION__PREFRAC_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="PREFRAC" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__CLKEN" parameterTypeRef="VERSION__CLKEN_Type" shortDescription="RTC Enabled">
+            <xtce:Parameter shortDescription="RTC Enabled" name="VERSION__CLKEN" parameterTypeRef="VERSION__CLKEN_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="CLKEN" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__CTCRST" parameterTypeRef="VERSION__CTCRST_Type" shortDescription="RTC Reset">
+            <xtce:Parameter shortDescription="RTC Reset" name="VERSION__CTCRST" parameterTypeRef="VERSION__CTCRST_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="CTCRST" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__CTTEST" parameterTypeRef="VERSION__CTTEST_Type" shortDescription="RTC Test">
+            <xtce:Parameter shortDescription="RTC Test" name="VERSION__CTTEST" parameterTypeRef="VERSION__CTTEST_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="CTTEST" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__CLKSRC" parameterTypeRef="VERSION__CLKSRC_Type" shortDescription="RTC Source">
+            <xtce:Parameter shortDescription="RTC Source" name="VERSION__CLKSRC" parameterTypeRef="VERSION__CLKSRC_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="CLKSRC" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="VERSION__VERSION_STRING" parameterTypeRef="VERSION__VERSION_STRING_Type" shortDescription="Software version string">
+            <xtce:Parameter shortDescription="Software version string" name="VERSION__VERSION_STRING" parameterTypeRef="VERSION__VERSION_STRING_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="VERSION_STRING" nameSpace="itemName"/>
                     <xtce:Alias alias="VERSION" nameSpace="externalElement"/>
@@ -994,7 +994,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MPUCONFIG__I2C_ADDR" parameterTypeRef="MPUCONFIG__I2C_ADDR_Type" shortDescription="I2C Address">
+            <xtce:Parameter shortDescription="I2C Address" name="MPUCONFIG__I2C_ADDR" parameterTypeRef="MPUCONFIG__I2C_ADDR_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
                     <xtce:Alias alias="I2C_ADDR" nameSpace="itemName"/>
@@ -1165,7 +1165,7 @@
                 </xtce:AncillaryDataSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MPUCONFIG__MOT_THR" parameterTypeRef="MPUCONFIG__MOT_THR_Type" shortDescription="Wake-on-motion Threshold">
+            <xtce:Parameter shortDescription="Wake-on-motion Threshold" name="MPUCONFIG__MOT_THR" parameterTypeRef="MPUCONFIG__MOT_THR_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
                     <xtce:Alias alias="MOT_THR" nameSpace="itemName"/>
@@ -1385,7 +1385,7 @@
                 </xtce:AncillaryDataSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MPUCONFIG__WHOAMI" parameterTypeRef="MPUCONFIG__WHOAMI_Type" shortDescription="Device Identification">
+            <xtce:Parameter shortDescription="Device Identification" name="MPUCONFIG__WHOAMI" parameterTypeRef="MPUCONFIG__WHOAMI_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MPUCONFIG" nameSpace="externalElement"/>
                     <xtce:Alias alias="WHOAMI" nameSpace="itemName"/>
@@ -1435,14 +1435,14 @@
                 </xtce:AncillaryDataSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="AKCONFIG__I2C_ADDR" parameterTypeRef="AKCONFIG__I2C_ADDR_Type" shortDescription="I2C Address">
+            <xtce:Parameter shortDescription="I2C Address" name="AKCONFIG__I2C_ADDR" parameterTypeRef="AKCONFIG__I2C_ADDR_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
                     <xtce:Alias alias="I2C_ADDR" nameSpace="itemName"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="AKCONFIG__WHOAMI" parameterTypeRef="AKCONFIG__WHOAMI_Type" shortDescription="Device Identification">
+            <xtce:Parameter shortDescription="Device Identification" name="AKCONFIG__WHOAMI" parameterTypeRef="AKCONFIG__WHOAMI_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="AKCONFIG" nameSpace="externalElement"/>
                     <xtce:Alias alias="WHOAMI" nameSpace="itemName"/>
@@ -1653,7 +1653,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="SECHDR__TC" parameterTypeRef="SECHDR__TC_Type" shortDescription="Timestamp">
+            <xtce:Parameter shortDescription="Timestamp" name="SECHDR__TC" parameterTypeRef="SECHDR__TC_Type">
                 <xtce:LongDescription>Count of microseconds (raw number is number of PCLK ticks) from the beginning of the most recent minute epoch</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="SECHDR" nameSpace="externalElement"/>
@@ -1726,7 +1726,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MAGDATA__BX" parameterTypeRef="MAGDATA__BX_Type" shortDescription="Magnetic Field X">
+            <xtce:Parameter shortDescription="Magnetic Field X" name="MAGDATA__BX" parameterTypeRef="MAGDATA__BX_Type">
                 <xtce:LongDescription>Magnetic field in MPU +X direction (AK +Y direction)</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
@@ -1737,7 +1737,7 @@
                 </xtce:AncillaryDataSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MAGDATA__BY" parameterTypeRef="MAGDATA__BY_Type" shortDescription="Magnetic Field Y">
+            <xtce:Parameter shortDescription="Magnetic Field Y" name="MAGDATA__BY" parameterTypeRef="MAGDATA__BY_Type">
                 <xtce:LongDescription>Magnetic field in MPU +Y direction (AK +X direction)</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
@@ -1748,7 +1748,7 @@
                 </xtce:AncillaryDataSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="MAGDATA__BZ" parameterTypeRef="MAGDATA__BZ_Type" shortDescription="Magnetic Field Z">
+            <xtce:Parameter shortDescription="Magnetic Field Z" name="MAGDATA__BZ" parameterTypeRef="MAGDATA__BZ_Type">
                 <xtce:LongDescription>Magnetic field in MPU +Z direction (AK -Z direction)</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAGDATA" nameSpace="externalElement"/>
@@ -1841,7 +1841,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="GGADATA__HMS" parameterTypeRef="GGADATA__HMS_Type" shortDescription="Hours, minutes, seconds">
+            <xtce:Parameter shortDescription="Hours, minutes, seconds" name="GGADATA__HMS" parameterTypeRef="GGADATA__HMS_Type">
                 <xtce:LongDescription>(UTC Hours times 100^2)+(UTC Minutes times 100)+(UTC Seconds)</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
@@ -1849,7 +1849,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="GGADATA__LAT" parameterTypeRef="GGADATA__LAT_Type" shortDescription="Latitude">
+            <xtce:Parameter shortDescription="Latitude" name="GGADATA__LAT" parameterTypeRef="GGADATA__LAT_Type">
                 <xtce:LongDescription>WGS-84 latitude</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
@@ -1857,7 +1857,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="GGADATA__LON" parameterTypeRef="GGADATA__LON_Type" shortDescription="Longitude">
+            <xtce:Parameter shortDescription="Longitude" name="GGADATA__LON" parameterTypeRef="GGADATA__LON_Type">
                 <xtce:LongDescription>WGS-84 Longitude</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
@@ -1865,7 +1865,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="GGADATA__ALT" parameterTypeRef="GGADATA__ALT_Type" shortDescription="Altitude">
+            <xtce:Parameter shortDescription="Altitude" name="GGADATA__ALT" parameterTypeRef="GGADATA__ALT_Type">
                 <xtce:LongDescription>Altitude above WGS-84 ellipsoid</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="GGADATA" nameSpace="externalElement"/>
@@ -1873,14 +1873,14 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="RMCDATA__SPD" parameterTypeRef="RMCDATA__SPD_Type" shortDescription="Speed">
+            <xtce:Parameter shortDescription="Speed" name="RMCDATA__SPD" parameterTypeRef="RMCDATA__SPD_Type">
                 <xtce:AliasSet>
                     <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
                     <xtce:Alias alias="SPD" nameSpace="itemName"/>
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="RMCDATA__HDG" parameterTypeRef="RMCDATA__HDG_Type" shortDescription="Heading">
+            <xtce:Parameter shortDescription="Heading" name="RMCDATA__HDG" parameterTypeRef="RMCDATA__HDG_Type">
                 <xtce:LongDescription>Heading east of true North</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
@@ -1888,7 +1888,7 @@
                 </xtce:AliasSet>
                 <xtce:ParameterProperties dataSource="telemetered"/>
             </xtce:Parameter>
-            <xtce:Parameter name="RMCDATA__DMY" parameterTypeRef="RMCDATA__DMY_Type" shortDescription="Day, Month, Year">
+            <xtce:Parameter shortDescription="Day, Month, Year" name="RMCDATA__DMY" parameterTypeRef="RMCDATA__DMY_Type">
                 <xtce:LongDescription>(Day times 100^2)+(Month times 100)+(Year%100)</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="RMCDATA" nameSpace="externalElement"/>
@@ -1974,7 +1974,7 @@
                     <xtce:ParameterRefEntry parameterRef="VERSION__PREINT"/>
                     <xtce:ParameterRefEntry parameterRef="VERSION__PREFRAC"/>
                     <xtce:ParameterRefEntry parameterRef="REUSABLE__SPARE_3"/>
-                    <xtce:ParameterRefEntry parameterRef="VERSION__CTCRST"/>
+                    <xtce:ParameterRefEntry parameterRef="VERSION__CLKSRC"/>
                     <xtce:ParameterRefEntry parameterRef="VERSION__CTTEST"/>
                     <xtce:ParameterRefEntry parameterRef="VERSION__CTCRST"/>
                     <xtce:ParameterRefEntry parameterRef="VERSION__CLKEN"/>
@@ -2226,7 +2226,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="MPU_DATA" shortDescription="Accelerometer Fast Packet">
+            <xtce:SequenceContainer shortDescription="Accelerometer Fast Packet" name="MPU_DATA">
                 <xtce:AliasSet>
                     <xtce:Alias alias="MPU_DATA" nameSpace="streamName"/>
                     <xtce:Alias alias="MPU_DATA" nameSpace="packetElement"/>
@@ -2254,7 +2254,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="MAG_DATA" shortDescription="Magnetometer Packet">
+            <xtce:SequenceContainer shortDescription="Magnetometer Packet" name="MAG_DATA">
                 <xtce:LongDescription>Timestamp is from just after single-shot readout is commanded</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="MAG_DATA" nameSpace="streamName"/>
@@ -2284,7 +2284,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="BMP_DATA" shortDescription="Temperature/Pressure packet">
+            <xtce:SequenceContainer shortDescription="Temperature/Pressure packet" name="BMP_DATA">
                 <xtce:LongDescription>Timestamp is after loop() notices that a complete temperature/pressure measurement is finished</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="BMP_DATA" nameSpace="streamName"/>
@@ -2308,7 +2308,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="NMEA" shortDescription="NMEA Sentence">
+            <xtce:SequenceContainer shortDescription="NMEA Sentence" name="NMEA">
                 <xtce:LongDescription>Timestamp is that of the time that loop() noticed it has a '$' to process, so the timestamp of the start of the *next* NMEA sentence</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="NMEA" nameSpace="streamName"/>
@@ -2335,7 +2335,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="GGA" shortDescription="GPS Latitude, Longitude, and Altitude">
+            <xtce:SequenceContainer shortDescription="GPS Latitude, Longitude, and Altitude" name="GGA">
                 <xtce:LongDescription>Timestamp is that of the time that loop() noticed that a GGA sentence has been parsed</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="GGA" nameSpace="streamName"/>
@@ -2359,7 +2359,7 @@
                     </xtce:RestrictionCriteria>
                 </xtce:BaseContainer>
             </xtce:SequenceContainer>
-            <xtce:SequenceContainer name="RMC" shortDescription="GPS Recommended Minimum">
+            <xtce:SequenceContainer shortDescription="GPS Recommended Minimum" name="RMC">
                 <xtce:LongDescription>Timestamp is that of the time that loop() noticed that an RMC sentence has been parsed</xtce:LongDescription>
                 <xtce:AliasSet>
                     <xtce:Alias alias="RMC" nameSpace="streamName"/>
@@ -2454,7 +2454,7 @@
                 <xtce:CommandContainer name="CMD_SEC_HDR">
                     <xtce:EntryList>
                         <xtce:ArgumentRefEntry argumentRef="CMD_SEC_HDR__FUNCTION_CODE"/>
-                        <xtce:FixedValueEntry sizeInBits="8" binaryValue="00"/>
+                        <xtce:FixedValueEntry binaryValue="00" sizeInBits="8"/>
                     </xtce:EntryList>
                 </xtce:CommandContainer>
             </xtce:MetaCommand>
