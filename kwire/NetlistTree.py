@@ -273,7 +273,7 @@ def toggleGrayCode(pins,tfirst):
     return result
 
 if __name__ == '__main__':
-    context=Context('kicad/xordriver.net')
+    context=Context('kicad/latchdriver.net')
     inputs=[{"time": 0,"ref":"J101","pin": "1","value":False}, #Turn on ground
             {"time": 0,"ref":"J101","pin": "2","value":True }]  #Turn on power
     inputs=inputs+toggleGrayCode([
@@ -281,8 +281,8 @@ if __name__ == '__main__':
             {"ref":"S102","pin":"16"}],0)
     for inp in inputs:
         print(inp)
-    print(" T|B A|Y")
-    print("--+---+-")
+    print(" T|S R|Q Q")
+    print("--+---+---")
     for inp in inputs:
         context.components[inp["ref"]].setInput(context,inp["time"],inp["pin"],inp["value"])
         while context.dispatchEvent():
@@ -290,7 +290,8 @@ if __name__ == '__main__':
             for event in context.eventList:
                 print(event)
             pass
-        print("%2d|%s %s|%s" % (context.time,
+        print("%2d|%s %s|%s %s" % (context.time,
               str(context.components["S102"].Y[1])[0],
               str(context.components["S101"].Y[1])[0],
-              str(context.components["D201"].A   )[0]))
+              str(context.components["D301"].A   )[0],
+              str(context.components["D401"].A   )[0]))

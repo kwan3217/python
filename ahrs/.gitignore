@@ -1,0 +1,6 @@
+*.SDS
+*.bin
+*.cpio*
+*.nmea
+*.csv
+

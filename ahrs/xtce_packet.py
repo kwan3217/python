@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 import collections
 import struct
+import glob
 
 def readPktDesc(xml):
     tree=ET.parse('xtce_pocketometer20150317.xml')
@@ -120,7 +121,7 @@ def getPacket(bytes,pktDef):
         fieldtype=pktDef[3][i]
         repeat=pktDef[4][i]
         if fieldtype=='s' and repeat<0:
-            val=bytes[bitstart//8:].decode("utf-8")
+            val=bytes[bitstart//8:].decode("utf-8","ignore")
         elif fieldtype=='c':
             if repeat<0:
                 val=bytes[bitstart//8:]
@@ -155,35 +156,46 @@ def getNextPacket(inf,pktDefs):
     header=getPacket(b,CCSDSheader)
     len=header["PKT_LEN"]+1
     b=b+inf.read(len)
-    if header["PKT_APID"]==11:
-        print(header)
     return getPacket(b,pktDefs[header["PKT_APID"]])
-      
+
+def parseFile(infn,pktDefs):
+    basefn=".".join(infn.split(".")[0:-1])
+    inf=open(infn,"rb")
+    inf.read(8)
+    tmin=0
+    tlastfast=0
+    ouf_image=open(basefn+".bin","wb")
+    ouf_source=open(basefn+".cpio.zpaq","wb")
+    ouf_fast=open(basefn+"_fast.csv","w")
+    ouf_nmea=open(basefn+".nmea","w")
+    while True:
+        try:
+            packet=getNextPacket(inf,pktDefs)
+        except struct.error:
+            break
+            ouf_image.close()
+            ouf_source.close()
+            ouf_fast.close()
+            ouf_nmea.close()
+        if packet["PKT_APID"]==1:
+            pclk=float(packet["PCLK"])
+        if packet["PKT_APID"]==2:
+            ouf_source.write(packet["DATA"])
+        if packet["PKT_APID"]==3:
+            ouf_image.write(packet["DATA"])
+        if packet["PKT_APID"]==9:
+            if packet["TC"]<tlastfast:
+                tmin+=1
+            tlastfast=packet["TC"]
+        if "TC" in packet:
+            packet["TC"]="%02d:%02d:%012.9f"%(tmin//60,tmin%60,float(packet["TC"])/pclk)
+        if packet["PKT_APID"]==9:
+            ouf_fast.write("%s,%d,%d,%d,%d,%d,%d,%d\n"%(packet["TC"],packet["AX"],packet["AY"],packet["AZ"],packet["GX"],packet["GY"],packet["GZ"],packet["MT"]))
+        if packet["PKT_APID"]==13:
+            ouf_nmea.write(packet["NMEA"])
+        if packet["PKT_APID"]!=9 and packet["PKT_APID"]!=10 and packet["PKT_APID"]!=11 and packet["PKT_APID"]!=13:
+            print(packet)
+
 pktDefs=readPktDesc('xtce_pocketometer20150317.xml')
-inf=open("POCKET01.SDS","rb")
-inf.read(8)
-tmin=0
-tlastfast=0
-ouf_image=open("POCKET01.bin","wb")
-ouf_source=open("POCKET01.cpio.zpaq","wb")
-ouf_fast=open("POCKET01_fast.csv","w")
-while True:
-    packet=getNextPacket(inf,pktDefs)
-    if packet["PKT_APID"]==1:
-        pclk=float(packet["PCLK"])
-    if packet["PKT_APID"]==2:
-        ouf_source.write(packet["DATA"])
-    if packet["PKT_APID"]==3:
-        ouf_image.write(packet["DATA"])
-    if packet["PKT_APID"]>3:
-        ouf_source.close()
-        ouf_image.close()
-    if packet["PKT_APID"]==9:
-        if packet["TC"]<tlastfast:
-            tmin+=1
-        tlastfast=packet["TC"]
-    if "TC" in packet:
-        packet["TC"]="%02d:%02d:%012.9f"%(tmin//60,tmin%60,float(packet["TC"])/pclk)
-    if packet["PKT_APID"]==9:
-        ouf_fast.write("%s,%d,%d,%d,%d,%d,%d,%d\n"%(packet["TC"],packet["AX"],packet["AY"],packet["AZ"],packet["GX"],packet["GY"],packet["GZ"],packet["MT"]))
-    print(packet)
+for infn in glob.glob("*.SDS"):
+    parseFile(infn,pktDefs)
