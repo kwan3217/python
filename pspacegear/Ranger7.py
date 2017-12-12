@@ -17,6 +17,125 @@ so deltaAT on that day was 3.1379540
 
 '''
 
+import csv
+from collections import namedtuple
+import numpy as np
+import matplotlib.pyplot as plt
+
+def floatN(x):
+    if x=="":
+        return float('NaN')
+    return float(x)
+
+rowtuple=namedtuple('rowtuple',['PhotoNum','GMT','sc_alt','sc_lat','sc_lon',
+                     'p2_lat','p2_lon','p2_srange',
+                     'v','pth','az',
+                     'p1_lat','p1_lon','p1_srange',
+                     'azn'])
+rows=[]
+with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
+    reader=csv.reader(inf)
+    #Read past the first header line
+    for row in reader:
+        break
+    #Read past the second header line
+    for row in reader:
+        break
+    #Read the rows
+    for row in reader:
+        if not row[0].isdigit():
+            break
+        rows.append(rowtuple(  int(row[ 0]), #PhotoNum
+                                   row[ 1] , #GMT
+                            floatN(row[ 2]), #sc_alt
+                            floatN(row[ 3]), #sc_lat
+                            floatN(row[ 4]), #sc_lon
+                            floatN(row[ 5]), #p2_lat
+                            floatN(row[ 6]), #p2_lon
+                            floatN(row[ 7]), #p2_srange
+                            floatN(row[ 8]), #v
+                            floatN(row[ 9]), #pth
+                            floatN(row[10]), #az
+                            floatN(row[11]), #p1_lat
+                            floatN(row[12]), #p1_lon
+                            floatN(row[13]), #p1_srange
+                            floatN(row[14]))) #azn
+
+rs=[]
+vs=[]
+dsrange2s=[]
+dsrange1as=[]
+r_moon=1735.46
+for row in rows:
+    #Zenith vector
+    rbar=np.array([np.cos(np.radians(row.sc_lat))*np.cos(np.radians(row.sc_lon)),
+                   np.cos(np.radians(row.sc_lat))*np.sin(np.radians(row.sc_lon)),
+                   np.sin(np.radians(row.sc_lat))])
+    #Position in selenocentric moon-fixed mean-earth/pole coordinates
+    r=rbar*(row.sc_alt+r_moon)
+    rs.append(r)
+    #East vector
+    e=np.cross(np.array([0,0,1]),rbar)
+    ebar=e/np.linalg.norm(e)
+    #North vector
+    nbar=np.cross(rbar,ebar)
+    #Velocity in selenocentric moon-fixed mean-earth/pole coordinates
+    vbarr=np.sin(np.radians(row.pth))
+    vbare=np.cos(np.radians(row.pth))*np.sin(np.radians(row.az))
+    vbarn=np.cos(np.radians(row.pth))*np.cos(np.radians(row.az))
+    vbar=vbarr*rbar+vbare*ebar+vbarn*nbar
+    v=vbar*row.v
+    vs.append(v)
+    #p2 position
+    p2=r_moon*np.array([np.cos(np.radians(row.p2_lat))*np.cos(np.radians(row.p2_lon)),
+                        np.cos(np.radians(row.p2_lat))*np.sin(np.radians(row.p2_lon)),
+                        np.sin(np.radians(row.p2_lat))])
+    p2_srange_calc=np.sqrt((r[0]-p2[0])**2+(r[1]-p2[1])**2+(r[2]-p2[2])**2)
+    dsrange2=row.p2_srange-p2_srange_calc
+    dsrange2s.append(dsrange2)
+    #p1 position from table
+    p1a=r_moon*np.array([np.cos(np.radians(row.p1_lat))*np.cos(np.radians(row.p1_lon)),
+                         np.cos(np.radians(row.p1_lat))*np.sin(np.radians(row.p1_lon)),
+                         np.sin(np.radians(row.p1_lat))])
+    p1a_srange_calc=np.sqrt((r[0]-p1a[0])**2+(r[1]-p1a[1])**2+(r[2]-p1a[2])**2)
+    dsrange1a=row.p1_srange-p1a_srange_calc
+    dsrange1as.append(dsrange1a)
+    #p1 position from velocity vector
+    #Parametric equation for a ray
+    #  r(t)=r0+v*t
+    #Equation for a sphere of radius r_m
+    #  dot(r,r)=r_m**2
+    #solve simultaneous equations
+    #  dot(r0+v*t,r0+v*t)=r_m**2
+    #  (rx+vx*t)**2+                           #expand dot product to components
+    #  (ry+vy*t)**2+
+    #  (rz+vz*t)**2=r_m**2
+    #  (r_+v_*t)**2=r_**2+2*r_*v_*t+v_**2*t**2 #square each term
+    #  rx**2+2*rx*vx*t+vx**2*t**2+             #substitute terms
+    #  ry**2+2*ry*vy*t+vy**2*t**2+
+    #  rz**2+2*rz*vz*t+vz**2*t**2=r_m**2
+    #  t**2*(vx**2  +vy**2  +vz**2  )+         #gather into coefficients of P(t)
+    #  t**1*(2*rx*vx+2*ry*vy+2*rz*vz)+
+    #  t**0*(rx**2  +ry**2  +rz**2  )=r_m**2
+    #  t**2*dot(v,v)+                          #recognize dot products
+    #  t**1*2*dot(r0,v)+
+    #  t**0*dot(r,r)=r_m**2
+    #Quadratic coefficients
+    #  A=dot(v,v), but we are using vbar so dot(v,v)=1
+    A=1.0
+    B=2*np.dot(r,vbar)
+    C=np.dot(r,r)-r_moon**2
+    D=B**2-4*A*C
+    t=(-B-np.sqrt(D))/2*A
+    print(A,B,C,D,t,row.p1_srange)
+    print(p1a,r+t*vbar)
+
+plt.plot(dsrange2s,'g+')
+plt.plot(dsrange1as,'bx')
+plt.show()
+
+exit()            
+
 GMTs=('1964-Jul-28 17:19:56.000', 
       '1964-Jul-28 17:20:01.000', 
       '1964-Jul-28 18:00:00.000', 
@@ -329,8 +448,6 @@ cspice.furnsh("Ranger7.bsp")
 
 statepos_x=[0.0]*len(t)
 statepos_y=[0.0]*len(t)
-
-import matplotlib.pyplot as plt
 
 for i in range(len(t)):
     this_state=np.array(state[i][:])

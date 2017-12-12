@@ -4,7 +4,7 @@ import struct
 import glob
 
 def readPktDesc(xml):
-    tree=ET.parse('xtce_pocketometer20150317.xml')
+    tree=ET.parse(xml)
     namespaces={'xtce':'http://www.omg.org/space/xtce'}
     #Dig out the TelemetryMetaData tag
     tlm=tree.getroot().findall('xtce:TelemetryMetaData',namespaces)[0]
@@ -112,7 +112,7 @@ def readPktDesc(xml):
         packets[apid]=(fieldnames,bitstart,bitlen,fieldtype,repeat)    
     return packets
 
-def getPacket(bytes,pktDef):
+def getPacket(buf,pktDef):
     packet=collections.OrderedDict()
     for i in range(len(pktDef[0])):
         fieldname=pktDef[0][i]
@@ -120,20 +120,20 @@ def getPacket(bytes,pktDef):
         bitlen=pktDef[2][i]
         fieldtype=pktDef[3][i]
         repeat=pktDef[4][i]
-        if fieldtype=='s' and repeat<0:
-            val=bytes[bitstart//8:].decode("utf-8","ignore")
-        elif fieldtype=='c':
+        if fieldtype in ['s','c']:
             if repeat<0:
-                val=bytes[bitstart//8:]
+                val=buf[bitstart//8:]
             else:
-                val=bytes[bitstart//8:bitstart//8+bitlen//8]
+                val=buf[bitstart//8:bitstart//8+bitlen//8]
+            if fieldtype=='s':
+                val=val.decode("utf-8","ignore")
         else:
-            val=struct.unpack_from(fieldtype,bytes,bitstart//8)[0]
-            #In CCSDS, the MSB is numbered 0, since it is transmitted first. Boo
-            #to that, but what can we do? So, a general bit field will have some
-            #padding before, some number of data bits, and some pad after. The
-            #value needs to be shifted right the number of bits of the padding
-            #after, then masked to the number of bits in the value.
+            val=struct.unpack_from(fieldtype,buf,bitstart//8)[0]
+            #In CCSDS, the MSB is numbered 0, since it is transmitted first.
+            #Boo to that, but what can we do? So, a general bit field will have
+            #some padding before, some number of data bits, and some pad after.
+            #The value needs to be shifted right the number of bits of the
+            #padding after, then masked to the number of bits in the value.
             bufbitlen=struct.calcsize(fieldtype)*8
             bitsbefore=bitstart%8
             bitsafter=bufbitlen-bitsbefore-bitlen
@@ -144,7 +144,7 @@ def getPacket(bytes,pktDef):
         packet[fieldname]=val 
     return packet
 
-def getNextPacket(inf,pktDefs):
+def getNextPacket(inf,pktDefs,apid_filter=None):
     CCSDSheader=pktDefs[0]
     nbitheader=0
     for bitlen in CCSDSheader[2]:
@@ -152,50 +152,11 @@ def getNextPacket(inf,pktDefs):
     nbytes=nbitheader//8
     if (nbitheader%8)!=0:
         nbytes+=1
-    b=inf.read(6)
-    header=getPacket(b,CCSDSheader)
-    len=header["PKT_LEN"]+1
-    b=b+inf.read(len)
-    return getPacket(b,pktDefs[header["PKT_APID"]])
-
-def parseFile(infn,pktDefs):
-    basefn=".".join(infn.split(".")[0:-1])
-    inf=open(infn,"rb")
-    inf.read(8)
-    tmin=0
-    tlastfast=0
-    ouf_image=open(basefn+".bin","wb")
-    ouf_source=open(basefn+".cpio.zpaq","wb")
-    ouf_fast=open(basefn+"_fast.csv","w")
-    ouf_nmea=open(basefn+".nmea","w")
     while True:
-        try:
-            packet=getNextPacket(inf,pktDefs)
-        except struct.error:
-            break
-            ouf_image.close()
-            ouf_source.close()
-            ouf_fast.close()
-            ouf_nmea.close()
-        if packet["PKT_APID"]==1:
-            pclk=float(packet["PCLK"])
-        if packet["PKT_APID"]==2:
-            ouf_source.write(packet["DATA"])
-        if packet["PKT_APID"]==3:
-            ouf_image.write(packet["DATA"])
-        if packet["PKT_APID"]==9:
-            if packet["TC"]<tlastfast:
-                tmin+=1
-            tlastfast=packet["TC"]
-        if "TC" in packet:
-            packet["TC"]="%02d:%02d:%012.9f"%(tmin//60,tmin%60,float(packet["TC"])/pclk)
-        if packet["PKT_APID"]==9:
-            ouf_fast.write("%s,%d,%d,%d,%d,%d,%d,%d\n"%(packet["TC"],packet["AX"],packet["AY"],packet["AZ"],packet["GX"],packet["GY"],packet["GZ"],packet["MT"]))
-        if packet["PKT_APID"]==13:
-            ouf_nmea.write(packet["NMEA"])
-        if packet["PKT_APID"]!=9 and packet["PKT_APID"]!=10 and packet["PKT_APID"]!=11 and packet["PKT_APID"]!=13:
-            print(packet)
+        b=inf.read(nbytes)
+        header=getPacket(b,CCSDSheader)
+        pktlen=header["PKT_LEN"]+1
+        b=b+inf.read(pktlen)
+        if apid_filter is None or header["PKT_APID"] in apid_filter:
+            return getPacket(b,pktDefs[header["PKT_APID"]])
 
-pktDefs=readPktDesc('xtce_pocketometer20150317.xml')
-for infn in glob.glob("*.SDS"):
-    parseFile(infn,pktDefs)
