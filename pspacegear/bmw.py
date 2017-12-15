@@ -182,7 +182,8 @@ Calculate the Universal Variable S(z) function
     elif z==0:
         return 1.0/6.0
     else:
-        return (1-np.cosh(np.sqrt(-z)))/z
+        sz=np.sqrt(-z)
+        return (np.sinh(sz)-sz)/np.sqrt((-z)**3)
 
 def kepler(rv0,vv0,t,l_DU=1,mu=1,eps=1e-9):
     """
@@ -285,6 +286,7 @@ def gauss(rv1,rv2,t,Type=-1,l_DU=1,mu=1,eps=1e-9):
   
         while True: #Emulate a repeat/until loop
             Z=(Zlo+Zhi)/2
+            print("Z: ",Z)
             Y=r1+r2-A*(1-Z*SS(Z))/np.sqrt(CC(Z))
             if Y*Zlo>0:
                 Zlo=Z
@@ -405,9 +407,26 @@ def test_kepler():
     r1_cu_standard=np.array([-0.6616125, +0.6840739, -0.6206809])
     v1_cu_standard=np.array([ 0.4667380, -0.2424455, -0.7732126])
     dt=2.974674
-    (r1_cu,v1_cu)=kepler(r0_cu,v0_cu,dt,l_DU=1,mu=1)
-    print("Calculated: ",r1_cu,v1_cu)
-    print("Documented: ",r1_cu_standard,v1_cu_standard)
+    (r1_cu,v1_cu)=kepler(r0_cu,v0_cu,dt)
+    print("test_kepler() Calculated: ",r1_cu,v1_cu)
+    print("test_kepler() Documented: ",r1_cu_standard,v1_cu_standard)
+
+def plot_kepler():
+    import matplotlib.pyplot as plt
+    r0_cu=np.array([ 0.17738,-0.35784,1.04614])
+    v0_cu=np.array([-0.71383, 0.54436,0.30723])
+    print("plot_kepler elorb: ",elorb(r0_cu, v0_cu))
+    r_cu=np.zeros([50,3])
+    for i,dt in enumerate(np.linspace(0,2.974674)):
+        (r1_cu,v1_cu)=kepler(r0_cu,v0_cu,dt)
+        r_cu[i,:]=r1_cu
+    plt.subplot(221)
+    plt.plot(r_cu[:,0],r_cu[:,1])
+    plt.subplot(222)
+    plt.plot(r_cu[:,0],r_cu[:,2])
+    plt.subplot(223)
+    plt.plot(r_cu[:,1],r_cu[:,2])
+    plt.show()
 
 def test_gauss1():
     #Canonical unit numbers from Vallado example 7-5, p467
@@ -418,20 +437,20 @@ def test_gauss1():
     v1_cu_standard=np.array([-0.4366104,0.1151515,0.0])
     dt=5.6519
     (v0_cu,v1_cu)=gauss(r0_cu,r1_cu,dt)
-    print("Calculated: ",v0_cu,v1_cu)
-    print("Documented: ",v0_cu_standard,v1_cu_standard)
+    print("test_gauss1() Calculated: ",v0_cu,v1_cu)
+    print("test_gauss1() Documented: ",v0_cu_standard,v1_cu_standard)
 
 def test_gauss2():
     #Same numbers as from test_kepler, but we use begin and end positions
     #and time between, and find velocities
-    r0_cu=np.array([ 0.17738,-0.35784,1.04614])
-    v0_cu_standard=np.array([-0.71383, 0.54436,0.30723])
-    r1_cu=np.array([-0.6616125, +0.6840739, -0.6206809])
+    r0_cu         =np.array([ 0.17738,-0.35784, 1.04614])
+    v0_cu_standard=np.array([-0.71383, 0.54436, 0.30723])
+    r1_cu         =np.array([-0.6616125, +0.6840739, -0.6206809])
     v1_cu_standard=np.array([ 0.4667380, -0.2424455, -0.7732126])
     dt=2.974674
-    (v0_cu,v1_cu)=gauss(r0_cu,r1_cu,dt)
-    print("Calculated: ",v0_cu,v1_cu)
-    print("Documented: ",v0_cu_standard,v1_cu_standard)
+    (v0_cu,v1_cu)=gauss(r0_cu,r1_cu,dt,Type=1)
+    print("test_gauss2() Calculated: ",v0_cu,v1_cu)
+    print("test_gauss2() Documented: ",v0_cu_standard,v1_cu_standard)
 
 if __name__=="__main__":
     test_su_to_cu()

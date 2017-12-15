@@ -8,37 +8,61 @@ Larger objects can be built up from these by applying the parallel axis theorem
 to transform each primitive from its own center of mass to that of the
 composite object, then simply summing the resulting moments.
 
-All of these functions take mass as their last object, which always has a
+All of these functions take mass as their last parameter, which always has a
 default value of 1. This means that you can ignore the last argument, and get
 a *normalized* moment of inertia. The vessel parts take advantage of this
 by multiplying this normalized inertia by the mass they are already passed, so
-that the mass doesn't have to be passed twice (thereby keeping the One 
+that the mass doesn't have to be passed twice (thereby keeping the One
 Definitive Source rule).
 '''
 import numpy as np
 from math import pi
 
+def CylinderV(r,l):
+    """
+    Calculate volume of cylinder
+    """
+    return r**2*np.pi*l
+
+def CylinderA(r,l):
+    """
+    Calculate surface area of cylinder, not including end caps
+    """
+    return r*2*np.pi*l
+
+def HollowCylinderV(rOuter,rInner,l):
+    return CylinderV(rOuter,l)-CylinderV(rInner,l)
+
+def SolidCylinderM(r,l,rho=1):
+    return CylinderV(r,l)*rho
+
+def ThinCylinderM(r,l,rho=1):
+    return CylinderA(r,l)*rho
+
+def HollowCylinderM(rOuter,rInner,l,rho=1):
+    return HollowCylinderV(rOuter,rInner,l)*rho
+
 def SolidCylinderI(r, l, m=1):
     """
-    Calculate inertia tensor for solid cylinder. 
-    
-    Inertia tensor is relative to cylinder center of mass. Cylinder axis is 
-    along X axis. 
-    
+    Calculate inertia tensor for solid cylinder.
+
+    Inertia tensor is relative to cylinder center of mass. Cylinder axis is
+    along X axis.
+
     Parameters
     ----------
-    m : real
-        Total mass of cylinder
     r : real
         radius of cylinder
     l : real
         length of cylinder
-       
+    m : real
+        Total mass of cylinder
+
     Returns
     -------
     I : numpy 3x3 matrix
         Inertia tensor with respect to the center of mass and these axes.
-        
+
     Notes
     -----
     from https://en.wikipedia.org/wiki/List_of_moments_of_inertia
@@ -49,53 +73,52 @@ def SolidCylinderI(r, l, m=1):
 
 def ThinCylinderI(r, l, m=1):
     """
-    Calculate inertia tensor for a thin-walled cylinder with no end caps. 
-    
-    Inertia tensor is relative to cylinder center of mass. Cylinder axis is 
-    along X axis. 
-    
+    Calculate inertia tensor for a thin-walled cylinder with no end caps.
+
+    Inertia tensor is relative to cylinder center of mass. Cylinder axis is
+    along X axis.
+
     Parameters
     ----------
-    m : real
-        Total mass of cylinder
     r : real
         radius of cylinder
     l : real
         length of cylinder
-       
+    m : real
+        Total mass of cylinder
+
     Returns
     -------
     I : numpy 3x3 matrix
         Inertia tensor with respect to the center of mass and these axes.
-        
+
     Notes
     -----
     from https://en.wikipedia.org/wiki/List_of_moments_of_inertia
     """
-    
     IAxis=r*r
-    IDiameter=(3*r*r+2*l*l)/6 
+    IDiameter=(3*r*r+2*l*l)/6
     return np.matrix([[IAxis,0,0],[0,IDiameter,0],[0,0,IDiameter]])*m
 
 def HollowCylinderI(rOuter, rInner, l, m=1):
     """
-    Calculate inertia tensor for a thick-walled hollow cylinder. 
-    
-    Inertia tensor is relative to cylinder center of mass. Cylinder axis is 
-    along X axis. 
-    
+    Calculate inertia tensor for a thick-walled hollow cylinder.
+
+    Inertia tensor is relative to cylinder center of mass. Cylinder axis is
+    along X axis.
+
     Parameters
     ----------
-    m : real
-        Total mass of cylinder
     rOuter : real
         outer radius of cylinder
     rInner : real
-        inner radius of cylinder (must be >=rOuter, silently gives 
-        non-physical results otherwise)
+        inner radius of cylinder (must be >=rOuter, silently gives
+        non-physical results otherwise, but =rOuter is OK)
     l : real
         length of cylinder
-       
+    m : real
+        Total mass of cylinder
+
     Returns
     -------
     I : numpy 3x3 matrix
@@ -117,19 +140,43 @@ def HollowCylinderI(rOuter, rInner, l, m=1):
     InnerMass=InnerVolume*Density
     return SolidCylinderI(rOuter, l, OuterMass)-SolidCylinderI(rInner,l,InnerMass)
 
+def SphereV(r):
+    """
+    Calculate volume of cylinder
+    """
+    return r**3*np.pi*4.0/3.0
+
+def SphereA(r,l):
+    """
+    Calculate surface area of cylinder, not including end caps
+    """
+    return r*2*np.pi*4
+
+def HollowSphereV(rOuter,rInner):
+    return SphereV(rOuter)-SphereV(rInner)
+
+def SolidSphereM(r,rho=1):
+    return SphereV(r)*rho
+
+def ThinSphereM(r,rho=1):
+    return SphereA(r)*rho
+
+def HollowSphereM(rOuter,rInner,rho=1):
+    return HollowSphereV(rOuter,rInner)*rho
+
 def SolidSphereI(r,m=1):
     """
-    Calculate inertia tensor for a solid sphere. 
-    
+    Calculate inertia tensor for a solid sphere.
+
     Inertia tensor is relative to sphere center of mass.
-    
+
     Parameters
     ----------
-    m : real
-        Total mass of cylinder
     r : real
         radius of sphere
-       
+    m : real
+        Total mass of cylinder
+
     Returns
     -------
     I : numpy 3x3 matrix
@@ -137,19 +184,20 @@ def SolidSphereI(r,m=1):
     """
     I=2*m*r*r/5;
     return np.identity(3)*I
+
 def ThinSphereI(r,m=1):
     """
-    Calculate inertia tensor for a thin-walled sphere. 
-    
+    Calculate inertia tensor for a thin-walled sphere.
+
     Inertia tensor is relative to sphere center of mass.
-    
+
     Parameters
     ----------
     m : real
-        Total mass of cylinder
+        Total mass of sphere
     r : real
         radius of sphere
-       
+
     Returns
     -------
     I : numpy 3x3 matrix
@@ -157,12 +205,13 @@ def ThinSphereI(r,m=1):
     """
     I=2*m*r*r/3;
     return np.identity(3)*I
+
 def HollowSphereI(rOuter, rInner,m=1):
     """
-    Calculate inertia tensor for a solid sphere. 
-    
+    Calculate inertia tensor for a solid sphere.
+
     Inertia tensor is relative to sphere center of mass.
-    
+
     Parameters
     ----------
     m : real
@@ -170,9 +219,9 @@ def HollowSphereI(rOuter, rInner,m=1):
     rOuter : real
         Outer radius of sphere
     rInner : real
-        inner radius of sphere (must be >=rOuter, silently gives 
+        inner radius of sphere (must be >=rOuter, silently gives
         non-physical results otherwise)
-       
+
     Returns
     -------
     I : numpy 3x3 matrix
@@ -191,7 +240,7 @@ def HollowSphereI(rOuter, rInner,m=1):
 def TriangularPrismI(a, b, c,m=1):
     """
     Calculate inertia tensor for a right triangular prism.
-    
+
     Parameters
     ----------
     m : real
@@ -202,7 +251,7 @@ def TriangularPrismI(a, b, c,m=1):
         length of prism base along +y axis
     c : real
         height of prism along +z axis
-        
+
     Notes
     -----
     I is with respect to the center of mass and these axes.
@@ -211,11 +260,11 @@ def TriangularPrismI(a, b, c,m=1):
     return np.matrix([[2*b*b+3*c*c,        a*b,           0],
                       [a*b,        2*a*a+3*c*c,           0],
                       [0,                    0, 2*a*a+2*b*b]])*m/36
-                      
+
 def RectangularPrismI(a, b, c,m=1):
     """
     Calculate inertia tensor for a right rectangular prism
-    
+
     Parameters
     ----------
     m : real

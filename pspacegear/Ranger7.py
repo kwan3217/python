@@ -21,11 +21,20 @@ import csv
 from collections import namedtuple
 import numpy as np
 import matplotlib.pyplot as plt
+import spiceypy as cspice
+import os
+old=os.getcwd()
+os.chdir('/home/chrisj/workspace/Data/spice/Ranger/')
+cspice.furnsh('Ranger7.tm')
+os.chdir(old)
 
 def floatN(x):
-    if x=="":
-        return float('NaN')
-    return float(x)
+    #if not x.isdigit():
+    #    return float('NaN')
+    try:
+        return float(x)
+    except ValueError:
+        return 0.0 #float('NaN')
 
 rowtuple=namedtuple('rowtuple',['PhotoNum','GMT','sc_alt','sc_lat','sc_lon',
                      'p2_lat','p2_lon','p2_srange',
@@ -44,28 +53,77 @@ with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
     #Read the rows
     for row in reader:
         if not row[0].isdigit():
-            break
-        rows.append(rowtuple(  int(row[ 0]), #PhotoNum
-                                   row[ 1] , #GMT
-                            floatN(row[ 2]), #sc_alt
-                            floatN(row[ 3]), #sc_lat
-                            floatN(row[ 4]), #sc_lon
-                            floatN(row[ 5]), #p2_lat
-                            floatN(row[ 6]), #p2_lon
-                            floatN(row[ 7]), #p2_srange
-                            floatN(row[ 8]), #v
-                            floatN(row[ 9]), #pth
-                            floatN(row[10]), #az
-                            floatN(row[11]), #p1_lat
-                            floatN(row[12]), #p1_lon
-                            floatN(row[13]), #p1_srange
-                            floatN(row[14]))) #azn
+            if row[0]!="Impact":
+                break
+        print(row[0:14])
+        latofs=0.089
+        rows.append(rowtuple(floatN(row[ 0]), #PhotoNum
+                                    row[ 1] , #GMT
+                             floatN(row[ 2]), #sc_alt
+                             floatN(row[ 3]), #sc_lat
+                             floatN(row[ 4])-latofs, #sc_lon
+                             floatN(row[ 5]), #p2_lat
+                             floatN(row[ 6])-latofs, #p2_lon
+                             floatN(row[ 7]), #p2_srange
+                             floatN(row[ 8]), #v
+                             floatN(row[ 9]), #pth
+                             floatN(row[10]), #az
+                             floatN(row[11]), #p1_lat
+                             floatN(row[12])-latofs, #p1_lon
+                             floatN(row[13]), #p1_srange
+                             floatN(row[14]))) #azn
+        print(rows[-1])
 
 rs=[]
 vs=[]
+#The tables include the spacecraft position in lat/lon/alt coordinates. Altitude is defined to be zero at impact, so the
+#reference surface is a sphere centered on the Moon's center of mass and has radius equal to the radius at impact. The
+#latitude and longitude are referenced to the Mean-Earth Polar system, as realized by this report. This gives a final
+#impact point about 2700m away from where LRO found the impact crater.
+
+#All reticle marks are numbered, with point 2 being the center mark. Point 1 is the velocity vector as described above.
+#For all such marks, the table includes the latitude and longitude on the reference surface, the distance from the
+#spacecraft to that point, several azimuths including the azimuth between the image vertical and true North.
+
+#Table "Point 1" is the point on the Lunar surface that the spacecraft is moving directly towards, based on
+#its instantaneous velocity vector in a lunar body-fixed frame. This is the point that doesn't move as the
+#spacecraft approaches the moon. The image appears to zoom in centered around this point.
+
+#Table "Point 2" is the point on the Lunar surface covered by the center reticle mark. It also has latitude, longitude,
+#and slant range
+
+#Much of the data which was entered is reduntant - point 1 is completely determined by the spacecraft position and velocity
+#vector. Slant ranges are always calculable from the point latitudes and longitudes and the spacecraft position.
+#These values were transcribed anyway, to validate the position and velocity transcription. Ideally, the calculated
+#values will be exactly equal to the table values, but due to limited precision in the table, particularly the latitudes
+#and longitudes, the values will be inconsistent on the few-meter level. Any discrepancy of more than 10m drew my
+#attention, and any larger than 20m indicated a transcription error, which was corrected.
+#
+#dsrange2 is the difference between the table slant range to point 2 and that calculated from the spacecraft lat/lon/alt
+#and point 2 lat/lon
 dsrange2s=[]
+#dsrange1a is the difference between the table slant range to point 1 and that calculated from the spacecraft lat/lon/alt
 dsrange1as=[]
+#dsrange1b is the difference between the table slant range to point 1 and that calculated from the spacecraft pos/vel
+#and the quadratic method (quadratic parameter t is the calculated distance between the ray origin and the ray/sphere
+#intersect point)
+dsrange1bs=[]
+#dsrange1c is the distance between the table point 1 calculated from lat/lon and that calculated by the quadratic
+#method. This isn't a difference in srange like the others are, but it is measured in the same units. However, dsrange1c
+#will always be positive, while the other measures can be positive or negative.
+dsrange1cs=[]
+#dv is the difference between the table velocity and that calculated by dividing the distance from the previous row's
+#position to this row's position by the difference in time. Keep track of last row position in r_last, use constant
+#5.12s as dt. Note that this will be biased from zero because it doesn't take into account the acceleration of gravity
+#over the time step.
+dvs=[float('NaN')]
+r_last=None
+dt=5.12
+#Size of 1 millidegree of latitude at the current spacecraft altitude. This is an idea of the precision we can expect
+#in using vectors with latitudes and longitudes specified in millidegree precision.
+mds=[]
 r_moon=1735.46
+ts=[]
 for row in rows:
     #Zenith vector
     rbar=np.array([np.cos(np.radians(row.sc_lat))*np.cos(np.radians(row.sc_lon)),
@@ -73,6 +131,7 @@ for row in rows:
                    np.sin(np.radians(row.sc_lat))])
     #Position in selenocentric moon-fixed mean-earth/pole coordinates
     r=rbar*(row.sc_alt+r_moon)
+    mds.append((row.sc_alt+r_moon)*np.pi*2.0/360000.0)
     rs.append(r)
     #East vector
     e=np.cross(np.array([0,0,1]),rbar)
@@ -126,15 +185,66 @@ for row in rows:
     B=2*np.dot(r,vbar)
     C=np.dot(r,r)-r_moon**2
     D=B**2-4*A*C
-    t=(-B-np.sqrt(D))/2*A
-    print(A,B,C,D,t,row.p1_srange)
-    print(p1a,r+t*vbar)
+    t=(-B-np.sqrt(D))/2*A #Since A is positive, it is always the case that using the negative sign will give the
+                          #lower root, which is what we want. If this root is negative, then the spacecraft is
+                          #inside the sphere or the sphere is behind the spacecraft.
+    #Since vbar is a unit vector, and r is measured in units of km, t has units of km itself, and is directly
+    #comparable to p1_srange.
+    dsrange1b=row.p1_srange-t
+    dsrange1bs.append(dsrange1b)
+    #Finish using the ray equation to find the coordinates of p1 from the spacecraft pos/vel
+    p1c=r+vbar*t
+    dsrange1c=np.sqrt(np.sum((p1c-p1a)**2))
+    dsrange1cs.append(dsrange1c)
+    #Calculate velocity from last row
+    if r_last is not None:
+        dr=np.sqrt(np.sum((r-r_last)**2))
+        dv=dr/dt-row.v
+        dvs.append(dv)
+    r_last=r
+    #Calculate ET from given GMT, bypassing spice leap second kernels. Spice does not properly handle the "rubber second"
+    #era. Ranger 7 was launched during this era, so we have to deal with it.
+    #Since the times have a rated accuracy of 5ms (even though they appear to have a sub-millisecond moment-to-moment
+    #consistency) we don't need to worry about such things as the change in MJD over the approach time. However, "Absurd
+    #Accuracy is Our Obsession", so since we *can* do it, we *will* do it.
+    #Ranger 7 was flown when the following row in tai-utc.dat was valid
+    #
+    #1964 APR  1 =JD 2438486.5  TAI-UTC=   3.3401300 S + (MJD - 38761.) X 0.001296 S
+    #
+    gmt=cspice.str2et(row.GMT+" TDT")
+    jd=cspice.timout(gmt,"JULIAND.#########")
+    mjd=float(jd)-2400000.5
+    tai_utc=3.3401300+(mjd-38761.0)*0.001296
+    tai=gmt+tai_utc
+    et=tai+32.184
+    ts.append(et)
+    print(row.GMT, gmt, cspice.etcal(gmt), mjd,tai_utc,tai,et, cspice.etcal(et))
 
-plt.plot(dsrange2s,'g+')
-plt.plot(dsrange1as,'bx')
-plt.show()
+if False:
+    #This plot is meant to duplicate the residual plot on the spreadsheet
+    fig,ax1=plt.subplots()
+    ax2=ax1.twinx()
+    ax1.plot(np.array(ts)-ts[-1],dsrange2s,'bo')
+    ax1.plot(np.array(ts)-ts[-1],dsrange1as,'ro')
+    ax1.plot(np.array(ts)-ts[-1],dsrange1bs,'yo')
+    ax1.plot(np.array(ts)-ts[-1],dsrange1cs,'go')
+    ax2.plot(np.array(ts)-ts[-1],dvs,'m+')
+    ax1.plot(np.array(ts)-ts[-1],mds,'k--')
+    ax1.plot(np.array(ts)-ts[-1],-np.array(mds),'k--')
+    plt.show()
 
-exit()            
+#Now, convert the coordinates from moon body-fixed to moon-centered inertial
+recis=np.zeros((len(ts),3))
+vecis=np.zeros((len(ts),3))
+i=0
+for (r,v,t) in zip(rs,vs,ts):
+    M=cspice.sxform("IAU_MOON","ECI_TOD",t)
+    print(t,M)
+    s=np.concatenate((r,v))
+    Ms=np.matmul(M,s)
+    recis[i,:]=Ms[0:3]
+    vecis[i,:]=Ms[3:6]
+    i=i+1
 
 GMTs=('1964-Jul-28 17:19:56.000', 
       '1964-Jul-28 17:20:01.000', 
@@ -210,13 +320,8 @@ GMTs=('1964-Jul-28 17:19:56.000',
       '1964-Jul-31 13:00:00.000', 
       '1964-Jul-31 13:25:48.724')
 
-import spiceypy as cspice
 import numpy as np
 import os
-old=os.getcwd()
-os.chdir('/home/chrisj/workspace/Data/spice/Ranger/')
-cspice.furnsh('Ranger7.tm')
-os.chdir(old)
 
 delAT=3.1379540
 t=np.zeros(len(GMTs))
@@ -312,6 +417,8 @@ selenostate=np.array(((-3.6696648E+4,8.3380871E+3,5.7618991E+3,1.1519648E+0,-2.9
 Ranger7Geo_txt="""
 Ranger 7 - first completely successful Ranger lunar impact mission. Data from
 'Ranger 7 flight path and its determination from tracking data', 15 Dec 1964
+available at https://archive.org/details/nasa_techdoc_19650003678 (but I got
+it from NTRS)
 
 The report had a table of geocentric state vectors in the True of Date system
 starting at injection and continuing every hour on the hour until impact. The
@@ -342,9 +449,6 @@ LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
 """ % ('../../Data/spice/generic','../../Data/spice/generic')
 
 Ranger7Seleno_txt="""
-Ranger 7 - first completely successful Ranger lunar impact mission. Data from
-'Ranger 7 flight path and its determination from tracking data', 15 Dec 1964
-
 Ranger 7 - first completely successful Ranger lunar impact mission. Data from
 'Ranger 7 flight path and its determination from tracking data', 15 Dec 1964
 available at https://archive.org/details/nasa_techdoc_19650003678 (but I got
@@ -383,6 +487,47 @@ CENTER_GM=4904.8695
 FRAME_DEF_FILE='%s/fk/eci_tod.tf'
 LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
 """ % ('../../Data/spice/generic','../../Data/spice/generic')
+
+Ranger7Seleno2_txt="""
+Ranger 7 - first completely successful Ranger lunar impact mission. Data from
+'Ranger VII Photographic Parameters', JPL Technical Report No. 32-964, 1 Nov 1966
+available at NTRS as document number 19670002488 
+
+The report had a table of camera parameters including the position of the spacecraft
+in a selenocentric body-fixed (Mean-earth-polar) frame for each picture published in
+the photo atlases. This spice segment uses the positions from the A camera, starting 
+about 15min before impact at %s, and ending with the last A
+camera image 2.5s before impact at %s. There is also a 
+calculated state at impact, at %s. 
+
+The table seems to have had a bias in longitude, as it matches neither the previous
+segments nor the actual location of the crater as found by LRO/LROC. This bias is 
+corrected in this spice segment, such that the final longitude matches that of LRO, and
+matches the selenocentric trajectory from the other segments much better.
+
+These table values were manually entered into a spreadsheet and verified by checking
+the slant ranges, which were consistent with the table values to the precision allowed
+by the table latitude and longitude (several errors were caught this way).
+
+\\begindata
+INPUT_DATA_TYPE = 'STATES'
+OUTPUT_SPK_TYPE = 5
+OBJECT_ID=-1007
+OBJECT_NAME='RANGER 7'
+CENTER_ID=301
+CENTER_NAME='MOON'
+REF_FRAME_NAME='ECI_TOD'
+PRODUCER_ID='C. Jeppesen, Kwan Systems'
+DATA_ORDER='EPOCH X Y Z VX VY VZ'
+TIME_WRAPPER='# ETSECONDS'
+INPUT_DATA_UNITS = ('ANGLES=DEGREES' 'DISTANCES=km')
+DATA_DELIMITER=';'
+LINES_PER_RECORD=1
+CENTER_GM=4904.8695
+FRAME_DEF_FILE='%s/fk/eci_tod.tf'
+LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
+""" % (rows[0].GMT,rows[-2].GMT,rows[-1].GMT,'../../Data/spice/generic','../../Data/spice/generic')
+
 
 import bmw
 
@@ -432,39 +577,67 @@ with open('seleno.txt','w') as ouf:
             this_vel[1],
             this_vel[2]),file=ouf)
 
+with open('seleno2.txt','w') as ouf:
+    for i in range(len(ts)):
+        #Check that we match the input state exactly
+        #(spice_state,ltime)=cspice.spkezr('-1007',t[i],'ECI_TOD','NONE','399')
+        this_pos=rs[i]
+        #spice_pos=spice_state[0:3]
+        #dpos=spice_pos-this_pos
+        this_vel=vs[i]
+        #spice_vel=spice_state[3:6]
+        #dvel=spice_vel-this_vel
+        #this_elorb=bmw.elorb(this_pos,this_vel,l_DU=re,mu=mu,t0=t[i])
+        #print(this_elorb)
+        print("%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e"%(ts[i],
+            this_pos[0],
+            this_pos[1],
+            this_pos[2],
+            this_vel[0],
+            this_vel[1],
+            this_vel[2]),file=ouf)
+
 with open('Ranger7Geo_mkspk.txt','w') as ouf:
     print(Ranger7Geo_txt,file=ouf)
 
 with open('Ranger7Seleno_mkspk.txt','w') as ouf:
     print(Ranger7Seleno_txt,file=ouf)
 
+with open('Ranger7Seleno2_mkspk.txt','w') as ouf:
+    print(Ranger7Seleno2_txt,file=ouf)
+
 import subprocess
 import os
-os.remove("Ranger7.bsp")
+try:
+    os.remove("Ranger7.bsp")
+except FileNotFoundError:
+    pass #no error, file is already not present
 subprocess.call("mkspk -setup Ranger7Geo_mkspk.txt -input geo.txt -output Ranger7.bsp",shell=True)
 subprocess.call("mkspk -setup Ranger7Seleno_mkspk.txt -input seleno.txt -output Ranger7.bsp -append",shell=True)
+subprocess.call("mkspk -setup Ranger7Seleno2_mkspk.txt -input seleno2.txt -output Ranger7.bsp -append",shell=True)
 
 cspice.furnsh("Ranger7.bsp")
 
-statepos_x=[0.0]*len(t)
-statepos_y=[0.0]*len(t)
+selenostatepos_x=[0.0]*selenostate.shape[0]
+selenostatepos_y=[0.0]*selenostate.shape[0]
 
-for i in range(len(t)):
-    this_state=np.array(state[i][:])
+for i in range(selenostate.shape[0]):
+    this_state = np.array(selenostate[i][:])
+    print(t[i + tofs])
     this_pos=this_state[0:3]
-    statepos_x[i]=this_pos[0]
-    statepos_y[i]=this_pos[1]
+    selenostatepos_x[i]=this_pos[0]
+    selenostatepos_y[i]=this_pos[1]
 
-plt.plot(statepos_x,statepos_y,'b*-')
+plt.plot(selenostatepos_x,selenostatepos_y,'b*')
 
 n_step=1000
-step=sorted(list(t)+list(np.linspace(t[0],t[-1],n_step)))
+step=sorted(list(t[tofs:])+list(np.linspace(t[tofs],t[-1],n_step)))
 n_step=len(step)
 spicepos_x=[0.0]*n_step
 spicepos_y=[0.0]*n_step
 
 for i,tt in enumerate(step):
-    (spice_state,ltime)=cspice.spkezr('-1007',tt,'ECI_TOD','NONE','399')
+    (spice_state,ltime)=cspice.spkezr('-1007',tt,'ECI_TOD','NONE','301')
     spice_pos=spice_state[0:3]
     spicepos_x[i]=spice_pos[0]
     spicepos_y[i]=spice_pos[1]
@@ -472,7 +645,9 @@ for i,tt in enumerate(step):
     spice_vel=spice_state[3:6]
     print(spice_vel)
 
-plt.plot(spicepos_x,spicepos_y,'g*-')
+plt.plot(spicepos_x,spicepos_y,'g-')
+plt.plot(recis[:,0],recis[:,1],'r+')
+plt.axis('equal')
 plt.show()
 
 
