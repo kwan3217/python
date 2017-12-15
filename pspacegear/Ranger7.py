@@ -3,18 +3,6 @@ Created on Dec 6, 2017
 
 @author: chrisj
 
-Ranger was before the era of leap seconds, and Spice uses an incorrect version of UTC prior to the 
-beginning of the leap second table. "Absurd Accuracy is our Obsession" 
-
-These are instants which have the same *name* as the UTC (actually GMT) times given in the Ranger report,
-but are on a uniform time scale which must be converted. TDT is ahead of TAI by 32.184s, so to get the
-ET of the TAI time with the same name, add 32.184s to the ET of the TDT time. TAI is ahead of GMT by deltaAT. 
-Ranger 7 was launched on mjd 38505, when the following row in tai-utc.dat was valid
-
- 1964 APR  1 =JD 2438486.5  TAI-UTC=   3.3401300 S + (MJD - 38761.) X 0.001296 S
-
-so deltaAT on that day was 3.1379540
-
 '''
 
 import csv
@@ -25,7 +13,7 @@ import spiceypy as cspice
 import os
 old=os.getcwd()
 os.chdir('/home/chrisj/workspace/Data/spice/Ranger/')
-cspice.furnsh('Ranger7.tm')
+cspice.furnsh('Ranger7Background.tm')
 os.chdir(old)
 
 def floatN(x):
