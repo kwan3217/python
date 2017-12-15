@@ -185,7 +185,7 @@ Calculate the Universal Variable S(z) function
         sz=np.sqrt(-z)
         return (np.sinh(sz)-sz)/np.sqrt((-z)**3)
 
-def kepler(rv0,vv0,t,l_DU=1,mu=1,eps=1e-9):
+def kepler(rv0_,vv0_,t_,l_DU=1,mu=1,eps=1e-9):
     """
 Given a state vector and time interval, calculate the state after the time interval elapses
 input
@@ -202,11 +202,13 @@ output
   rv_t= - Position vector after passage of time t, in same units as rv0 
   vv_t= - Velocity vector after passage of time t, in same units as vv0
     """
-
+    if t_==0.0:
+        #Shortcut if we ask for zero time interval
+        return (rv0_,vv0_)
     tau=np.pi*2.0
-    rv0=su_to_cu(rv0,l_DU,mu,1, 0)
-    vv0=su_to_cu(vv0,l_DU,mu,1,-1)
-    t  =su_to_cu(t  ,l_DU,mu,0, 1)
+    rv0=su_to_cu(rv0_,l_DU,mu,1, 0)
+    vv0=su_to_cu(vv0_,l_DU,mu,1,-1)
+    t  =su_to_cu(t_  ,l_DU,mu,0, 1)
 
     r0=np.linalg.norm(rv0)
     v0=np.linalg.norm(vv0)
@@ -232,7 +234,7 @@ output
         x0=np.sqrt(p)/np.tan(2*w) #cot(x)=1/tan(x)
     else:
         #hyperbolic
-        sa=np.sqrt(1.0/alpha)
+        sa=np.sqrt(-1.0/alpha)
         st=1 if t>0 else -1
         x0_a=st*sa
         x0_n=-2*alpha*t
@@ -262,7 +264,7 @@ output
         vv_t=su_to_cu(vv_t,l_DU,mu,1,-1,inverse=True)
     return(rv_t,vv_t)
 
-def gauss(rv1,rv2,t,Type=-1,l_DU=1,mu=1,eps=1e-9):
+def gauss(rv1_,rv2_,t_,Type=-1,l_DU=1,mu=1,eps=1e-9):
     def FindTTrialCore(A,S,X,Y):
         return (X**3)*S+A*np.sqrt(Y)
     def FindTTrial(A,r1,r2,Z):
@@ -286,7 +288,6 @@ def gauss(rv1,rv2,t,Type=-1,l_DU=1,mu=1,eps=1e-9):
   
         while True: #Emulate a repeat/until loop
             Z=(Zlo+Zhi)/2
-            print("Z: ",Z)
             Y=r1+r2-A*(1-Z*SS(Z))/np.sqrt(CC(Z))
             if Y*Zlo>0:
                 Zlo=Z
@@ -306,9 +307,9 @@ def gauss(rv1,rv2,t,Type=-1,l_DU=1,mu=1,eps=1e-9):
         return Z
 
     tau=2*np.pi
-    rv1=su_to_cu(rv1,l_DU,mu,1,0)
-    rv2=su_to_cu(rv2,l_DU,mu,1,0)
-    t  =su_to_cu(t  ,l_DU,mu,0,1)
+    rv1=su_to_cu(rv1_,l_DU,mu,1,0)
+    rv2=su_to_cu(rv2_,l_DU,mu,1,0)
+    t  =su_to_cu(t_  ,l_DU,mu,0,1)
 
     if(Type<0):
         pole=np.cross(rv1,rv2)
@@ -382,22 +383,76 @@ def gauss(rv1,rv2,t,Type=-1,l_DU=1,mu=1,eps=1e-9):
     f=1.0-Y/r1
     g=A*np.sqrt(Y)
     gdot=1.0-Y/r2
-    vv1=(rv2-rv1*f)/g
-    vv2=(rv2*gdot-rv1)/g
-    vv1=su_to_cu(vv1,l_DU,mu,1,-1,inverse=True)
-    vv2=su_to_cu(vv2,l_DU,mu,1,-1,inverse=True)
+    vv1=su_to_cu((rv2     -rv1*f)/g,l_DU,mu,1,-1,inverse=True)
+    vv2=su_to_cu((rv2*gdot-rv1  )/g,l_DU,mu,1,-1,inverse=True)
     return (vv1,vv2)
 
+def herrick_gibbs(rr1,rr2,rr3,t1,t2,t3,mu=1):
+    """
+    Given three closely-spaced position observations, calculate the
+    velocity at the middle observation. From Vallado p444, algorithm 52
+
+    This is much less computationally intensive than the Gauss method,
+    and has a better chance of numerical stability.
+
+    :param rr1: Position vector at t1
+    :param rr2: Position vector at t2
+    :param rr3: Position vector at t3
+    :param t1:  Time of first position vector
+    :param t2:  Time of second position vector
+    :param t3:  Time of third position vector
+    :param mu:  Gravitational parameter
+    :return:    Velocity at t2
+    """
+    dt31=t3-t1
+    dt32=t3-t2
+    dt21=t2-t1
+    r1=np.linalg.norm(rr1)
+    r2=np.linalg.norm(rr2)
+    r3=np.linalg.norm(rr3)
+    #Coplanarity (not strictly needed)
+    Z23=np.cross(rr2,rr3)
+    alpha_cop=np.pi/2-np.arccos(np.dot(Z23,rr1)/(np.linalg.norm(Z23)*np.linalg.norm(rr1)))
+    #position spread (not strictly needed)
+    cosalpha12=np.dot(rr1,rr2)/(r1*r2)
+    cosalpha23=np.dot(rr2,rr3)/(r2*r3)
+    vv2=      -dt32 *(1/(dt21*dt31)+mu/(12*r1**3))*rr1+\
+         (dt32-dt21)*(1/(dt21*dt32)+mu/(12*r2**3))*rr2+\
+               dt21 *(1/(dt32*dt31)+mu/(12*r3**3))*rr3
+    return vv2
+
 def test_su_to_cu():
-    print(su_to_cu(np.array([1131340.0,-2282343.0,6672423.0]),6378137.0,398600.4415e9,1,0))
+    """
+Example
+ An object orbiting Earth has a position of <1131340,-2282343,6672423> m
+ and a speed of <-5643.05,4303.33,2428.79> m/s. Convert this to canonical units
+ Earth radius used as distance unit length: 6378137m
+ Earth gravitational constant: 398600.4415d9 m,s
+ print,su_to_cu([1131340d,-2282343d,6672423d],6378137d,398600.4415d9,1,0)
+      0.17737781     -0.35783850       1.0461398
+ print,su_to_cu([-5643.05d,4303.33d,2428.79d],6378137d,398600.4415d9,1,-1)
+     -0.71382529      0.54435559      0.30723310
+ We are going to solve the Kepler problem over a time of 40min=2400s. How many canonical time units?
+ print,su_to_cu(2400d,6378137d,398600.4415d9,0,1)
+       2.9746739
+ The answer is r_t=<-0.6616125, 0.6840739,-0.6206809> and
+               v_t=< 0.4667380,-0.2424455,-0.7732126>. What is this in SI units?
+ print,su_to_cu([-0.6616125d, 0.6840739d,-0.6206809d],6378137d,398600.4415d9,1,0,/inv)
+      -4219855.2       4363117.1      -3958787.8
+ print,su_to_cu([ 0.4667380d,-0.2424455d,-0.7732126d],6378137d,398600.4415d9,1,-1,/inv)
+       3689.7346      -1916.6203      -6112.5284
+    """
+    re=6378137.0
+    mu=398600.4415e9
+    print(su_to_cu(np.array([1131340.0 ,-2282343.0 ,6672423.0 ]),re,mu,1, 0))
     print(np.array([0.17737781,     -0.35783850,      1.0461398]))
-    print(su_to_cu(np.array([-5643.05,4303.33,2428.79]),6378137,398600.4415e9,1,-1))
+    print(su_to_cu(np.array([  -5643.05,    4303.33,   2428.79]),re,mu,1,-1))
     print(np.array([-0.71382529,     0.54435559,     0.30723310]))
     print(su_to_cu(2400.0,6378137.0,398600.4415e9,0,1))
     print(2.9746739)
-    print(su_to_cu(np.array([-0.6616125, 0.6840739,-0.6206809]),6378137.0,398600.4415e9,1,0,inverse=True))
+    print(su_to_cu(np.array([-0.6616125, 0.6840739,-0.6206809]),re,mu,1,0,inverse=True))
     print(np.array([-4219855.2,      4363117.1,     -3958787.8]))
-    print(su_to_cu(np.array([ 0.4667380,-0.2424455,-0.7732126]),6378137.0,398600.4415e9,1,-1,inverse=True))
+    print(su_to_cu(np.array([ 0.4667380,-0.2424455,-0.7732126]),re,mu,1,-1,inverse=True))
     print(np.array([  3689.7346,      -1916.6203,      -6112.5284]))
 
 def test_kepler():
@@ -452,10 +507,29 @@ def test_gauss2():
     print("test_gauss2() Calculated: ",v0_cu,v1_cu)
     print("test_gauss2() Documented: ",v0_cu_standard,v1_cu_standard)
 
+def test_herrick_gibbs():
+    rr1=np.array([3419.85564,6019.82602,2784.60022])
+    rr2=np.array([2935.91195,6326.18324,2660.59584])
+    rr3=np.array([2434.95205,6597.38674,2521.52311])
+    t1=0
+    t2=1*60+16.48
+    t3=2*60+33.04
+    re=6378.1363
+    mu=398600.4415
+    rr1_cu=su_to_cu(rr1,re,mu,1, 0)
+    rr2_cu=su_to_cu(rr2,re,mu,1, 0)
+    rr3_cu=su_to_cu(rr3,re,mu,1, 0)
+    t1_cu =su_to_cu(t1 ,re,mu,0, 1)
+    t2_cu =su_to_cu(t2 ,re,mu,0, 1)
+    t3_cu =su_to_cu(t3 ,re,mu,0, 1)
+    vv2_cu=herrick_gibbs(rr1_cu,rr2_cu,rr3_cu,t1_cu,t2_cu,t3_cu)
+    vv2=su_to_cu(vv2_cu,re,mu,1,-1,inverse=True)
+    print(vv2)
+
 if __name__=="__main__":
-    test_su_to_cu()
-    test_kepler()
-    test_gauss1()
-    test_gauss2()
-    print(elorb(np.array([1,0,0]),np.array([0,0,1])))
+    test_herrick_gibbs()
+    #test_kepler()
+    #test_gauss1()
+    #test_gauss2()
+    #print(elorb(np.array([1,0,0]),np.array([0,0,1])))
 

@@ -55,7 +55,7 @@ with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
         if not row[0].isdigit():
             if row[0]!="Impact":
                 break
-        print(row[0:14])
+        #print(row[0:14])
         latofs=0.089
         rows.append(rowtuple(floatN(row[ 0]), #PhotoNum
                                     row[ 1] , #GMT
@@ -72,7 +72,7 @@ with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
                              floatN(row[12])-latofs, #p1_lon
                              floatN(row[13]), #p1_srange
                              floatN(row[14]))) #azn
-        print(rows[-1])
+        #print(rows[-1])
 
 rs=[]
 vs=[]
@@ -218,7 +218,7 @@ for row in rows:
     tai=gmt+tai_utc
     et=tai+32.184
     ts.append(et)
-    print(row.GMT, gmt, cspice.etcal(gmt), mjd,tai_utc,tai,et, cspice.etcal(et))
+    #print(row.GMT, gmt, cspice.etcal(gmt), mjd,tai_utc,tai,et, cspice.etcal(et))
 
 if False:
     #This plot is meant to duplicate the residual plot on the spreadsheet
@@ -239,14 +239,62 @@ vecis=np.zeros((len(ts),3))
 i=0
 for (r,v,t) in zip(rs,vs,ts):
     M=cspice.sxform("IAU_MOON","ECI_TOD",t)
-    print(t,M)
+    #print(t,M)
     s=np.concatenate((r,v))
     Ms=np.matmul(M,s)
     recis[i,:]=Ms[0:3]
     vecis[i,:]=Ms[3:6]
     i=i+1
 
-GMTs=('1964-Jul-28 17:19:56.000', 
+import bmw
+
+#Use Herrick-Gibbs to figure velocities between points
+mu_moon=4904.8695
+dvhgs=[]
+dvhgs.append(float('NaN'))
+for i in range(1,len(ts)-1):
+    tm=ts[i-1]
+    t0=ts[i]
+    tp=ts[i+1]
+    rm=recis[i-1]
+    r0=recis[i]
+    rp=recis[i+1]
+    vm=vecis[i-1]
+    v0=vecis[i]
+    vp=vecis[i+1]
+    v0hg=bmw.herrick_gibbs(rm,r0,rp,tm,t0,tp,mu=mu_moon)
+    print("Table      v:     ",v0     ,np.linalg.norm(v0    ))
+    print("Calculated v:     ",v0hg   ,np.linalg.norm(v0hg   ))
+    print("Difference v:     ",v0-v0hg,np.linalg.norm(v0-v0hg))
+    print("Table      elorb: ",bmw.elorb(r0,v0  ,l_DU=r_moon,mu=mu_moon))
+    print("Calculated elorb: ",bmw.elorb(r0,v0hg,l_DU=r_moon,mu=mu_moon))
+    dvhgs.append(np.linalg.norm(v0-v0hg))
+dvhgs.append(float('NaN'))
+
+#Use Gauss targeting to get a trajectory from first image to impact, use
+#Kepler propagation to evaluate at each image time, and graph the difference
+r0=recis[0]
+r1=recis[-1]
+drs=[]
+dvgs=[]
+(v0,v1)=bmw.gauss(r0,r1,ts[-1]-ts[0],Type=1,l_DU=r_moon,mu=mu_moon)
+print("elorb0: ",bmw.elorb(r0,v0,l_DU=r_moon,mu=mu_moon))
+print("elorb1: ",bmw.elorb(r1,v1,l_DU=r_moon,mu=mu_moon))
+for (reci,veci,t) in zip(recis,vecis,ts):
+    (rcalc,vcalc)=bmw.kepler(r0,v0,t-ts[0],l_DU=r_moon,mu=mu_moon)
+    drs.append(np.linalg.norm(reci-rcalc))
+    dvgs.append(np.linalg.norm(veci-vcalc))
+    print("R Difference: ",reci-rcalc,drs[-1])
+    print("V Difference: ",veci-vcalc,dvgs[-1])
+
+if True:
+    #This plot is meant to duplicate the residual plot on the spreadsheet
+    plt.plot(np.array(ts)-ts[-1],drs,'b+')
+    plt.plot(np.array(ts)-ts[-1],np.array(dvhgs)*1000,'gx')
+    plt.plot(np.array(ts)-ts[-1],np.array(dvgs)*1000,'rx')
+    plt.show()
+
+GMTs=('1964-Jul-28 17:19:56.000',
       '1964-Jul-28 17:20:01.000', 
       '1964-Jul-28 18:00:00.000', 
       '1964-Jul-28 19:00:00.000', 
