@@ -76,7 +76,7 @@ def vangle(a,b):
    return np.arccos(np.dot(a,b)/np.linalg.norm(a)/np.linalg.norm(b))
 
 Elorb=namedtuple('elorb',['p','a','e','i','an','ap','ta','tp','rp','MM','n','t'])
-def elorb(r,v,l_DU=1,mu=1,t0=0.0):
+def elorb(rv,vv,l_DU=None,mu=None,t0=None):
     """
     Given state vector, calculate orbital elements.
 
@@ -99,8 +99,9 @@ def elorb(r,v,l_DU=1,mu=1,t0=0.0):
         tp: time to next periapse, in original time units. Negative if only one periapse and in the past
         rp: radius of periapse in original distance units
     """
-    rv=su_to_cu(r,l_DU,mu,1,0)
-    vv=su_to_cu(v,l_DU,mu,1,-1)
+    if l_DU is not None:
+        rv=su_to_cu(rv,l_DU,mu,1,0)
+        vv=su_to_cu(vv,l_DU,mu,1,-1)
     r=np.linalg.norm(rv)
     v=np.linalg.norm(vv)
         
@@ -148,18 +149,17 @@ def elorb(r,v,l_DU=1,mu=1,t0=0.0):
         n=np.sqrt(-1/(a**3))
         rp=a*(1-e)
     tp=-MM/n
-    return Elorb(p =su_to_cu(p,l_DU,mu,1,0,inverse=True),   
-                 a =su_to_cu(a,l_DU,mu,1,0,inverse=True),
-                 e =e,                    
-                 i =i,
-                 an=an,
-                 ap=ap,
-                 ta=ta,
-                 tp=su_to_cu(tp,l_DU,mu,0,1,inverse=True)+t0,
-                 rp=su_to_cu(rp,l_DU,mu,1,0,inverse=True),
-                 MM=MM, 
-                 n =su_to_cu(n,l_DU,mu,0,-1,inverse=True),
-                 t =su_to_cu(2*math.pi*np.sqrt(a**3),l_DU,mu,0,1,inverse=True))
+    t=2*math.pi*np.sqrt(a**3)
+    if l_DU is not None:
+        p =su_to_cu(p,l_DU,mu,1,0,inverse=True)   
+        a =su_to_cu(a,l_DU,mu,1,0,inverse=True)
+        tp=su_to_cu(tp,l_DU,mu,0,1,inverse=True)
+        if t0 is not None:
+            tp+=t0
+        rp=su_to_cu(rp,l_DU,mu,1,0,inverse=True)
+        n =su_to_cu(n,l_DU,mu,0,-1,inverse=True)
+        t =su_to_cu(t,l_DU,mu,0,1,inverse=True)
+    return Elorb(p=p,a =a,e=e,i=i,an=an,ap=ap,ta=ta,tp=tp,rp=rp,MM=MM, n=n,t=t)
 
 def CC(z):
     """
@@ -185,7 +185,7 @@ Calculate the Universal Variable S(z) function
         sz=np.sqrt(-z)
         return (np.sinh(sz)-sz)/np.sqrt((-z)**3)
 
-def kepler(rv0_,vv0_,t_,l_DU=1,mu=1,eps=1e-9):
+def kepler(rv0,vv0,t,l_DU=None,mu=None,eps=1e-9):
     """
 Given a state vector and time interval, calculate the state after the time interval elapses
 input
@@ -202,13 +202,14 @@ output
   rv_t= - Position vector after passage of time t, in same units as rv0 
   vv_t= - Velocity vector after passage of time t, in same units as vv0
     """
-    if t_==0.0:
+    if t==0.0:
         #Shortcut if we ask for zero time interval
-        return (rv0_,vv0_)
+        return (rv0,vv0)
     tau=np.pi*2.0
-    rv0=su_to_cu(rv0_,l_DU,mu,1, 0)
-    vv0=su_to_cu(vv0_,l_DU,mu,1,-1)
-    t  =su_to_cu(t_  ,l_DU,mu,0, 1)
+    if l_DU is not None:
+        rv0=su_to_cu(rv0,l_DU,mu,1, 0)
+        vv0=su_to_cu(vv0,l_DU,mu,1,-1)
+        t  =su_to_cu(t  ,l_DU,mu,0, 1)
 
     r0=np.linalg.norm(rv0)
     v0=np.linalg.norm(vv0)
@@ -259,12 +260,12 @@ output
     gdot=1-x**2*C/r
     rv_t=f   *rv0+g   *vv0
     vv_t=fdot*rv0+gdot*vv0
-    if l_DU!=1:
+    if l_DU is not None:
         rv_t=su_to_cu(rv_t,l_DU,mu,1, 0,inverse=True)
         vv_t=su_to_cu(vv_t,l_DU,mu,1,-1,inverse=True)
     return(rv_t,vv_t)
 
-def gauss(rv1_,rv2_,t_,Type=-1,l_DU=1,mu=1,eps=1e-9):
+def gauss(rv1,rv2,t,Type=-1,l_DU=None,mu=None,eps=1e-9):
     def FindTTrialCore(A,S,X,Y):
         return (X**3)*S+A*np.sqrt(Y)
     def FindTTrial(A,r1,r2,Z):
@@ -307,9 +308,10 @@ def gauss(rv1_,rv2_,t_,Type=-1,l_DU=1,mu=1,eps=1e-9):
         return Z
 
     tau=2*np.pi
-    rv1=su_to_cu(rv1_,l_DU,mu,1,0)
-    rv2=su_to_cu(rv2_,l_DU,mu,1,0)
-    t  =su_to_cu(t_  ,l_DU,mu,0,1)
+    if l_DU is not None:
+        rv1=su_to_cu(rv1,l_DU,mu,1,0)
+        rv2=su_to_cu(rv2,l_DU,mu,1,0)
+        t  =su_to_cu(t  ,l_DU,mu,0,1)
 
     if(Type<0):
         pole=np.cross(rv1,rv2)
@@ -383,8 +385,11 @@ def gauss(rv1_,rv2_,t_,Type=-1,l_DU=1,mu=1,eps=1e-9):
     f=1.0-Y/r1
     g=A*np.sqrt(Y)
     gdot=1.0-Y/r2
-    vv1=su_to_cu((rv2     -rv1*f)/g,l_DU,mu,1,-1,inverse=True)
-    vv2=su_to_cu((rv2*gdot-rv1  )/g,l_DU,mu,1,-1,inverse=True)
+    vv1=(rv2     -rv1*f)/g
+    vv2=(rv2*gdot-rv1  )/g
+    if l_DU is not None:
+        vv1=su_to_cu(vv1,l_DU,mu,1,-1,inverse=True)
+        vv2=su_to_cu(vv2,l_DU,mu,1,-1,inverse=True)
     return (vv1,vv2)
 
 def herrick_gibbs(rr1,rr2,rr3,t1,t2,t3,mu=1):
