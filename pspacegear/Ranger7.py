@@ -1,24 +1,15 @@
-'''
+"""
 Created on Dec 6, 2017
 
 @author: chrisj
-
-Ranger was before the era of leap seconds, and Spice uses an incorrect version of UTC prior to the 
-beginning of the leap second table. "Absurd Accuracy is our Obsession" 
-
-These are instants which have the same *name* as the UTC (actually GMT) times given in the Ranger report,
-but are on a uniform time scale which must be converted. TDT is ahead of TAI by 32.184s, so to get the
-ET of the TAI time with the same name, add 32.184s to the ET of the TDT time. TAI is ahead of GMT by deltaAT. 
-Ranger 7 was launched on mjd 38505, when the following row in tai-utc.dat was valid
-
- 1964 APR  1 =JD 2438486.5  TAI-UTC=   3.3401300 S + (MJD - 38761.) X 0.001296 S
-
-so deltaAT on that day was 3.1379540
-
-'''
+"""
 
 import csv
 from collections import namedtuple
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize as opt
@@ -81,7 +72,7 @@ def floatN(x):
     try:
         return float(x)
     except ValueError:
-        return 0.0 #float('NaN')
+        return float('NaN')
 
 image_a_tuple=namedtuple('image_a_tuple',['PhotoNum','GMT',
                                           'sc_alt','sc_lat','sc_lon',
@@ -174,7 +165,7 @@ def ray_sphere_intersect(r0,v,re):
     #Finish using the ray equation to find the coordinates of p1 from the spacecraft pos/vel
     return (t,r0+v*t)
 
-def processImageA(image_a,plot_check_values=False):
+def processImageA(image_a,plot=False):
     """
     Convert Image A table to usable state vectors, and calculate the check values
 
@@ -202,47 +193,47 @@ def processImageA(image_a,plot_check_values=False):
     attention, and any larger than 20m indicated a transcription error, which was corrected.
     
     :param array of namedtuple image_a: Rows from original table
-    :param bool plot_check_values: If true, plot the check value residuals
+    :param bool plot: If true, plot the check value residuals
     :rtype: tuple
     :return: First element is numpy array of position vectors, one row for each row in the table, 3 columns
              Second element is numpy array of velocity vectors, one row for each row in the table, 3 columns
              Third element
     """
-    rs=[]
-    vs=[]
+    rs=np.zeros((len(image_a),3),np.float64)
+    vs=np.zeros((len(image_a),3),np.float64)
     #dsrange2 is the difference between the table slant range to point 2 and that calculated from the spacecraft lat/lon/alt
     #and point 2 lat/lon
-    dsrange2s=[]
+    dsrange2s=np.zeros(len(image_a),np.float64)
     #dsrange1a is the difference between the table slant range to point 1 and that calculated from the spacecraft lat/lon/alt
-    dsrange1as=[]
+    dsrange1as=np.zeros(len(image_a),np.float64)
     #dsrange1b is the difference between the table slant range to point 1 and that calculated from the spacecraft pos/vel
     #and the quadratic method (quadratic parameter t is the calculated distance between the ray origin and the ray/sphere
     #intersect point)
-    dsrange1bs=[]
+    dsrange1bs=np.zeros(len(image_a),np.float64)
     #dsrange1c is the distance between the table point 1 calculated from lat/lon and that calculated by the quadratic
     #method. This isn't a difference in srange like the others are, but it is measured in the same units. However, dsrange1c
     #will always be positive, while the other measures can be positive or negative.
-    dsrange1cs=[]
+    dsrange1cs=np.zeros(len(image_a),np.float64)
     #dv is the difference between the table velocity and that calculated by dividing the distance from the previous row's
     #position to this row's position by the difference in time. Keep track of last row position in r_last, use constant
     #5.12s as dt. Note that this will be biased from zero because it doesn't take into account the acceleration of gravity
     #over the time step.
-    dvs=[float('NaN')]
+    dvs=np.zeros(len(image_a),np.float64)
+    dvs[0]=float('NaN')
     r_last=None
-    t_last=None
     #Size of 1 millidegree of latitude at the current spacecraft altitude. This is an idea of the precision we can expect
     #in using vectors with latitudes and longitudes specified in millidegree precision.
-    mds=[]
-    ts=[]
-    for row in image_a:
+    mds=np.zeros(len(image_a),dtype=np.float64)
+    ts=np.zeros(len(image_a),dtype=np.float64)
+    for i,row in enumerate(image_a):
         #Zenith vector
         rbar=np.array([np.cos(np.radians(row.sc_lat))*np.cos(np.radians(row.sc_lon)),
                        np.cos(np.radians(row.sc_lat))*np.sin(np.radians(row.sc_lon)),
                        np.sin(np.radians(row.sc_lat))])
         #Position in selenocentric moon-fixed mean-earth/pole coordinates
         r=rbar*(row.sc_alt+r_moon)
-        mds.append((row.sc_alt+r_moon)*np.pi*2.0/360000.0)
-        rs.append(r)
+        mds[i]=(row.sc_alt+r_moon)*np.pi*2.0/360000.0
+        rs[i,:]=r
         #East vector
         e=np.cross(np.array([0,0,1]),rbar)
         ebar=e/np.linalg.norm(e)
@@ -254,52 +245,54 @@ def processImageA(image_a,plot_check_values=False):
         vbarn=np.cos(np.radians(row.pth))*np.cos(np.radians(row.az))
         vbar=vbarr*rbar+vbare*ebar+vbarn*nbar
         v=vbar*row.v
-        vs.append(v)
+        vs[i,:]=v
         #p2 position
         p2=r_moon*np.array([np.cos(np.radians(row.p2_lat))*np.cos(np.radians(row.p2_lon)),
                             np.cos(np.radians(row.p2_lat))*np.sin(np.radians(row.p2_lon)),
                             np.sin(np.radians(row.p2_lat))])
         p2_srange_calc=np.sqrt((r[0]-p2[0])**2+(r[1]-p2[1])**2+(r[2]-p2[2])**2)
         dsrange2=row.p2_srange-p2_srange_calc
-        dsrange2s.append(dsrange2)
+        dsrange2s[i]=dsrange2
         #p1 position from table
         p1a=r_moon*np.array([np.cos(np.radians(row.p1_lat))*np.cos(np.radians(row.p1_lon)),
                              np.cos(np.radians(row.p1_lat))*np.sin(np.radians(row.p1_lon)),
                              np.sin(np.radians(row.p1_lat))])
         p1a_srange_calc=np.sqrt((r[0]-p1a[0])**2+(r[1]-p1a[1])**2+(r[2]-p1a[2])**2)
         dsrange1a=row.p1_srange-p1a_srange_calc
-        dsrange1as.append(dsrange1a)
+        dsrange1as[i]=dsrange1a
         #p1 position from velocity vector
         (t,p1c)=ray_sphere_intersect(r, vbar, r_moon)
         #Since vbar is a unit vector, and r is measured in units of km, t has units of km itself,
         #and is therefore directly comparable to p1_srange.
         dsrange1b=row.p1_srange-t
-        dsrange1bs.append(dsrange1b)
+        dsrange1bs[i]=dsrange1b
         dsrange1c=np.sqrt(np.sum((p1c-p1a)**2))
-        dsrange1cs.append(dsrange1c)
+        dsrange1cs[i]=dsrange1c
         #Calculate velocity from last row
-        ts.append(gmt_to_et(row.GMT))
+        ts[i]=gmt_to_et(row.GMT)
         if r_last is not None:
             dt=ts[-1]-ts[-2]
+            if dt==0:
+                pass
             dr=np.sqrt(np.sum((r-r_last)**2))
             dv=dr/dt-row.v
-            dvs.append(dv)
+            dvs[i]=dv
         r_last=r
         #print(row.GMT, gmt, cspice.etcal(gmt), mjd,tai_utc,tai,et, cspice.etcal(et))
     
-    if plot_check_values:
+    if plot:
         #This plot is meant to duplicate the residual plot on the spreadsheet
         fig,ax1=plt.subplots()
         ax2=ax1.twinx()
-        ax1.plot(np.array(ts)-ts[-1],dsrange2s,'bo')
-        ax1.plot(np.array(ts)-ts[-1],dsrange1as,'ro')
-        ax1.plot(np.array(ts)-ts[-1],dsrange1bs,'yo')
-        ax1.plot(np.array(ts)-ts[-1],dsrange1cs,'go')
-        ax2.plot(np.array(ts)-ts[-1],dvs,'m+')
-        ax1.plot(np.array(ts)-ts[-1],mds,'k--')
-        ax1.plot(np.array(ts)-ts[-1],-np.array(mds),'k--')
+        ax1.plot(ts-ts[-1],dsrange2s,'bo')
+        ax1.plot(ts-ts[-1],dsrange1as,'ro')
+        ax1.plot(ts-ts[-1],dsrange1bs,'yo')
+        ax1.plot(ts-ts[-1],dsrange1cs,'go')
+        ax2.plot(ts-ts[-1],dvs,'m+')
+        ax1.plot(ts-ts[-1],mds,'k--')
+        ax1.plot(ts-ts[-1],-np.array(mds),'k--')
         plt.show()
-    return (rs,vs,ts)
+    return rs, vs, ts
 
 def convertImageACanonical(rs,vs,ts):
     rcus=np.zeros((len(ts),3))
@@ -347,7 +340,7 @@ def threeBodyRK4(r0,v0,ts):
     :return: First element is numpy array of position vectors, second element is numpy array of velocities 
 
     """
-    def f(t,y):
+    def f(t,y,i):
         """
         Derivative function, following the form in the Wikipedia article on Runge-Kutta
         
@@ -362,16 +355,10 @@ def threeBodyRK4(r0,v0,ts):
         * mu_earth - used for calculating accelerations towards Earth
         """
         dvdtMoon=-y[0:3]/np.linalg.norm(y[0:3])**3
-        et=bmw.su_to_cu(t,r_moon,mu_moon,0,1,inverse=True)+tas[0]
-        (xEarth,ltime)=cspice.spkezr('399',+et,'ECI_TOD','NONE','301')
-        rEarth=bmw.su_to_cu(xEarth[0:3],r_moon,mu_moon,1,0)
-        drEarth=y[0:3]-rEarth
+        drEarth=y[0:3]-rEarth[i,:] #Use cached Earth position
         #Acceleration of the *probe* from the gravity of the Earth
         dvdtEarth=-(mu_earth/mu_moon)*drEarth/np.linalg.norm(drEarth)**3
-        #acceleration of the *moon*  from the gravity of the Earth. This isn't quite right,
-        #as it doesn't take into account the non-negligible mass of the moon.
-        dvdtEM   = (mu_earth/mu_moon)* rEarth/np.linalg.norm( rEarth)**3
-        return np.concatenate((y[3:6],dvdtMoon+dvdtEarth-dvdtEM))
+        return np.concatenate((y[3:6],dvdtMoon+dvdtEarth-dvdtEM[i,:])) #Use cached EM acceleration
     result=np.zeros((ts.size,6))
     yi=np.concatenate((r0,v0))
     result[0,:]=yi
@@ -381,17 +368,15 @@ def threeBodyRK4(r0,v0,ts):
         h=ti3-ti0
         ti1=ti0+h/2
         ti2=ti1
-        ki1=f(ti0,yi)
-        ki2=f(ti1,yi+h/2*ki1)
-        ki3=f(ti2,yi+h/2*ki2)
-        ki4=f(ti3,yi+h*ki3)
+        ki1=f(ti0,yi        ,i*2  )
+        ki2=f(ti1,yi+h/2*ki1,i*2+1)
+        ki3=f(ti2,yi+h/2*ki2,i*2+1)
+        ki4=f(ti3,yi+h  *ki3,i*2+2)
         yi+=(ki1+2*ki2+2*ki3+ki4)*h/6
-        result[i+1]=yi
+        result[i+1,:]=yi
     return (result[:,0:3],result[:,3:6])
 
-#Calculate a trajectory from the current start position to the final impact point, and return the difference in position at table rows
-
-def cost(r0,rs,ts,dr=None,propagate=wrap_kepler):
+def cost(r0,rs,ts,bias=None,propagate=wrap_kepler):
     """
     Calculate the cost function using biased Gauss targeting and three-body propagation. Compatibile with scipy.optimize.minimize
     :param numpy vector r0: Initial position for Gauss targeting, in canonical units.
@@ -404,15 +389,13 @@ def cost(r0,rs,ts,dr=None,propagate=wrap_kepler):
     :return: Cost function, square of distance from each given position to the calculated position on the targeted trajectory at the 
              corresponding time. Value is in square canonical distance units.
     """
-    #unpack *args rs,ts,dr=None,propagate=wrap_kepler
-    result=0
-    target=rs[-1]
-    if dr is not None:
-        target-=dr
+    target=rs[-1,:]
+    if bias is not None:
+        target-=bias
     (v0,v1)=bmw.gauss(r0,target,ts[-1]-ts[0])
     (rcalcs,vcalcs)=propagate(r0,v0,ts)
-    for i in range(ts.size):
-        result+=np.sum((rs[i]-rcalcs[i,:])**2)
+    result=np.sum((rs-rcalcs)**2)
+    print(r0,result)
     return result
 
 def trajectory_to_su(rs,vs):
@@ -429,13 +412,15 @@ def plot_residuals(rcalcs,vcalcs,rs,vs,ts,subplot=411, title=''):
     dvxfs=[]
     dvyfs=[]
     dvzfs=[]
+    mdegs=[]
     for (i,(r,v,t)) in enumerate(zip(rs,vs,ts)):
         drxfs.append(r[0]-rcalcs[i,0])
         dryfs.append(r[1]-rcalcs[i,1])
         drzfs.append(r[2]-rcalcs[i,2])
         dvxfs.append(v[0]-vcalcs[i,0])
         dvyfs.append(v[1]-vcalcs[i,1])
-        dvzfs.append(v[2]-vcalcs[i,2])        
+        dvzfs.append(v[2]-vcalcs[i,2])
+        mdegs.append(bmw.su_to_cu(np.linalg.norm(r)*2*np.pi/360000.0,r_moon,mu_moon,1,0,inverse=True))        
     plt.subplot(subplot)
     plt.title(title+', pos residuals')
     plt.ylabel('pos residual/(m)')
@@ -444,6 +429,8 @@ def plot_residuals(rcalcs,vcalcs,rs,vs,ts,subplot=411, title=''):
     xh,=plt.plot(tsus,bmw.su_to_cu(np.array(drxfs),r_moon,mu_moon,1,0,inverse=True)*1000,'rx',label='dx')
     yh,=plt.plot(tsus,bmw.su_to_cu(np.array(dryfs),r_moon,mu_moon,1,0,inverse=True)*1000,'gx',label='dy')
     zh,=plt.plot(tsus,bmw.su_to_cu(np.array(drzfs),r_moon,mu_moon,1,0,inverse=True)*1000,'bx',label='dz')
+    plt.plot(tsus,np.array(mdegs)*500,'k--')
+    plt.plot(tsus,np.array(mdegs)*-500,'k--')
     plt.legend(handles=(xh,yh,zh))
     plt.subplot(subplot+1)
     plt.title(title+', vel residuals')
@@ -454,103 +441,177 @@ def plot_residuals(rcalcs,vcalcs,rs,vs,ts,subplot=411, title=''):
     zh,=plt.plot(tsus,bmw.su_to_cu(np.array(dvzfs),r_moon,mu_moon,1,-1,inverse=True),'b+',label='dvz')
     plt.legend(handles=(xh,yh,zh))
 
+def cache_earth(ts):
+    """"
+    cache the position vector of the Earth, and the EM acceleration, since
+    we always use threeBodyRK4 with the same ts.
+
+    :param numpy array ts: array of Spice times to calculate the positions at
+    :rtype tuple:
+    :return: First elemet is rEarth, a numpy array [ts.size*2-1,3]. Each row is the
+               position of the Earth relative to the Moon in selenocentric ECI_TOD frame,
+               in lunar canonical units. Every even row is the position at one of
+               the requested times in ts, and every odd row is the position exactly
+               in between two consecutive times in ts.
+             Second element is dvdtEarth, a numpy array [ts.size*2-1,3]. Each row is the
+               acceleration of the moon towards the earth in the same frame and units
+               as above. Same even/odd breakdown too.
+    """
+    rEarth=np.zeros((ts.size*2-1,3),np.float64)
+    dvdtEM=np.zeros((ts.size*2-1,3),np.float64)
+    for i in range(ts.size):
+        (xEarth, _) = cspice.spkezr('399', ts[i], 'ECI_TOD', 'NONE', '301')
+        rEarth[i*2,:] = bmw.su_to_cu(xEarth[0:3], r_moon, mu_moon, 1, 0)
+        # acceleration of the *moon*  from the gravity of the Earth. This isn't quite right,
+        # as it doesn't take into account the non-negligible mass of the moon.
+        dvdtEM[i*2,:] = (mu_earth/mu_moon)*rEarth[i*2,:]/np.linalg.norm(rEarth[i*2,:]) ** 3
+        if i<tas.size-1:
+            (xEarth, _) = cspice.spkezr('399', (ts[i]+ts[i+1])/2, 'ECI_TOD', 'NONE', '301')
+            rEarth[i*2+1,:] = bmw.su_to_cu(xEarth[0:3], r_moon, mu_moon, 1, 0)
+            dvdtEM[i*2+1,:] = (mu_earth/mu_moon)*rEarth[i*2,:]/np.linalg.norm(rEarth[i*2,:]) ** 3
+    return rEarth, dvdtEM
+
+def gradient_descent(F,x0,args=(),delta=1e-14,gamma0=1e-12,adapt=False,plot=False):
+    """
+    Find a local minimum of a scalar-valued function of a vector (scalar field)
+    by the Gradient Descent method.
+
+    https://en.wikipedia.org/wiki/Gradient_descent
+
+    :param function F: Function to minimize. Initial use case is a cost
+                       function computed as a sum of squares of difference
+                       between points on a calculated trajectory and observed
+                       points on the same trajectory
+    :param numpy vector x0: Initial guess as to minimum of function. This method
+                            will "probably" find the local minimum nearest
+                            to this point
+    :param float delta: Amount to perturb the function parameters to calculate
+                        the gradient
+    :param float gamma0: Initial step size. The step size is adaptive after
+                         the first step, so this controls the size of that
+                         first step.
+
+    Gradient descent minimizes the function by steps. At each step, it figures
+    out the gradient of the function. This is a vector which points in the
+    direction of maximum increase of the function. Since we want to minimize,
+    we take a step in the opposite direction. Gamma is a scale factor which
+    determines how far to step in that direction.
+
+    \delta_x=\gamma_n*grad(F(x_n)
+    x_{n+1}=x_{n+1}-\delta_x
+
+    Now the only hard part is to figure out the right gamma. A simple
+    non-working optimizer would use the gradient function to project to zero,
+    and take a step of that size. Unfortunately, that is only sound if the
+    minimum is exactly zero. The wiki (boo!) gives a formula for gamma as:
+
+    \gamma_n=\frac{(x_n-x_{n-1})^T[grad(F(x_n))-grad(F(x_{n-1}))]}
+                  {norm(grad(F(x_n))-grad(F(x_{n-1})))**2}
+
+    Since this requires the gradient both at the current step and the previous one,
+    we need an initial step size in order to take that first step.
+    """
+    def grad(F,x0,delta,*args):
+        """
+        Estimate the gradient of a scalar field by finite differences
+        :param function F: Function to calculate the value of the field at a given point
+        :param numpy vector x0: Point to take the gradient at
+        :param float delta: Step size to take
+        :return: Estimate of gradient vector
+        """
+        F0=F(x0,*args)
+        kd=np.zeros(x0.size)
+        result=np.zeros(x0.size)
+        min=True
+        for i in range(x0.size):
+            kd[i]=delta
+            Fp=F(x0+kd,*args)
+            Fm=F(x0-kd,*args)
+            if Fp<F0 or Fm<F0:
+                min=False
+            result[i]=(Fp-Fm)/(2*delta)
+            kd[i]=0.0
+        return (result,F0,min)
+    #Take the first step
+    xnm1=x0
+    gFxnm1,Fxnm1,min=grad(F,x0,delta,*args)
+    if min:
+        #won't be able to find an improvement, delta is too big
+        return x0
+    xn=xnm1-gamma0*gFxnm1
+    #Now take steps with dynamic step size
+    done=False
+    Fs=[Fxnm1]
+    xs=[0.0]
+    ys=[0.0]
+    zs=[0.0]
+    while not done:
+        gFxn,Fxn,min=grad(F,xn,delta,*args)
+        Fs.append(Fxn)
+        xs.append(xn[0]-x0[0])
+        ys.append(xn[1]-x0[1])
+        zs.append(xn[2]-x0[2])
+        if adapt:
+            #Adaptive size (doesn't work for my problem)
+            dx=xn-xnm1
+            dF=gFxn-gFxnm1
+            gamma=np.dot(dx,dF)/np.dot(dF,dF)
+        else:
+            gamma=gamma0
+        xnm1=xn
+        gFxnm1=gFxn
+        xn=xnm1-gamma*gFxnm1/np.linalg.norm(gFxnm1)
+        done=min
+    if plot:
+        mpl.rcParams['legend.fontsize'] = 10
+        fig = plt.figure(3)
+        ax = fig.gca(projection='3d')
+        ax.plot(ys, zs, Fs)
+        plt.show()
+    return xn
+
 image_a=readImageA() #Read table A
 (recias,vecias,tas)=processImageA(image_a)
+
 #Convert the coordinates from moon body-fixed to moon-centered inertial canonical
 (racus,vacus,tacus)=convertImageACanonical(recias,vecias,tas)
 
-#Use Gauss targeting to get a trajectory from the initial to final positions, without any target bias
+#Cache the earth positions and accelerations
+(rEarth,dvdtEM)=cache_earth(tas)
+
+#Use Gauss targeting to get a trajectory from the initial to final positions,
+#without any target bias
 (v0_gauss,v1_gauss)=bmw.gauss(racus[0],racus[-1],tacus[-1],Type=1)
 
 #Use three-body propagation to calculate the target bias
-(rs_for_dr,vs_for_dr)=threeBodyRK4(racus[0],v0_gauss,tacus)
-#How close do we get to table A?
+(rs_for_bias,vs_for_bias)=threeBodyRK4(racus[0],v0_gauss,tacus)
 plt.figure(1)
-plot_residuals(rs_for_dr,vs_for_dr,racus,vacus,tacus,subplot=211,title='Unbiased Gauss targeting')
-plt.show()
-dr=rs_for_dr[-1,:]-racus[-1]
+plot_residuals(rs_for_bias,vs_for_bias,racus,vacus,tacus,subplot=211,title='Unbiased Gauss targeting')
+bias=rs_for_bias[-1,:]-racus[-1]
 
 #Fit the observations using biased Gauss targeting and three-body propagation
 plt.figure(2)
-(rcu0_fit,vcu0_fit)=opt.minimize(cost,racus[0,:],args=(racus,tacus,dr,threeBodyRK4))
-(rcus_fit,vcus_fit)=threeBodyRK4(rcu0_fit,vcu0_fit,tacus)
-plot_residuals(rcus_fit,vcus_fit,racus,vacus,tacus,subplot=211)
+(v0_gaussb,_)=bmw.gauss(racus[0],racus[-1,:]-bias,tacus[-1])
+(rcus_gaussb,vcus_gaussb)=threeBodyRK4(racus[0],v0_gaussb,tacus)
+plot_residuals(rcus_gaussb,vcus_gaussb,racus,vacus,tacus,subplot=211,title='Biased Gauss targeting')
 
-#Now bias the aimpoint for Gauss and re-find the position and velocity
-dr1=r1_rk-rcus[-1]
-print("State before tide correction (km): ",bmw.su_to_cu(r0_fit,r_moon,mu_moon,1,0,inverse=True),bmw.su_to_cu(v0_fit,r_moon,mu_moon,1,-1,inverse=True))
-print("Error before tide correction (km): ",bmw.su_to_cu(dr1,r_moon,mu_moon,1,0,inverse=True))
-(v0_fit2,v1_fit2)=bmw.gauss(r0_fit,rcus[-1]-dr1,tcus[-1])
+rcus_for_spice=rcus_gaussb
+vcus_for_spice=vcus_gaussb
 
-done_fit=False
-r0_fit2=r0_fit
-costm=0.0
-costs2=[]
-while not done_fit:
-    cost0=fit_cost2(r0_fit2,rcus,dr1,tcus)
-    costs2.append(cost0)
-    rstep=1e-7
-    dcostdrx=(fit_cost2(r0_fit2+np.array([rstep,0.000,0.000]),rcus,dr1,tcus)-cost0)/rstep        
-    dcostdry=(fit_cost2(r0_fit2+np.array([  0.0,rstep,0.000]),rcus,dr1,tcus)-cost0)/rstep        
-    dcostdrz=(fit_cost2(r0_fit2+np.array([  0.0,0.000,rstep]),rcus,dr1,tcus)-cost0)/rstep        
-    print("Old cost: %e, new cost: %e" %(costm,cost0))
-    if costm==0.0:
-        done_fit=False
-    else:
-        done_fit=abs(cost0-costm)<1e-4*cost0
-    if done_fit:
-        break
-    costm=cost0
-    dr=np.array([dcostdrx,dcostdry,dcostdrz])
-    gamma=rstep/np.linalg.norm(dr) #Move 1m closer to correct position
-    dr*=gamma
-    r0_fit2-=dr
-
-(v0_fit2,v1_fit2)=bmw.gauss(r0_fit2,rcus[-1]-dr1,tcus[-1])
-(r1_rk2,v1_rk2)=threeBodyRK4(r0_fit2,v0_fit2,tcus)
-
-#Now bias the aimpoint for Gauss and re-find the position and velocity
-dr2=r1_rk2[-1,:]-rcus[-1]
-print("State after tide correction (km): ",bmw.su_to_cu(r0_fit2,r_moon,mu_moon,1,0,inverse=True),bmw.su_to_cu(v0_fit2,r_moon,mu_moon,1,-1,inverse=True))
-print("Error after tide correction (km): ",bmw.su_to_cu(dr2,r_moon,mu_moon,1,0,inverse=True))
-
-if False:    
-    plt.plot(costs)
-    plt.plot(costs2)
-    plt.show()
-
-#Use the fit trajectory, use
-#three-body propagation to evaluate at each image time, and graph the difference
-drxfs2=[]
-dryfs2=[]
-drzfs2=[]
-dvxfs2=[]
-dvyfs2=[]
-dvzfs2=[]
-recis=np.zeros([len(ts),3])
-vecis=np.zeros([len(ts),3])
-print("elorb0: ",bmw.elorb(r0_fit,v0_fit))
-for (i,(rcu,vcu,tcu)) in enumerate(zip(rcus,vcus,tcus)):
-    (rcalc,vcalc)=(r1_rk2[i,:],v1_rk2[i,:])
-    recis[i,:]=bmw.su_to_cu(rcalc,r_moon,mu_moon, 1, 0,inverse=True)
-    vecis[i,:]=bmw.su_to_cu(vcalc,r_moon,mu_moon, 1,-1,inverse=True)
-    drxfs2.append(rcu[0]-rcalc[0])
-    dryfs2.append(rcu[1]-rcalc[1])
-    drzfs2.append(rcu[2]-rcalc[2])
-    dvxfs2.append(vcu[0]-vcalc[0])
-    dvyfs2.append(vcu[1]-vcalc[1])
-    dvzfs2.append(vcu[2]-vcalc[2])
+#Previous results work from the first table position, which has limited precision. The code below is
+#an attempt to find a start point which fits all of the points better, but unfortunately it is failing.
+#It looks like the initial guess is so close to the minimum that numerical precision is getting in the
+#way of finding a better initial guess.
+if False:
+    rcu0_fit=gradient_descent(cost,racus[0,:],args=(racus,tacus,bias,threeBodyRK4),plot=False)
+    (v0_fit,_)=bmw.gauss(rcu0_fit,racus[-1,:]-bias,tacus[-1])
+    (rcus_fit,vcus_fit)=threeBodyRK4(racus[0],v0_gaussb,tacus)
+    plt.figure(3)
+    plot_residuals(rcus_fit,vcus_fit,racus,vacus,tacus,subplot=211,title='Fit Gauss targeting')
+    rcus_for_spice=rcus_fit
+    vcus_for_spice=vcus_fit
     
-if True:
-    plt.subplot(413)
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(drxfs2),r_moon,mu_moon,1,0,inverse=True),'rx')
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(dryfs2),r_moon,mu_moon,1,0,inverse=True),'gx')
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(drzfs2),r_moon,mu_moon,1,0,inverse=True),'bx')
-    plt.subplot(414)
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(dvxfs2),r_moon,mu_moon,1,-1,inverse=True),'r+')
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(dvyfs2),r_moon,mu_moon,1,-1,inverse=True),'g+')
-    plt.plot(np.array(ts)-ts[-1],bmw.su_to_cu(np.array(dvzfs2),r_moon,mu_moon,1,-1,inverse=True),'b+')
-    plt.show()
+(rs_for_spice,vs_for_spice)=trajectory_to_su(rcus_for_spice, vcus_for_spice)
 
 trajtuple=namedtuple('trajtuple',['GMT',
                                   'GeoRX','GeoRY','GeoRZ',
@@ -700,7 +761,7 @@ LINES_PER_RECORD=1
 CENTER_GM=%9.4f
 FRAME_DEF_FILE='%s/fk/eci_tod.tf'
 LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
-""" % (rows[0].GMT,rows[-2].GMT,rows[-1].GMT,mu_moon,'../../Data/spice/generic','../../Data/spice/generic')
+""" % (image_a[0].GMT,image_a[-2].GMT,image_a[-1].GMT,mu_moon,'../../Data/spice/generic','../../Data/spice/generic')
 
 print(t)
 tofs=None
@@ -729,15 +790,15 @@ with open('geo.txt','w') as ouf_geo:
                 this_state[4],
                 this_state[5]),file=ouf_seleno)
 
-with open('seleno2.txt','w') as ouf:
-    for i in range(len(ts)):
-        print("%23.6f;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e"%(ts[i],
-            recis[i,0],
-            recis[i,1],
-            recis[i,2],
-            vecis[i,0],
-            vecis[i,1],
-            vecis[i,2]),file=ouf)
+with open('seleno2.txt','w') as ouf_seleno2:
+    for i in range(tas.size):
+        print("%23.6f;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e"%(tas[i],
+            rs_for_spice[i,0],
+            rs_for_spice[i,1],
+            rs_for_spice[i,2],
+            vs_for_spice[i,0],
+            vs_for_spice[i,1],
+            vs_for_spice[i,2]),file=ouf_seleno2)
 
 with open('Ranger7Geo_mkspk.txt','w') as ouf:
     print(Ranger7Geo_txt,file=ouf)
@@ -749,7 +810,6 @@ with open('Ranger7Seleno2_mkspk.txt','w') as ouf:
     print(Ranger7Seleno2_txt,file=ouf)
 
 import subprocess
-import os
 try:
     os.remove("Ranger7.bsp")
 except FileNotFoundError:
@@ -760,35 +820,52 @@ subprocess.call("~/bin/mkspk -setup Ranger7Seleno2_mkspk.txt -input seleno2.txt 
 
 cspice.furnsh("Ranger7.bsp")
 
-selenostatepos_x=[0.0]*SelenoState.shape[0]
-selenostatepos_y=[0.0]*SelenoState.shape[0]
+selenostatepos_x=[]
+selenostatepos_y=[]
+selenostatepos_z=[]
 
 for i in range(SelenoState.shape[0]):
     this_state = SelenoState[i,:]
     if np.isfinite(this_state[0]):
         this_pos=this_state[0:3]
-        selenostatepos_x[i]=this_pos[0]
-        selenostatepos_y[i]=this_pos[1]
+        selenostatepos_x.append(this_pos[0])
+        selenostatepos_y.append(this_pos[1])
+        selenostatepos_z.append(this_pos[2])
 
 n_step=1000
-step=sorted(list(t[tofs:])+list(ts)+list(np.linspace(t[tofs],t[-1],n_step)))
+step=sorted(list(t[tofs:])+list(tas)+list(np.linspace(t[tofs],t[-1],n_step)))
 n_step=len(step)
-spicepos_x=[0.0]*n_step
-spicepos_y=[0.0]*n_step
+spicepos_x=np.zeros(n_step)
+spicepos_y=np.zeros(n_step)
+spicepos_z=np.zeros(n_step)
 
 for i,tt in enumerate(step):
     (spice_state,ltime)=cspice.spkezr('-1007',tt,'ECI_TOD','NONE','301')
     spice_pos=spice_state[0:3]
     spicepos_x[i]=spice_pos[0]
     spicepos_y[i]=spice_pos[1]
+    spicepos_z[i]=spice_pos[2]
     #print(spice_pos)
     spice_vel=spice_state[3:6]
-    #print(spice_vel)
+    print(cspice.etcal(tt),tt,spice_state)
 
 if True:
-    plt.plot(selenostatepos_x,selenostatepos_y,'b*')
-    plt.plot(spicepos_x,spicepos_y,'g-*')
-    plt.plot(recis[:,0],recis[:,1],'r+')
+    plt.figure(4)
+    plt.subplot(211)
+    plt.xlabel('x selenocentric/km')
+    plt.ylabel('y selenocentric/km')
+    plt.plot(selenostatepos_x,selenostatepos_y,'b*',label='selenostate')
+    plt.plot(spicepos_x,spicepos_y,'g-*',label='spice output')
+    plt.plot(rs_for_spice[:,0],rs_for_spice[:,1],'r+',label='spice input')
+    plt.legend()
+    plt.axis('equal')
+    plt.subplot(212)
+    plt.xlabel('x selenocentric/km')
+    plt.ylabel('z selenocentric/km')
+    plt.plot(selenostatepos_x,selenostatepos_z,'b*',label='selenostate')
+    plt.plot(spicepos_x,spicepos_z,'g-*',label='spice output')
+    plt.plot(rs_for_spice[:,0],rs_for_spice[:,2],'r+',label='spice input')
+    plt.legend()
     plt.axis('equal')
     plt.show()
 
