@@ -22,13 +22,31 @@ os.chdir('../../Data/spice/Ranger/')
 cspice.furnsh('Ranger7Background.tm')
 os.chdir(old)
 
-r_moon=1735.46        #Reported radius of Moon at impact point. This happens to be about 1700m below the LRO/LROC reference sphere
 #mu_moon=4904.8695     #Value from Vallado of gravitational parameter of Moon in km and s
 #mu_earth=398600.4415  #Value from Vallado of gravitational parameter of Earth in km and s
 mu_moon =cspice.gdpool("BODY301_GM",0,1)[0]  #DE431 value of gravitational parameter of Moon in km and s
 mu_earth=cspice.gdpool("BODY399_GM",0,1)[0] #DE431 value of gravitational parameter of Earth in km and s
-#Documented Ranger 7 impact points
-#
+#Documented Ranger 7 impact points. All seem to be in Mean-Earth-Pole coordinates
+#From Image A, last row (value is actually from point 1 from the previous row, 2.5s before impact)
+#lat: -10.630   lon: -20.588   r: 1735.455   GMT: 1961-Jul-31 13:25:48.799
+ImageALLR=(-10.630,-20.588,1735.455)
+#From Wagner 02/2017 (https://doi.org/10.1016/j.icarus.2016.05.011)
+#lat: -10.6340  lon: 339.3230  r: 1735.609
+#                   (-20.6770)
+WagnerLLR=(-10.6340,-20.6770,1735.609)
+#From http://lroc.sese.asu.edu/posts/650 (2013 update)
+#lat: -10.6340  lon: 339.3229
+#                   (-20.6771)
+#From http://lroc.sese.asu.edu/posts/938 (same as Wagner 02/2017 above)
+#lat: -10.6340  lon: 339.3230  el: -1.791
+#                   (-20.6770)
+#From Trajectory table selenocentric (copied from program output below)
+#lat: -10.693   lon: -20.676   r: 1735.600   GMT: 1964-Jul-31 13:25:48.724
+TrajLLR=(-10.693,-20.676,1735.600)
+
+#Reported radius of Moon at impact point. Take this from one of the LLRs
+r_moon=ImageALLR[2]
+
 def gmt_to_et(gmt):
     """
 Calculate ET from given GMT, bypassing spice leap second kernels. Spice does not properly handle the "rubber second"
@@ -74,62 +92,16 @@ def floatN(x):
     except ValueError:
         return float('NaN')
 
-image_a_tuple=namedtuple('image_a_tuple',['PhotoNum','GMT',
-                                          'sc_alt','sc_lat','sc_lon',
-                                          'p2_lat','p2_lon','p2_srange',
-                                          'v','pth','az',
-                                          'p1_lat','p1_lon','p1_srange',
-                                          'azn'])
-
-def readImageA(lonofs=0.089):
-    """
-    Read the Image A table.
-    
-    :param float lonofs: offset in longitude to subtract from all longitudes in the file. This is used to make the trajectory
-                         match a given impact longitude from another source.
-    :rtype: list of namedtuple
-    """
-    result=[]
-    with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
-        reader=csv.reader(inf)
-        #Read past the first header line
-        for row in reader:
-            break
-        #Read past the second header line
-        for row in reader:
-            break
-        #Read the rows
-        for row in reader:
-            if not row[0].isdigit():
-                if row[0]!="Impact":
-                    break
-            result.append(image_a_tuple(floatN(row[ 0]), #PhotoNum
-                                               row[ 1] , #GMT
-                                        floatN(row[ 2]), #sc_alt
-                                        floatN(row[ 3]), #sc_lat
-                                        floatN(row[ 4])-lonofs, #sc_lon
-                                        floatN(row[ 5]), #p2_lat
-                                        floatN(row[ 6])-lonofs, #p2_lon
-                                        floatN(row[ 7]), #p2_srange
-                                        floatN(row[ 8]), #v
-                                        floatN(row[ 9]), #pth
-                                        floatN(row[10]), #az
-                                        floatN(row[11]), #p1_lat
-                                        floatN(row[12])-lonofs, #p1_lon
-                                        floatN(row[13]), #p1_srange
-                                        floatN(row[14]))) #azn
-    return result
-
-def ray_sphere_intersect(r0,v,re):
+def ray_sphere_intersect(r0, v, re):
     """
     Calculate the point of intersection between a given ray r(t)=r0+v*t and a sphere dot(r,r)=re**2
-    
+
     :param numpy vector r0: initial point of ray
     :param numpy vector v:  direction of ray. If this is a unit vector, then the units of t returned will be
                             the same as the units of r0
     :param float re: radius of sphere
     :return: tuple, first element is ray parameter, second is intersect point.
-    
+
     Parametric equation for a ray
       r(t)=r0+v*t
     Equation for a sphere of radius r_m
@@ -154,16 +126,62 @@ def ray_sphere_intersect(r0,v,re):
       * B=2*dot(r0,v)
       * C=dot(r0,r0)-re**2
     """
-    A=np.dot(v,v)
-    B=2*np.dot(r0,v)
-    C=np.dot(r0,r0)-re**2
-    D=B**2-4*A*C
-    #Since A is positive, it is always the case that using the negative sign will give the
-    #lower root, which is what we want. If this root is negative, then the spacecraft is
-    #inside the sphere or the sphere is behind the spacecraft.
-    t=(-B-np.sqrt(D))/2*A 
-    #Finish using the ray equation to find the coordinates of p1 from the spacecraft pos/vel
-    return (t,r0+v*t)
+    A = np.dot(v, v)
+    B = 2 * np.dot(r0, v)
+    C = np.dot(r0, r0) - re ** 2
+    D = B ** 2 - 4 * A * C
+    # Since A is positive, it is always the case that using the negative sign will give the
+    # lower root, which is what we want. If this root is negative, then the spacecraft is
+    # inside the sphere or the sphere is behind the spacecraft.
+    t = (-B - np.sqrt(D)) / 2 * A
+    # Finish using the ray equation to find the coordinates of p1 from the spacecraft pos/vel
+    return (t, r0 + v * t)
+
+image_a_tuple=namedtuple('image_a_tuple',['PhotoNum','GMT',
+                                          'sc_alt','sc_lat','sc_lon',
+                                          'p2_lat','p2_lon','p2_srange',
+                                          'v','pth','az',
+                                          'p1_lat','p1_lon','p1_srange',
+                                          'azn'])
+
+def readImageA(latofs=0,lonofs=0,rofs=0):
+    """
+    Read the Image A table.
+    
+    :param float lonofs: offset in longitude to subtract from all longitudes in the file. This is used to make the trajectory
+                         match a given impact longitude from another source.
+    :rtype: list of namedtuple
+    """
+    result=[]
+    with open('Ranger 7 Trajectory - Image A Parameters.csv','r') as inf:
+        reader=csv.reader(inf)
+        #Read past the first header line
+        for row in reader:
+            break
+        #Read past the second header line
+        for row in reader:
+            break
+        #Read the rows
+        for row in reader:
+            if not row[0].isdigit():
+                if row[0]!="Impact":
+                    break
+            result.append(image_a_tuple(floatN(row[ 0]), #PhotoNum
+                                               row[ 1] , #GMT
+                                        floatN(row[ 2])-rofs, #sc_alt
+                                        floatN(row[ 3])-latofs, #sc_lat
+                                        floatN(row[ 4])-lonofs, #sc_lon
+                                        floatN(row[ 5])-latofs, #p2_lat
+                                        floatN(row[ 6])-lonofs, #p2_lon
+                                        floatN(row[ 7]), #p2_srange
+                                        floatN(row[ 8]), #v
+                                        floatN(row[ 9]), #pth
+                                        floatN(row[10]), #az
+                                        floatN(row[11])-latofs, #p1_lat
+                                        floatN(row[12])-lonofs, #p1_lon
+                                        floatN(row[13]), #p1_srange
+                                        floatN(row[14]))) #azn
+    return result
 
 def processImageA(image_a,plot=False):
     """
@@ -272,8 +290,6 @@ def processImageA(image_a,plot=False):
         ts[i]=gmt_to_et(row.GMT)
         if r_last is not None:
             dt=ts[-1]-ts[-2]
-            if dt==0:
-                pass
             dr=np.sqrt(np.sum((r-r_last)**2))
             dv=dr/dt-row.v
             dvs[i]=dv
@@ -284,15 +300,55 @@ def processImageA(image_a,plot=False):
         #This plot is meant to duplicate the residual plot on the spreadsheet
         fig,ax1=plt.subplots()
         ax2=ax1.twinx()
-        ax1.plot(ts-ts[-1],dsrange2s,'bo')
-        ax1.plot(ts-ts[-1],dsrange1as,'ro')
-        ax1.plot(ts-ts[-1],dsrange1bs,'yo')
-        ax1.plot(ts-ts[-1],dsrange1cs,'go')
-        ax2.plot(ts-ts[-1],dvs,'m+')
-        ax1.plot(ts-ts[-1],mds,'k--')
-        ax1.plot(ts-ts[-1],-np.array(mds),'k--')
-        plt.show()
+        ax1.plot(ts-ts[-1],dsrange2s,'bo',label='dsrange2')
+        ax1.plot(ts-ts[-1],dsrange1as,'ro',label='dsrange1a')
+        ax1.plot(ts-ts[-1],dsrange1bs,'yo',label='dsrange1b')
+        ax1.plot(ts-ts[-1],dsrange1cs,'go',label='dsrange1c')
+        ax2.plot(ts-ts[-1],dvs,'m+',label='dvs')
+        ax1.plot(ts-ts[-1], np.array(mds)*0.5,'k--',label='1 millidegree')
+        ax1.plot(ts-ts[-1],-np.array(mds)*0.5,'k--')
     return rs, vs, ts
+
+trajtuple=namedtuple('trajtuple',['GMT',
+                                  'GeoRX','GeoRY','GeoRZ',
+                                  'GeoVX','GeoVY','GeoVZ',
+                                  'SelenoRX','SelenoRY','SelenoRZ',
+                                  'SelenoVX','SelenoVY','SelenoVZ'])
+
+def read_trajectory():
+    traj=[]
+    with open('Ranger 7 Trajectory - Trajectory.csv','r') as inf:
+        reader=csv.reader(inf)
+        #Read past the first header line
+        for row in reader:
+            break
+        #Read the rows
+        for row in reader:
+            traj.append(trajtuple(      row[ 0] , #GMT
+                                 floatN(row[ 1]), #GeoRX
+                                 floatN(row[ 2]), #GeoRY
+                                 floatN(row[ 3]), #GeoRZ
+                                 floatN(row[ 4]), #GeoVX
+                                 floatN(row[ 5]), #GeoVY
+                                 floatN(row[ 6]), #GeoVZ
+                                 floatN(row[ 7]), #SelenoRX
+                                 floatN(row[ 8]), #SelenoRY
+                                 floatN(row[ 9]), #SelenoRZ
+                                 floatN(row[10]), #SelenoVX
+                                 floatN(row[11]), #SelenoVY
+                                 floatN(row[12])))#SelenoVZ
+            print(traj[-1])
+    return traj
+
+def process_trajectory(traj):
+    t=np.zeros(len(traj))
+    GeoState=np.zeros((len(traj),6))
+    SelenoState=np.zeros((len(traj),6))
+    for i,row in enumerate(traj):
+        t[i]=gmt_to_et(row.GMT)
+        GeoState[i,:]=np.array(row[1:7])
+        SelenoState[i,:]=np.array(row[7:13])
+    return (t,GeoState,SelenoState)
 
 def convertImageACanonical(rs,vs,ts):
     rcus=np.zeros((len(ts),3))
@@ -382,9 +438,11 @@ def cost(r0,rs,ts,bias=None,propagate=wrap_kepler):
     :param numpy vector r0: Initial position for Gauss targeting, in canonical units.
     :param numpy array of vectors rs: Positions to fit, in canonical units. Last vector is used as position for Gauss targeting to aim at.
     :param numpy array ts: Times for each position in the fit, in canonical units.
-    :param float      et0: Spice time of first position
-    :param numpy array dr: Target bias vector, in canonical units. This vector is subtracted from the last position and used as the target
+    :param numpy array bias: Target bias vector, in canonical units. This vector is subtracted from the last position and used as the target
                            for Gauss targeting. A correct bias will result in nearly hitting the actual last position.
+    :param function propagate: Function used to propagate the trajectory. Must take
+                           (r0,v0,ts) and return (rs,vs). threeBodyRK4 and wrap_kepler
+                           both are satisfactory.
     :rtype float:
     :return: Cost function, square of distance from each given position to the calculated position on the targeted trajectory at the 
              corresponding time. Value is in square canonical distance units.
@@ -426,20 +484,20 @@ def plot_residuals(rcalcs,vcalcs,rs,vs,ts,subplot=411, title=''):
     plt.ylabel('pos residual/(m)')
     plt.xlabel('Time from impact/s')
     tsus=bmw.su_to_cu(ts-ts[-1],r_moon,mu_moon,0,1,inverse=True)
-    xh,=plt.plot(tsus,bmw.su_to_cu(np.array(drxfs),r_moon,mu_moon,1,0,inverse=True)*1000,'rx',label='dx')
-    yh,=plt.plot(tsus,bmw.su_to_cu(np.array(dryfs),r_moon,mu_moon,1,0,inverse=True)*1000,'gx',label='dy')
-    zh,=plt.plot(tsus,bmw.su_to_cu(np.array(drzfs),r_moon,mu_moon,1,0,inverse=True)*1000,'bx',label='dz')
-    plt.plot(tsus,np.array(mdegs)*500,'k--')
+    plt.plot(tsus,bmw.su_to_cu(np.array(drxfs),r_moon,mu_moon,1,0,inverse=True)*1000,'rx',label='dx')
+    plt.plot(tsus,bmw.su_to_cu(np.array(dryfs),r_moon,mu_moon,1,0,inverse=True)*1000,'gx',label='dy')
+    plt.plot(tsus,bmw.su_to_cu(np.array(drzfs),r_moon,mu_moon,1,0,inverse=True)*1000,'bx',label='dz')
+    plt.plot(tsus,np.array(mdegs)*500,'k--',label='1 millidegree')
     plt.plot(tsus,np.array(mdegs)*-500,'k--')
-    plt.legend(handles=(xh,yh,zh))
+    plt.legend()
     plt.subplot(subplot+1)
     plt.title(title+', vel residuals')
     plt.ylabel('vel residual/(m/s)')
     plt.xlabel('Time from impact/s')
-    xh,=plt.plot(tsus,bmw.su_to_cu(np.array(dvxfs),r_moon,mu_moon,1,-1,inverse=True),'r+',label='dvx')
-    yh,=plt.plot(tsus,bmw.su_to_cu(np.array(dvyfs),r_moon,mu_moon,1,-1,inverse=True),'g+',label='dvy')
-    zh,=plt.plot(tsus,bmw.su_to_cu(np.array(dvzfs),r_moon,mu_moon,1,-1,inverse=True),'b+',label='dvz')
-    plt.legend(handles=(xh,yh,zh))
+    plt.plot(tsus,bmw.su_to_cu(np.array(dvxfs),r_moon,mu_moon,1,-1,inverse=True),'r+',label='dvx')
+    plt.plot(tsus,bmw.su_to_cu(np.array(dvyfs),r_moon,mu_moon,1,-1,inverse=True),'g+',label='dvy')
+    plt.plot(tsus,bmw.su_to_cu(np.array(dvzfs),r_moon,mu_moon,1,-1,inverse=True),'b+',label='dvz')
+    plt.legend()
 
 def cache_earth(ts):
     """"
@@ -570,18 +628,26 @@ def gradient_descent(F,x0,args=(),delta=1e-14,gamma0=1e-12,adapt=False,plot=Fals
         plt.show()
     return xn
 
-image_a=readImageA() #Read table A
-(recias,vecias,tas)=processImageA(image_a)
+image_a=readImageA(lonofs=0) #Read table A
+print(image_a[-1])
+plt.figure(5)
+(recias,vecias,tas)=processImageA(image_a,plot=True)
 
 #Convert the coordinates from moon body-fixed to moon-centered inertial canonical
 (racus,vacus,tacus)=convertImageACanonical(recias,vecias,tas)
 
-#Cache the earth positions and accelerations
-(rEarth,dvdtEM)=cache_earth(tas)
-
 #Use Gauss targeting to get a trajectory from the initial to final positions,
 #without any target bias
 (v0_gauss,v1_gauss)=bmw.gauss(racus[0],racus[-1],tacus[-1],Type=1)
+
+#Show that just using Kepler and lunar two-body gravity is inadequate, thereby
+#showing that we need to consider Earth tide.
+(rcus_kepler,vcus_kepler)=wrap_kepler(racus[0],v0_gauss,tacus)
+plt.figure(0)
+plot_residuals(rcus_kepler,vcus_kepler,racus,vacus,tacus,subplot=211,title='Kepler propagation')
+
+#Cache the earth positions and accelerations
+(rEarth,dvdtEM)=cache_earth(tas)
 
 #Use three-body propagation to calculate the target bias
 (rs_for_bias,vs_for_bias)=threeBodyRK4(racus[0],v0_gauss,tacus)
@@ -610,44 +676,29 @@ if False:
     plot_residuals(rcus_fit,vcus_fit,racus,vacus,tacus,subplot=211,title='Fit Gauss targeting')
     rcus_for_spice=rcus_fit
     vcus_for_spice=vcus_fit
-    
+
+#Try to manually dial it in - enter numbers in meters
+manual_fit=bmw.su_to_cu(np.array([0.0,-25.0,-10.0])/1000.0,r_moon,mu_moon,1,0)
+plt.figure(3)
+(v0_gaussb,_)=bmw.gauss(racus[0]+manual_fit,racus[-1,:]-bias,tacus[-1])
+(rcus_manual,vcus_manual)=threeBodyRK4(racus[0]+manual_fit,v0_gaussb,tacus)
+plot_residuals(rcus_manual,vcus_manual,racus,vacus,tacus,subplot=211,title='Manual fit')
+
 (rs_for_spice,vs_for_spice)=trajectory_to_su(rcus_for_spice, vcus_for_spice)
 
-trajtuple=namedtuple('trajtuple',['GMT',
-                                  'GeoRX','GeoRY','GeoRZ',
-                                  'GeoVX','GeoVY','GeoVZ',
-                                  'SelenoRX','SelenoRY','SelenoRZ',
-                                  'SelenoVX','SelenoVY','SelenoVZ'])
-traj=[]
-with open('Ranger 7 Trajectory - Trajectory.csv','r') as inf:
-    reader=csv.reader(inf)
-    #Read past the first header line
-    for row in reader:
-        break
-    #Read the rows
-    for row in reader:
-        traj.append(trajtuple(      row[ 0] , #GMT
-                             floatN(row[ 1]), #GeoRX
-                             floatN(row[ 2]), #GeoRY
-                             floatN(row[ 3]), #GeoRZ
-                             floatN(row[ 4]), #GeoVX
-                             floatN(row[ 5]), #GeoVY
-                             floatN(row[ 6]), #GeoVZ
-                             floatN(row[ 7]), #SelenoRX
-                             floatN(row[ 8]), #SelenoRY
-                             floatN(row[ 9]), #SelenoRZ
-                             floatN(row[10]), #SelenoVX
-                             floatN(row[11]), #SelenoVY
-                             floatN(row[12])))#SelenoVZ
-        print(traj[-1])
-        
-t=np.zeros(len(traj))
-GeoState=np.zeros((len(traj),6))
-SelenoState=np.zeros((len(traj),6))
-for i,row in enumerate(traj):
-    t[i]=gmt_to_et(row.GMT)
-    GeoState[i,:]=np.array(row[1:7])
-    SelenoState[i,:]=np.array(row[7:13])
+#Read Earth-Moon trajectory
+traj=read_trajectory()
+(t,GeoState,SelenoState)=process_trajectory(traj)
+
+#Convert last SelenoState from ECI_TOD to IAU_MOON lat/lon, for comparison with other coordinates
+M=cspice.sxform('ECI_TOD','IAU_MOON',t[-1])
+print(traj[-1].GMT,t[-1],M)
+Ms = np.matmul(M, SelenoState[-1,:])
+print(Ms)
+lon=np.degrees(np.arctan2(Ms[1],Ms[0]))
+r=np.linalg.norm(Ms[0:3])
+lat=np.degrees(np.arcsin(Ms[2]/r))
+print("#lat: %7.3f   lon: %7.3f   r: %7.3f   GMT: %s" % (lat,lon,r,traj[-1].GMT))
 
 Ranger7Geo_txt="""
 Ranger 7 - first completely successful Ranger lunar impact mission. Data from
@@ -763,7 +814,6 @@ FRAME_DEF_FILE='%s/fk/eci_tod.tf'
 LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
 """ % (image_a[0].GMT,image_a[-2].GMT,image_a[-1].GMT,mu_moon,'../../Data/spice/generic','../../Data/spice/generic')
 
-print(t)
 tofs=None
 with open('geo.txt','w') as ouf_geo:
     with open('seleno.txt','w') as ouf_seleno:
@@ -845,7 +895,6 @@ for i,tt in enumerate(step):
     spicepos_x[i]=spice_pos[0]
     spicepos_y[i]=spice_pos[1]
     spicepos_z[i]=spice_pos[2]
-    #print(spice_pos)
     spice_vel=spice_state[3:6]
     print(cspice.etcal(tt),tt,spice_state)
 
@@ -854,19 +903,21 @@ if True:
     plt.subplot(211)
     plt.xlabel('x selenocentric/km')
     plt.ylabel('y selenocentric/km')
-    plt.plot(selenostatepos_x,selenostatepos_y,'b*',label='selenostate')
     plt.plot(spicepos_x,spicepos_y,'g-*',label='spice output')
     plt.plot(rs_for_spice[:,0],rs_for_spice[:,1],'r+',label='spice input')
+    plt.plot(selenostatepos_x,selenostatepos_y,'b*',label='selenostate')
     plt.legend()
     plt.axis('equal')
+    plt.axis((-3835,-3805,118,124))
     plt.subplot(212)
     plt.xlabel('x selenocentric/km')
     plt.ylabel('z selenocentric/km')
-    plt.plot(selenostatepos_x,selenostatepos_z,'b*',label='selenostate')
     plt.plot(spicepos_x,spicepos_z,'g-*',label='spice output')
     plt.plot(rs_for_spice[:,0],rs_for_spice[:,2],'r+',label='spice input')
+    plt.plot(selenostatepos_x,selenostatepos_z,'b*',label='selenostate')
     plt.legend()
     plt.axis('equal')
+    plt.axis((-3835,-3805,-301.5,-299.5))
     plt.show()
 
 
