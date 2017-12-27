@@ -81,6 +81,27 @@ Ranger 7 was flown when the following row in tai-utc.dat was valid
     et=tai+32.184
     return et
 
+def llr_to_xyz(lat,lon,radius=1.0,az=False,deg=False):
+    """
+    Convert planetocentric spherical coordinates to rectangular coordinates
+
+    :param float lat: Latitude in radians
+    :param float lon: Longitude in radians
+    :param float radius: Radius, output is in same distance units
+    :param bool az: If true, then treat this as an azimuth from North, rather than a longitude from the prime meridian
+    :param bool deg: If true, input latitude and longitude are in degrees, rather than radians.
+    :rtype np array:
+    :return: Rectangular vector in same distance units as radius
+    """
+    if deg:
+        lat=np.radians(lat)
+        lon=np.radians(lon)
+    if az:
+        lon=np.radians(90)-lon
+    return radius*np.array([np.cos(lat) * np.cos(lon),
+                            np.cos(lat) * np.sin(lon),
+                            np.sin(lat)])
+
 def floatN(x):
     """
     Convert the input to a floating point number if possible, but return NaN if it's not
@@ -245,9 +266,7 @@ def processImageA(image_a,plot=False):
     ts=np.zeros(len(image_a),dtype=np.float64)
     for i,row in enumerate(image_a):
         #Zenith vector
-        rbar=np.array([np.cos(np.radians(row.sc_lat))*np.cos(np.radians(row.sc_lon)),
-                       np.cos(np.radians(row.sc_lat))*np.sin(np.radians(row.sc_lon)),
-                       np.sin(np.radians(row.sc_lat))])
+        rbar=llr_to_xyz(lat=row.sc_lat,lon=row.sc_lon,deg=True)
         #Position in selenocentric moon-fixed mean-earth/pole coordinates
         r=rbar*(row.sc_alt+r_moon)
         mds[i]=(row.sc_alt+r_moon)*np.pi*2.0/360000.0
@@ -258,23 +277,20 @@ def processImageA(image_a,plot=False):
         #North vector
         nbar=np.cross(rbar,ebar)
         #Velocity in selenocentric moon-fixed mean-earth/pole coordinates
-        vbarr=np.sin(np.radians(row.pth))
-        vbare=np.cos(np.radians(row.pth))*np.sin(np.radians(row.az))
-        vbarn=np.cos(np.radians(row.pth))*np.cos(np.radians(row.az))
+        vbar_topo=llr_to_xyz(row.pth,row.az,az=True,deg=True)
+        vbarr=vbar_topo[2]
+        vbare=vbar_topo[0]
+        vbarn=vbar_topo[1]
         vbar=vbarr*rbar+vbare*ebar+vbarn*nbar
         v=vbar*row.v
         vs[i,:]=v
         #p2 position
-        p2=r_moon*np.array([np.cos(np.radians(row.p2_lat))*np.cos(np.radians(row.p2_lon)),
-                            np.cos(np.radians(row.p2_lat))*np.sin(np.radians(row.p2_lon)),
-                            np.sin(np.radians(row.p2_lat))])
+        p2=llr_to_xyz(lat=row.p2_lat,lon=row.p2_lon,deg=True,radius=r_moon)
         p2_srange_calc=np.sqrt((r[0]-p2[0])**2+(r[1]-p2[1])**2+(r[2]-p2[2])**2)
         dsrange2=row.p2_srange-p2_srange_calc
         dsrange2s[i]=dsrange2
         #p1 position from table
-        p1a=r_moon*np.array([np.cos(np.radians(row.p1_lat))*np.cos(np.radians(row.p1_lon)),
-                             np.cos(np.radians(row.p1_lat))*np.sin(np.radians(row.p1_lon)),
-                             np.sin(np.radians(row.p1_lat))])
+        p1a=llr_to_xyz(lat=row.p1_lat,lon=row.p1_lon,deg=True,radius=r_moon)
         p1a_srange_calc=np.sqrt((r[0]-p1a[0])**2+(r[1]-p1a[1])**2+(r[2]-p1a[2])**2)
         dsrange1a=row.p1_srange-p1a_srange_calc
         dsrange1as[i]=dsrange1a
@@ -628,9 +644,61 @@ def gradient_descent(F,x0,args=(),delta=1e-14,gamma0=1e-12,adapt=False,plot=Fals
         plt.show()
     return xn
 
-image_a=readImageA(lonofs=0) #Read table A
+def point_toward(p_b,t_b,p_r,t_r):
+    """
+    Calculate the Point-Toward matrix
+    :param np vector p_b: Point vector in body frame
+    :param np vector t_b: Toward vector in body frame
+    :param np vector p_r: Point vector in reference frame
+    :param np vector t_r: Toward vector in reference vector
+    :return: A 3x3 matrix which transforms from the body frame to the reference frame, pointing the
+    Point body vector to the Point reference vector, and aligning the toward vectors as close as possible.
+    :rtype np matrix:
+    """
+    s_b=np.cross(p_b,t_b) #vector normal to both
+    s_b/=np.linalg.norm(s_b) #force to unit vector
+    s_r=np.cross(p_r,t_r)
+    s_r/=np.linalg.norm(s_r)
+    u_b=np.cross(p_b,s_b)
+    u_b/=np.linalg.norm(u_b) #p_b might not be a unit vector
+    u_r=np.cross(p_r,s_r)
+    u_r/=np.linalg.norm(u_r) #likewise p_r
+    B=np.column_stack((p_b,s_b,u_b))
+    R=np.column_stack((p_r,s_r,u_r))
+    M=np.dot(R,B.transpose())
+    return M
+
+def test_point_toward():
+    thrust_ofs=np.radians(-13)
+    p_b=np.array((np.cos(thrust_ofs),0,np.sin(thrust_ofs)))
+    t_b=np.array((0.0,0.0,1.0))
+    print("p_b: ",p_b)
+    print("t_b: ",t_b)
+    thrust_el=30.0
+    thrust_az=80.0
+    p_r=llr_to_xyz(lat=thrust_el,lon=thrust_az,deg=True,az=True)
+    t_r=np.array((0.0,0.0,-1.0))
+    s_b=np.cross(p_b,t_b)
+    s_b/=np.linalg.norm(s_b)
+    s_r=np.cross(p_r,t_r)
+    s_r/=np.linalg.norm(s_r)
+    u_b=np.cross(p_b,s_b)
+    u_r=np.cross(p_r,s_r)
+    M=point_toward(p_b=p_b,t_b=t_b,p_r=p_r,t_r=t_r)
+    print(M)
+    print("M*p_b: ", np.dot(M, p_b))
+    print("p_r:   ", p_r)
+    print("M*s_b: ", np.dot(M, s_b))
+    print("s_r:   ", s_r)
+    print("M*u_b: ", np.dot(M, u_b))
+    print("u_r:   ", u_r)
+    print("M*t_b: ", np.dot(M, t_b))
+    print("t_r:   ", t_r)
+
+test_point_toward()
+
+image_a=readImageA(latofs=ImageALLR[0]-WagnerLLR[0],lonofs=ImageALLR[1]-WagnerLLR[1]) #Read table A
 print(image_a[-1])
-plt.figure(5)
 (recias,vecias,tas)=processImageA(image_a,plot=True)
 
 #Convert the coordinates from moon body-fixed to moon-centered inertial canonical
@@ -883,7 +951,7 @@ for i in range(SelenoState.shape[0]):
         selenostatepos_z.append(this_pos[2])
 
 n_step=1000
-step=sorted(list(t[tofs:])+list(tas)+list(np.linspace(t[tofs],t[-1],n_step)))
+step=sorted(list(t[tofs:])+list(tas)+list(tas-0.000001)+list(np.linspace(t[tofs],t[-1],n_step)))
 n_step=len(step)
 spicepos_x=np.zeros(n_step)
 spicepos_y=np.zeros(n_step)
@@ -898,7 +966,7 @@ for i,tt in enumerate(step):
     spice_vel=spice_state[3:6]
     print(cspice.etcal(tt),tt,spice_state)
 
-if True:
+if False:
     plt.figure(4)
     plt.subplot(211)
     plt.xlabel('x selenocentric/km')
@@ -919,5 +987,76 @@ if True:
     plt.axis('equal')
     plt.axis((-3835,-3805,-301.5,-299.5))
     plt.show()
+
+
+#C Kernel
+# Point the reticle towards point 2. The toward vector formed by components of the north and east vectors,
+# as determined by the AZN value of the table row.
+#
+# The camera reference vector is 38deg away from the +Z axis, in the direction of the +Y axis. The A camera
+# center reticle is 8.75deg closer to the +Y axis (up) and 0.05deg towards the -x axis (right) of the camera
+# reference axis.
+#
+# So, we have:
+#  Point body, as determined above
+#  Toward body N, 90deg further away from +Z axis
+#  Toward body E, 9odeg from Toward body N and point
+#  Toward body - components of N and E determined by sin and cos of AZN field
+#  Point reference, unit vector from spacecraft to point 2 on surface of Moon
+#  Toward reference - Lunar North
+
+#Treat XY spacecraft plane as equator. The 38+8.75deg angle is the colatitude, and the longitude is 90deg more
+# than the 0.05deg horizontal offset, since
+
+Ranger7CK_txt="""
+Ranger 7 - first completely successful Ranger lunar impact mission. Data from
+'Ranger VII Photographic Parameters', JPL Technical Report No. 32-964, 1 Nov 1966
+available at NTRS as document number 19670002488 
+
+\\begindata
+INPUT_DATA_TYPE = 'MATRICES'
+INPUT_TIME_TYPE = 'ET'
+ANGULAR_RATE_PRESENT= 'MAKE UP/NO AVERAGING'
+CK_TYPE = 3
+INSTRUMENT_ID=-1007000
+REFERENCE_FRAME_NAME='ECI_TOD'
+PRODUCER_ID='C. Jeppesen, Kwan Systems'
+FRAMES_FILE_NAME='%s/fk/eci_tod.tf'
+SCLK_FILE_NAME='Ranger7.tsc'
+LSK_FILE_NAME='%s/lsk/naif0011.tls'
+""" % ('../../Data/spice/generic','../../Data/spice/generic')
+
+with open('Ranger7_msopck.txt','w') as ouf:
+    print(Ranger7CK_txt,file=ouf)
+
+cameraA_center_reticle_lat=np.radians(90-(38+8.75))
+cameraA_center_reticle_lon=np.radians(90+0.05)
+
+p_b=llr_to_xyz(lat=cameraA_center_reticle_lat,lon=cameraA_center_reticle_lon,deg=True)
+tE_b=np.cross(p_b,np.array([0,0,1]))
+tE_b/=np.linalg.norm(tE_b)
+tN_b=np.cross(p_b,tE_b)
+tN_b/=np.linalg.norm(tN_b)
+t_r=np.array([0.0,0.0,1.0])
+
+
+with open('Ranger7ck.txt','w') as ouf_ck:
+    for row in image_a:
+        azn=np.radians(row.azn)
+        t_b=tN_b*np.cos(azn)+tE_b*np.sin(azn)
+        et=gmt_to_et(row.GMT)
+        #Point 2 on reference surface of Moon
+        p2_mep = llr_to_xyz(lat=row.p2_lat, lon=row.p2_lon, deg=True, radius=r_moon)
+        p2_eci=np.dot(cspice.pxform("IAU_MOON","ECI_TOD",et),p2_mep)
+        sc_eci,_=cspice.spkezr("-1007",et,"ECI_TOD","NONE","301")
+        p_r=sc_eci[0:3]-p2_eci
+        p_r/=np.linalg.norm(p_r)
+        M=point_toward(p_b=p_b,p_r=p_r,t_b=t_b,t_r=t_r)
+        print("%23.6f %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e" % (et,
+                M[0,0],M[0,1],M[0,2],
+                M[1,0],M[1,1],M[1,2],
+                M[2,0],M[2,1],M[2,2]), file=ouf_ck)
+
+print(p_b,tE_b,tN_b)
 
 
