@@ -668,23 +668,44 @@ def point_toward(p_b,t_b,p_r,t_r):
     M=np.dot(R,B.transpose())
     return M
 
-def test_point_toward():
-    thrust_ofs=np.radians(-13)
-    p_b=np.array((np.cos(thrust_ofs),0,np.sin(thrust_ofs)))
-    t_b=np.array((0.0,0.0,1.0))
-    print("p_b: ",p_b)
-    print("t_b: ",t_b)
-    thrust_el=30.0
-    thrust_az=80.0
-    p_r=llr_to_xyz(lat=thrust_el,lon=thrust_az,deg=True,az=True)
-    t_r=np.array((0.0,0.0,-1.0))
+def test_point_toward(p_b=None,t_b=None,p_r=None,t_r=None,M=None):
+    """
+    Test if the Point-Toward algorithm is working by printing the transformed body vectors
+    next to the reference vectors. If the algorithm is working, the vectors should be
+    equal to within floating-point accuracy.
+
+    :param p_b: Point body vector to test with. If not supplied, all of the vectors
+                will be calculated from the Space Shuttle test case in the Kwan
+                Hypertext Library
+    :param t_b: Toward body vector. If p_b is not supplied, any value passed as t_b
+                is ignored as t_b is recalculated.
+    :param p_r: Point reference vector. Recaluclated like t_b if needed.
+    :param t_r: Toward reference vector. Recalculated if needed
+    :param M:   Matrix which transforms a vector from the body frame to the
+                reference frame. If not supplied, calculated from the vector parameters
+                (note - if vector parameters are passed but M is not, M will be calculated
+                from the passed vector parameters, which shall be used as-is.)
+    """
+    if p_b is None:
+        thrust_ofs=np.radians(-13)
+        p_b=np.array((np.cos(thrust_ofs),0,np.sin(thrust_ofs)))
+        t_b=np.array((0.0,0.0,1.0))
+        thrust_el=30.0
+        thrust_az=80.0
+        p_r=llr_to_xyz(lat=thrust_el,lon=thrust_az,deg=True,az=True)
+        t_r=np.array((0.0,0.0,-1.0))
+    if M is None:
+        M=point_toward(p_b=p_b,t_b=t_b,p_r=p_r,t_r=t_r)
     s_b=np.cross(p_b,t_b)
     s_b/=np.linalg.norm(s_b)
     s_r=np.cross(p_r,t_r)
     s_r/=np.linalg.norm(s_r)
     u_b=np.cross(p_b,s_b)
     u_r=np.cross(p_r,s_r)
-    M=point_toward(p_b=p_b,t_b=t_b,p_r=p_r,t_r=t_r)
+    print("p_b: ",p_b)
+    print("t_b: ",t_b)
+    print("p_r: ",p_r)
+    print("t_r: ",t_r)
     print(M)
     print("M*p_b: ", np.dot(M, p_b))
     print("p_r:   ", p_r)
@@ -1029,34 +1050,63 @@ LSK_FILE_NAME='%s/lsk/naif0011.tls'
 with open('Ranger7_msopck.txt','w') as ouf:
     print(Ranger7CK_txt,file=ouf)
 
-cameraA_center_reticle_lat=np.radians(90-(38+8.75))
-cameraA_center_reticle_lon=np.radians(90+0.05)
+cameraA_center_reticle_lat=90-(38+8.75)
+cameraA_center_reticle_lon=90+0.05
 
 p_b=llr_to_xyz(lat=cameraA_center_reticle_lat,lon=cameraA_center_reticle_lon,deg=True)
 tE_b=np.cross(p_b,np.array([0,0,1]))
 tE_b/=np.linalg.norm(tE_b)
 tN_b=np.cross(p_b,tE_b)
 tN_b/=np.linalg.norm(tN_b)
-t_r=np.array([0.0,0.0,1.0])
-
+t_r_mep=np.array([0.0,0.0,1.0])
 
 with open('Ranger7ck.txt','w') as ouf_ck:
     for row in image_a:
-        azn=np.radians(row.azn)
+        azn=np.radians(row.azn-90)
         t_b=tN_b*np.cos(azn)+tE_b*np.sin(azn)
         et=gmt_to_et(row.GMT)
         #Point 2 on reference surface of Moon
         p2_mep = llr_to_xyz(lat=row.p2_lat, lon=row.p2_lon, deg=True, radius=r_moon)
-        p2_eci=np.dot(cspice.pxform("IAU_MOON","ECI_TOD",et),p2_mep)
+        M_mep_eci=cspice.pxform("IAU_MOON","ECI_TOD",et)
+        p2_eci=np.dot(M_mep_eci,p2_mep)
         sc_eci,_=cspice.spkezr("-1007",et,"ECI_TOD","NONE","301")
-        p_r=sc_eci[0:3]-p2_eci
+        p_r=p2_eci-sc_eci[0:3]
         p_r/=np.linalg.norm(p_r)
+        t_r=np.dot(M_mep_eci,t_r_mep)
         M=point_toward(p_b=p_b,p_r=p_r,t_b=t_b,t_r=t_r)
+        test_point_toward(p_b=p_b,p_r=p_r,t_b=t_b,t_r=t_r,M=M)
         print("%23.6f %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e %23.15e" % (et,
-                M[0,0],M[0,1],M[0,2],
-                M[1,0],M[1,1],M[1,2],
-                M[2,0],M[2,1],M[2,2]), file=ouf_ck)
+                M[0,0],M[1,0],M[2,0],
+                M[0,1],M[1,1],M[2,1],
+                M[0,2],M[1,2],M[2,2]), file=ouf_ck)
 
 print(p_b,tE_b,tN_b)
 
+try:
+    os.remove("Ranger7.bc")
+except FileNotFoundError:
+    pass #no error, file is already not present
+subprocess.call("~/bin/msopck Ranger7_msopck.txt Ranger7ck.txt Ranger7.bc",shell=True)
+
+cspice.furnsh("Ranger7.bc")
+cspice.furnsh("Ranger7.tf")
+cspice.furnsh("Ranger7.tsc")
+
+for row in image_a:
+    azn = np.radians(row.azn)
+    t_b = tN_b * np.cos(azn) + tE_b * np.sin(azn)
+    et = gmt_to_et(row.GMT)
+    # Point 2 on reference surface of Moon
+    M_mep_eci = cspice.pxform("IAU_MOON", "ECI_TOD", et)
+    p2_eci = np.dot(M_mep_eci, p2_mep)
+    sc_eci, _ = cspice.spkezr("-1007", et, "ECI_TOD", "NONE", "301")
+    p_r = sc_eci[0:3] - p2_eci
+    p_r /= np.linalg.norm(p_r)
+    t_r = np.dot(M_mep_eci, t_r_mep)
+    M = point_toward(p_b=p_b, p_r=p_r, t_b=t_b, t_r=t_r)
+    test_point_toward(p_b=p_b, p_r=p_r, t_b=t_b, t_r=t_r,M=M)
+    print("M:       ",M)
+    M_spice=cspice.pxform("RANGER7_SPACECRAFT","ECI_TOD",et)
+    test_point_toward(p_b=p_b, p_r=p_r, t_b=t_b, t_r=t_r,M=M_spice)
+    print("M_spice: ",M_spice)
 

@@ -1,0 +1,33 @@
+KPL/SCLK
+ 
+SCLK Kernel for Ranger 7
+--------------------------------------------------------
+ 
+   This SCLK kernel contains the data necessary for converting from
+   ephemeris time (ET) to ticks for a fake clock associated with the
+   spacecraft with ID code -1007. This clock runs at the same rate
+   as ET, starting at ET 1950-JAN-01-12:00:00.000 and going for 100
+   years. It has two fields -- seconds and milliseconds. The clock's
+   granularity is 1 millisecond.
+ 
+   This file was created by C. Jeppesen, Kwan Systems
+   on 2017-12-27/15:45:25.
+ 
+Kernel data
+--------------------------------------------------------
+ 
+   \begindata
+ 
+      SCLK_KERNEL_ID = ( @2017-12-27/15:45:25 )
+      SCLK_DATA_TYPE_1007       = ( 1 )
+      SCLK01_TIME_SYSTEM_1007   = ( 1 )
+      SCLK01_N_FIELDS_1007      = ( 2 )
+      SCLK01_MODULI_1007        = ( 3155760000 1000 )
+      SCLK01_OFFSETS_1007       = ( 0 0 )
+      SCLK01_OUTPUT_DELIM_1007  = ( 1 )
+      SCLK_PARTITION_START_1007 = ( 0.00000E+00 )
+      SCLK_PARTITION_END_1007   = ( 3.15576E+12 )
+      SCLK01_COEFFICIENTS_1007  = ( 0.0 @1950-JAN-01-12:00:00.000 1.0 )
+ 
+   \begintext
+ 
