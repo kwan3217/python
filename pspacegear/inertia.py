@@ -20,27 +20,41 @@ from math import pi
 
 def CylinderV(r,l):
     """
-    Calculate volume of cylinder
+    Calculate volume of right circular cylinder
+
+    :param r: radius of cylinder
+    :param l: length of cylinder
+    :return: volume of cylinder
     """
-    return r**2*np.pi*l
+    V=r**2*np.pi*l
+    return V
 
 def CylinderA(r,l):
     """
     Calculate surface area of cylinder, not including end caps
+
+    :param r: radius of cylinder
+    :param l: length of cylinder
+    :return: Area of side of cylinder
     """
-    return r*2*np.pi*l
+    A=r*2*np.pi*l
+    return A
 
 def HollowCylinderV(rOuter,rInner,l):
-    return CylinderV(rOuter,l)-CylinderV(rInner,l)
+    V=CylinderV(rOuter,l)-CylinderV(rInner,l)
+    return V
 
 def SolidCylinderM(r,l,rho=1):
-    return CylinderV(r,l)*rho
+    M=CylinderV(r,l)*rho
+    return M
 
 def ThinCylinderM(r,l,rho=1):
-    return CylinderA(r,l)*rho
+    M=CylinderA(r,l)*rho
+    return M
 
 def HollowCylinderM(rOuter,rInner,l,rho=1):
-    return HollowCylinderV(rOuter,rInner,l)*rho
+    M=HollowCylinderV(rOuter,rInner,l)*rho
+    return M
 
 def SolidCylinderI(r, l, m=1):
     """
@@ -150,13 +164,16 @@ def SphereA(r,l):
     """
     Calculate surface area of cylinder, not including end caps
     """
-    return r*2*np.pi*4
+    A=r*2*np.pi*4
+    return A
 
 def HollowSphereV(rOuter,rInner):
-    return SphereV(rOuter)-SphereV(rInner)
+    V=SphereV(rOuter)-SphereV(rInner)
+    return V
 
 def SolidSphereM(r,rho=1):
-    return SphereV(r)*rho
+    M=SphereV(r)*rho
+    return M
 
 def ThinSphereM(r,rho=1):
     return SphereA(r)*rho
@@ -183,7 +200,8 @@ def SolidSphereI(r,m=1):
         Inertia tensor with respect to the center of mass and these axes.
     """
     I=2*m*r*r/5;
-    return np.identity(3)*I
+    I=np.identity(3)*I
+    return I
 
 def ThinSphereI(r,m=1):
     """
@@ -204,7 +222,8 @@ def ThinSphereI(r,m=1):
         Inertia tensor with respect to the center of mass and these axes.
     """
     I=2*m*r*r/3;
-    return np.identity(3)*I
+    I=np.identity(3)*I
+    return I
 
 def HollowSphereI(rOuter, rInner,m=1):
     """
@@ -235,7 +254,8 @@ def HollowSphereI(rOuter, rInner,m=1):
     Density=m/TotalVolume
     OuterMass=OuterVolume*Density
     InnerMass=InnerVolume*Density
-    return SolidSphereI(rOuter,OuterMass)-SolidSphereI(rInner,InnerMass)
+    I=SolidSphereI(rOuter,OuterMass)-SolidSphereI(rInner,InnerMass)
+    return I
 
 def TriangularPrismI(a, b, c,m=1):
     """
@@ -257,9 +277,10 @@ def TriangularPrismI(a, b, c,m=1):
     I is with respect to the center of mass and these axes.
     To describe a prism out -x or -y, use a negative a or b
     """
-    return np.matrix([[2*b*b+3*c*c,        a*b,           0],
-                      [a*b,        2*a*a+3*c*c,           0],
-                      [0,                    0, 2*a*a+2*b*b]])*m/36
+    I=np.matrix([[2*b*b+3*c*c,        a*b,           0],
+                 [a*b,        2*a*a+3*c*c,           0],
+                 [0,                    0, 2*a*a+2*b*b]])*m/36
+    return I
 
 def RectangularPrismI(a, b, c,m=1):
     """
@@ -280,6 +301,7 @@ def RectangularPrismI(a, b, c,m=1):
     -----
     I is with respect to the center of mass and these axes.
     """
-    return np.matrix([[b*b+c*c,       0,       0],
-                      [      0, a*a+c*c,       0],
-                      [      0,       0, a*a+b*b]])*m/12;
+    I=np.matrix([[b*b+c*c,       0,       0],
+                 [      0, a*a+c*c,       0],
+                 [      0,       0, a*a+b*b]])*m/12;
+    return I
