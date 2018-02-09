@@ -257,6 +257,39 @@ def HollowSphereI(rOuter, rInner,m=1):
     I=SolidSphereI(rOuter,OuterMass)-SolidSphereI(rInner,InnerMass)
     return I
 
+def ConeA(r,h):
+    """
+    Calculate the area of "side" of a right circular cone, not counting the base cap
+    :param r: Radius of cone base
+    :param h: height of the cone
+    :return: Area of the side of the cone
+    """
+    s=np.sqrt(h**2+r**2)
+    A=pi*r*s
+    return A
+
+def ConeV(r,h):
+    """
+    Calculate the volume of a right circular cone
+    :param r: Radius of the cone base
+    :param h: Height of the cone
+    :return: Volume of the cone
+    """
+    V=pi*r*r*h/3
+    return V
+
+def SolidConeI(r,h,m=1):
+    """
+    :param r:
+    :param h:
+    :param m:
+    :return:
+    """
+    #From Wolfram Alpha: "moment of inertia tensor of solid cone"
+    Iaxis=3*r**2/10
+    Iperp=(3*a**2+2*h**2)/20
+
+
 def TriangularPrismI(a, b, c,m=1):
     """
     Calculate inertia tensor for a right triangular prism.

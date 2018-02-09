@@ -10,6 +10,9 @@ import numpy as np
 from inertia import SolidSphereI, ThinSphereI
 import math
 
+g0=9.80665
+g0_kerbin=9.82
+
 class Mass:
     """
     Describes a mass element of a vehicle.
@@ -23,7 +26,7 @@ class Mass:
     ----------
     m : real
       Mass of this element in global mass units, usually kg
-    I : 3x3 numpy matrix
+    nI : 3x3 numpy matrix
       Normaized inertia tensor about center of mass of mass element, in global
       length units, usually m. This is the actual inertia tensor divided by the
       mass of the object
@@ -35,18 +38,25 @@ class Mass:
     Use the fields of this class directly. Subclasses may recalculate these
     fields when timestep is called.
     """
-    def __init__(self,m,I,CoM):
+    def __init__(self,name,m,nI=None,CoM=None):
         """
         Initialize a mass with constant mass properties.
 
         :param m:  mass of element in kg
-        :param I:   Normalized inertia tensor about center of mass in m^2.
+        :param nI:   Normalized inertia tensor about center of mass in m^2.
                     This is actual inertia tensor divided by mass
         :param CoM: Center of mass in station coordinates
         """
-        self.CoM=CoM
+        self.name=name
         self.m=m
-        self.I=I*m
+        if nI is None:
+            self.nI=np.identity(3)
+        else:
+            self.nI=nI
+        if CoM is None:
+            self.CoM=np.zeros(3)
+        else:
+            self.CoM=CoM
     def timestep(self,t,delta_t):
         """
         Placeholder virtual method
@@ -55,7 +65,9 @@ class Mass:
         """
         pass
     def inertia(self):
-        return (self.m,self.I,self.CoM)
+        return (self.m,self.nI*self.m,self.CoM)
+    def __str__(self):
+        return "%s -- m: %f, I: %s, CoM: %s" % (self.name, self.m, str(self.nI*self.m), str(self.CoM))
 
 class Propellant(Mass):
     """
@@ -63,7 +75,7 @@ class Propellant(Mass):
     MoI and CoM (say a gaseous tank). Subclasses will define time-variable
     moment of inertia and/or center of mass.
     """
-    def __init__(self,m_full,I,CoM,propType,initialLoad=1.0):
+    def __init__(self,name,m_full,I=None,CoM=None,propType=None,initialLoad=1.0):
         """
 
         :param M: Fully-loaded mass of propellant resource
@@ -72,9 +84,15 @@ class Propellant(Mass):
         :param propType: Object describing what kind of propellant this stores
         :param initialLoad: Initial fraction of propellant loaded. Default is fully loaded.
         """
-        Mass.__init__(m_full*initialLoad,I,CoM)
+        Mass.__init__(self,name,m_full*initialLoad,I,CoM)
         self.m_full=m_full
         self.propType=propType
+    def recalcMassProps(self):
+        """
+        Recalculate the center of mass and moment of inertia, given the current amount
+        of propellant in the resource
+        """
+        pass
     def demand(self,mdot,t,delta_t):
         """
         Demand a certain amount of propellant from the propellant resource. Each
@@ -89,24 +107,22 @@ class Propellant(Mass):
         :param t:    Range time at end of time step
         :param delta_t: Time step size
         :return: Fraction of demand that can be met. Will usually be 1.0 or 0.0,
-                 but may be less. Might be less for a pressure-fed engine where
-                 available flow rate drops with quantity, or might be fractional
-                 during the last time step that a resource has fuel. For instance,
-                 if there is 1kg of fuel left, and 2kg/s over 1 second is demanded,
-                 only 0.5 of that demand can be met.
+                 but may be in between -- eg. for a pressure-fed engine where
+                 available flow rate drops with quantity, or during the last time
+                 step that a resource has fuel. For instance, if there is 1kg of
+                 fuel left, and 2kg/s over 1 second is demanded, only 0.5 of that
+                 demand can be met.
         """
-        m_full=self.M/self.load #Calculate a full load
         delta_m=mdot*delta_t
-        new_m_requested=self.M+delta_m
+        new_m_requested=self.m+delta_m
         if new_m_requested<0:
-            result=self.M/delta_m
-            self.M=0
-        if new_m_requested>m_full:
-            result=(m_full-self.M)/delta_m
-            self.M=m_full
-        self.load=self.M/m_full
-        #A non-pointmass subclass would call this method, recalculate I and CoM based on
-        #the new mass, then return the result of this method.
+            result=self.m/delta_m
+            self.m=0
+        if new_m_requested>self.m_full:
+            result=(self.m_full-self.m)/delta_m
+            self.m=self.m_full
+        self.load=self.m/self.m_full
+        self.recalcMassProps()
         return result
     def timestep(self,t,delta_t):
         """
@@ -140,9 +156,14 @@ class Substance:
         self.name=name
         self.density=density
         self.phase=phase
+    def __str__(self):
+        return "%s -- density: %f, phase: %d" % (self.name, self.density, self.phase)
+
+
 Al  =Substance("Al" ,phase=0,density=2700) #Solid Aluminum, intended to be used for structures
 RP1 =Substance("RP1",phase=1,density= 810) #Room-temperature Rocket Propellant 1
 dRP1=Substance("RP1",phase=1,density= 810  *1.04) #Chilled RP1, used in Falcon 9. Reported 2.5-4% increase in density, but compatible with any consumer of RP1
+print(dRP1)
 #LOX data from https://www.gpo.gov/fdsys/pkg/GOVPUB-C13-26d428ad4ca587866a90da5f71b4a727/pdf/GOVPUB-C13-26d428ad4ca587866a90da5f71b4a727.pdf
 LOX =Substance("LOX",phase=1,density=1141.6)      #"Normal" temperature liquid oxygen, 1 bar at boiling point, 90K
 dLOX=Substance("LOX",phase=1,density=1254.8)      #Chilled LOX. SpaceX reports using LOX at 66K
@@ -160,7 +181,9 @@ Alwt=16
 PBwt=12.04
 #Neglect the epoxy and iron oxide
 SRF =Substance("SRF",phase=0,density=(AP.density*APwt+PBAN.density*PBwt+Al.density*Alwt)/(APwt+PBwt+Alwt))
-print(SRF.name,SRF.phase,SRF.density)
+print(SRF)
+LOX_RP1=2.56 #LOX/RP-1 mass mixture ratio -- IE use this many kg of LOX for every kg of RP-1
+LOX_LH2=6    #LOX/LH2 mass mixture ratio
 
 class Actuator:
     def __init__(self,CoA):
@@ -260,13 +283,15 @@ class Rocket(Actuator):
         self.ve1=ve1
         self.f0=self.mdot*self.ve0
         self.f1=self.mdot*self.ve1
+    def __str__(self):
+        return "%s -- mdot: %f, ve0: %f, ve1: %f, f0: %f, f1: %f" % (self.name,self.mdot,self.ve0,self.ve1,self.f0,self.f1)
 
 #Merlin 1D engine. Stats from http://www.spacex.com/falcon9
 M1D=Rocket("M1D",np.array([0,0,0]),np.array([1,0,0]),f0=8227000/9,f1=7607000/9,ve0=3050,ve1=2770)
-print(M1D.mdot,M1D.ve0,M1D.ve1,M1D.f0,M1D.f1)
+print(M1D)
 #Merlin 1D Vacuum engine.
-M1Dvac=Rocket("M1Dvac",np.array([0,0,0]),np.array([1,0,0]),f0=934000,f1=0,ve0=348*9.80665)
-print(M1Dvac.mdot,M1Dvac.ve0,M1Dvac.ve1,M1Dvac.f0,M1Dvac.f1)
+#M1Dvac=Rocket("M1Dvac",np.array([0,0,0]),np.array([1,0,0]),f0=934000,f1=0,ve0=348*9.80665)
+#print(M1Dvac.mdot,M1Dvac.ve0,M1Dvac.ve1,M1Dvac.f0,M1Dvac.f1)
 
 class vehicle(Mass):
     """
@@ -285,10 +310,11 @@ class vehicle(Mass):
     """
     E3=np.identity(3) #Identity 3x3 matrix
     
-    def __init__(self,actuators,masses):
+    def __init__(self,name,actuators,masses):
+        Mass.__init__(self,name,0)
         self.actuators=actuators
         self.masses=masses
-        
+        self.inertia()
     def timestep(self,t,delta_t):
         """
         Update the properties of the vehicle. This is used to do such things as:
@@ -327,10 +353,9 @@ class vehicle(Mass):
         3) Run timestep(10.5,0.0) to set properties for third step
         4) Run timestep(11.0,0.5) to set properties for fourth step
         """
-        (F,M)=actuate(t,delta_t)
+        (F,M)=self.actuate(t,delta_t)
         for mass in self.masses:
             mass.timestep(t,delta_t)
-
     def inertia(self):
         """
         Get the mass and moment of inertia matrix about the center of mass
@@ -347,23 +372,24 @@ class vehicle(Mass):
             vehicle but not needed in dynamics)
         """
         #vehicle mass in station coordinates
-        m=0
-        CoM=np.array([0,0,0])
+        self.m=0
+        self.CoM=np.array([0,0,0])
         for mass in self.masses:
-            m=m+mass.m
-            CoM=CoM+np.array((mass.m,))*mass.CoM
+            self.m=self.m+mass.m
+            self.CoM=self.CoM+mass.CoM*mass.m
         #Divide the weighted sum of center of masses by the total mass to get
         #the actual center of mass
-        CoM=CoM/m
+        self.CoM=self.CoM/self.m
         #Now that we know where the total center of mass is, use the parallel
         #axis theorem to figure the moment of inertia of each element
         #relative to that center of mass
         #https://en.wikipedia.org/wiki/Parallel_axis_theorem#Tensor_generalization
         I=np.matrix([[0,0,0],[0,0,0],[0,0,0]])
         for mass in self.masses:
-            R=mass.CoM-CoM
-            I=I+mass.I*mass.m+m*(np.inner(R,R)*vehicle.E3-np.outer(R,R))
-        return (m,I,CoM)
+            R=mass.CoM-self.CoM
+            I=I+mass.nI*mass.m+mass.m*(np.inner(R,R)*vehicle.E3-np.outer(R,R))
+        self.nI=I/self.m
+        return (self.m,I,self.CoM)
     def actuate(self,t,delta_t):
         """
         Get the total non-gravitational force and moment relative to the center
@@ -383,10 +409,32 @@ class vehicle(Mass):
         for actuator in self.actuators:
             (this_f,this_M)=actuator.actuate(t,delta_t)
             f+=this_f
-            m+=this_M
+            M+=this_M
         return (f,M)
-    
-v=vehicle([],[Mass(1,SolidSphereI(1),np.array([-1,0,0])),
-             Mass(1,ThinSphereI (1),np.array([ 1,0,0]))])
-print(v.inertia())
+
+#Actuators
+LV909=Rocket("LV-909",np.array([0,0,0]),np.array([1,0,0]),f0=215000,f1=215000,ve0=320*g0_kerbin)
+LVT45=Rocket("LV-T45",np.array([0,0,0]),np.array([1,0,0]),f0= 60000,f1= 60000,ve0=345*g0_kerbin)
+
+#Propellant resources
+prop1LF =Propellant("prop1LF" ,4000*      1/(LOX_RP1+1),propType=RP1) #Stage 1 propellant
+prop1LOX=Propellant("prop1LOX",4000*LOX_RP1/(LOX_RP1+1),propType=LOX) #Stage 1 propellant
+prop2LF =Propellant("prop2LF" ,4000*      1/(LOX_RP1+1),propType=RP1) #Stage 2 propellant
+prop2LOX=Propellant("prop2LOX",4000*LOX_RP1/(LOX_RP1+1),propType=LOX) #Stage 2 propellant
+
+#First stage inert parts
+TR16A_12=Mass("TR16A_12",400)
+tank1=Mass("tank1",500)
+LVT45_mass=Mass("LVT45",1500)
+
+#Second stage inert parts
+Mk1=Mass("Mk1",800)
+HeatShield=Mass("HeatShield",300)
+Mk16=Mass("Mk16",100)
+TR16A_2Cap=Mass("TR16A_2Cap",400)
+tank2=Mass("tank2",500)
+LV909_mass=Mass("LV909",500)
+
+v=vehicle("vehicle",[M1D],[prop1LF,prop1LOX,prop2LF,prop2LOX,TR16A_12,tank1,LVT45_mass,Mk1,HeatShield,Mk16,TR16A_2Cap,tank2,LV909_mass])
+print(v)
 
