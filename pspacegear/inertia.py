@@ -339,6 +339,71 @@ def RectangularPrismI(a, b, c,m=1):
                  [      0,       0, a*a+b*b]])*m/12;
     return I
 
+def SpheroidV(a,b,z0=None,z1=None):
+    if z0 is None:
+        z0=-b
+    if z1 is None:
+        z1=b
+    z1int=z1-z0
+    z3int=(z1**3-z0**3)/3
+    V=np.pi*a**2*(z1int-z3int/b**2)
+    return V
+
+def SpheroidI(a,b,z0=None,z1=None,m=1,rho=None):
+    """
+    Calculate the moment of inertia of a segment of a solid spheroid.
+
+    This segment is a solid of revolution, bounded by an ellipse spun
+    around the z axis, which is also one of the axes of the ellipse. It
+    is optionally also bound by planes z=z0 and z=z1. This is useful for
+    doing things like the fuel in a spheroid fuel tank.
+    :param a: Equatorial radius of spheroid, may be greater than (oblate),
+              equal to (sphere) or less than (prolate) the polar radius
+    :param b: Polar radius of spheroid
+    :param z0: Optional lower bound of integration. If included, the
+               spheroid is assumed to be cut off below this level. May
+               be any value between -b and b inclusive. Do not exceed
+               this bound, or this function will silently give a wrong
+               answer.
+    :param z1: Optional upper bound of integration. If included, the
+               spheroid is assumed to be cut off above this level. May
+               be any value between -b and b, but must be greater than
+               z0.
+    :param m: mass of the spheroid segment, defaults to 1, ignored if
+              rho is set
+    :param rho: density of the spheroid segment. If not set, then the
+                mass m and volume are used to calculate it. If it is
+                set, m is ignored (its value isn't used).
+    :return:
+    """
+    V=SpheroidV(a,b,z0=z0,z1=z1)
+    #If rho has a value, then the value of m is ignored
+    if rho is None:
+        rho=m/V
+    if z0 is None:
+        z0=-b
+    if z1 is None:
+        z1=b
+    z1int=z1-z0
+    z3int=(z1**3-z0**3)/3
+    z5int=(z1**5-z0**5)/5
+    Izz=rho*np.pi*a**4/2*(z1int-2*z3int/b**2+z5int/b**4)
+    Ixx=Izz/2+rho*np.pi*a**2*(z3int-z5int/b**2)
+    return np.array(((Ixx,0,0),
+                     (0,Ixx,0),
+                     (0,0,Izz)))
+
+def SpheroidCoM(a,b,z0=None,z1=None):
+    V=SpheroidV(a,b,z0=z0,z1=z1)
+    if z0 is None:
+        z0 = -b
+    if z1 is None:
+        z1 = b
+    z2int = (z1 ** 2 - z0 ** 2) / 2
+    z4int = (z1 ** 4 - z0 ** 4) / 4
+    zcom=np.pi*a**2/V*(z2int-z4int/b**2)
+    return np.array((0,0,zcom))
+
 def MonteCarloI(rho,x0,x1,y0,y1,z0,z1,n=1000000,n_inter=1000,*arg,**kwarg):
     """
     Calculate the moment of inertia of an arbitrary object by the Monte Carlo method
@@ -406,15 +471,18 @@ def spheroidRho(x,y,z,a=1,b=1,zz0=None,zz1=None):
     return 0
 
 if __name__=="__main__":
-    (m_est,I_est,CoM_est)=MonteCarloI(spheroidRho,-1,1,-1,1,-1,1,n=10000000,n_inter=100000,zz0=0)
-    m=8
-    CoM=np.zeros(3)
-    I=m*np.array(((4/6,0,0),
-                  (0,4/6,0),
-                  (0,0,4/6)))
+    a=2
+    b=1
+    z0=-b
+    z1=0
+    V=SpheroidV(a,b,z0=z0,z1=z1)
+    m=V
+    CoM=SpheroidCoM(a,b,z0=z0,z1=z1)
+    I=SpheroidI(a,b,z0=0,rho=1)
     print("calc m: %f" %(m))
     print("calc I: ",I)
     print("calc CoM: ",CoM)
+    (m_est,I_est,CoM_est)=MonteCarloI(spheroidRho,-a,a,-a,a,z0,z1,n=10000000,n_inter=1000000,a=a,b=b,zz0=z0,zz1=z1)
     print("diff m: %f" %(m-m_est))
     print("diff I: ",I-I_est)
     print("diff CoM: ",CoM-CoM_est)
