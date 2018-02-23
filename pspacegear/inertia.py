@@ -338,3 +338,83 @@ def RectangularPrismI(a, b, c,m=1):
                  [      0, a*a+c*c,       0],
                  [      0,       0, a*a+b*b]])*m/12;
     return I
+
+def MonteCarloI(rho,x0,x1,y0,y1,z0,z1,n=1000000,n_inter=1000,*arg,**kwarg):
+    """
+    Calculate the moment of inertia of an arbitrary object by the Monte Carlo method
+    :param rho: Function that takes rho(x,y,z) and returns density at that point
+    :param x0: lower x bound. Will silently give wrong answers if x0>x1
+    :param x1: upper x bound
+    :param y0: lower y bound. Will silently give wrong answers if y0>y1
+    :param y1: upper y bound
+    :param z0: lower z bound. Will silently give wrong answers if z0>z1
+    :param z1: upper z bound
+    :param n: Number of Monte Carlo samples to use
+    :return: A tuple.
+      First element scalar estimate of total mass.
+      Second element is 3x3 matrix of estimate of inertia tensor.
+      Third element is estimate of center of mass
+    """
+    import random
+    m_acc=0
+    I_acc=np.zeros((3,3))
+    CoM_acc=np.zeros(3)
+    box_v=(x1-x0)*(y1-y0)*(z1-z0)
+    for i in range(int(n)):
+        x=random.uniform(x0,x1)
+        y=random.uniform(y0,y1)
+        z=random.uniform(z0,z1)
+        r=np.array((x,y,z))
+        this_rho=rho(x,y,z,*arg,**kwarg)
+        m_acc+=this_rho
+        CoM_acc+=r*this_rho
+        I_acc+=this_rho*np.array(((y**2+z**2,-x*y,-x*z),
+                                  (-y*x,x**2+z**2,-y*z),
+                                  (-z*x,-z*y,x**2+y**2)))
+        dV=box_v/(i+1)
+        m=m_acc*dV
+        I=I_acc*dV
+        CoM=CoM_acc*dV/m
+        if(i % n_inter==0):
+            print("i: %d dv: %f m: %f"%(i,dV,m))
+            print("CoM: ",CoM)
+            print("I: ", I)
+    print("i: %d dv: %f m: %f" % (n, dV, m))
+    print("CoM: ", CoM)
+    print("I: ", I)
+    return (m,I,CoM)
+
+def cubeRho(x,y,z):
+    return 1
+
+def sphereRho(x,y,z,r=1):
+    if(x**2+y**2+z**2<r**2):
+        return 1
+    return 0
+
+def spheroidRho(x,y,z,a=1,b=1,zz0=None,zz1=None):
+    if zz0 is None:
+        zz0=-b
+    if zz1 is None:
+        zz1=b
+    if z<zz0:
+        return 0
+    if z>zz1:
+        return 0
+    if(x**2/a**2+y**2/a**2+z**2/b**2<1):
+        return 1
+    return 0
+
+if __name__=="__main__":
+    (m_est,I_est,CoM_est)=MonteCarloI(spheroidRho,-1,1,-1,1,-1,1,n=10000000,n_inter=100000,zz0=0)
+    m=8
+    CoM=np.zeros(3)
+    I=m*np.array(((4/6,0,0),
+                  (0,4/6,0),
+                  (0,0,4/6)))
+    print("calc m: %f" %(m))
+    print("calc I: ",I)
+    print("calc CoM: ",CoM)
+    print("diff m: %f" %(m-m_est))
+    print("diff I: ",I-I_est)
+    print("diff CoM: ",CoM-CoM_est)
