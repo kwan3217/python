@@ -9,6 +9,8 @@ from numpy.linalg import norm as vlength
 from numpy import cross, dot, cos, sin, arccos as acos, sqrt, pi
 import matplotlib.pyplot as plt
 import collections
+from atmosphere.earth import lower_atmosphere as atm
+from scipy.interpolate import interp1d
 
 class shooter:
     pass
@@ -150,8 +152,8 @@ def Ff(t, x, extra=None):
     vvert = dot(vsur, r) / dot(r, r) * r  # projection of vsur in vertical
     vhorz = vsur - vvert  # rejection of vsur from vertical
     vverthat = r / vlength(r)  # Since the rocket may travel down, don't
-    # use the vertical component as the basis
-    # vector, instead use the position vector.
+                               # use the vertical component as the basis
+                               # vector, instead use the position vector.
     vhorzhat = vhorz / vlength(vhorz)
     pitchpoly = np.deg2rad(90 - vlength(vsur) / extra["pitchover"])  # pitch down 1 degree for each 12m/s of velocity
     pitchgrav = vangle(vhorzhat, vsur)
@@ -174,7 +176,17 @@ def Ff(t, x, extra=None):
     return Fv * Fm, Ffextra(np.rad2deg(pitch), vvert, vhorz, vverthat, vhorzhat,
                             Fv, mode, np.rad2deg(alpha), np.rad2deg(pitchgrav), np.rad2deg(pitchpoly))
 
+#Axial force for Atlas SLV3. This can be taken as drag coefficient as long as the rocket has zero angle of attack.
+drag_M =np.array((0.0  ,0.25 ,0.5  ,0.6  ,0.7  ,0.8  ,0.85 ,0.9  ,0.93 ,0.95 ,1.0  ,1.05 ,1.1  ,1.15 ,1.25 ,1.4  ,1.5  ,1.75 ,2.0  ,2.5  ,3.5  ,4.5  ,6.0  ,8.0  ,10.0  ))
+drag_Ca=np.array((0.373,0.347,0.345,0.350,0.365,0.391,0.425,0.481,0.565,0.610,0.725,0.760,0.773,0.770,0.740,0.665,0.622,0.530,0.459,0.374,0.303,0.273,0.259,0.267, 0.289))
+f_Ca=interp1d(drag_M,drag_Ca)
 
+#drag_r=(5*0.3048) #Effective radius of rocket body, m. This is used to describe a circle which is the drag reference area
+drag_r=0.625
+drag_S=drag_r**2*np.pi
+
+Dfextra = collections.namedtuple("Dfextra",
+                                 ["spd","Z","atm","M", "q", "Ca", "Fa"])
 def Df(t, x, extra=None):
     """
     Calculate aero force on vehicle
@@ -207,22 +219,34 @@ def Df(t, x, extra=None):
         of which implies the vehicle attitude. This may be needed for
         angle-of-attack calculation.
     """
-    return np.array([0, 0, 0])
+    r = np.array(x[:3])
+    vorb = np.array(x[3:6])
+    wind = cross(pole, r)
+    vsur = vorb - wind
+    Z=vlength(r)-Re
+    a=atm(Z)
+    spd=vlength(vsur)
+    M=spd/a.Cs #Mach number
+    q=a.rho*spd**2/2
+    Ca=f_Ca(M)
+    Fa=q*drag_S*Ca
+    if spd==0:
+        return np.zeros(3),Dfextra(spd,Z,a,M,q,Ca,Fa)
+    if a.rho==0:
+        return np.zeros(3),Dfextra(spd,Z,a,M,q,Ca,Fa)
+    return -Fa*vsur/spd, Dfextra(spd,Z,a,M,q,Ca,Fa)
 
-
-xdotextra = collections.namedtuple("xdotextra", ["m", "g", "F", "D", "Fextra"])
-
+xdotextra = collections.namedtuple("xdotextra", ["m", "g", "F", "D", "Fextra", "Dextra"])
 
 def xdot(t, x, extra=None):
     m = mf(t, x, extra)
     g = gf(t, x, extra)
     F, Fextra = Ff(t, x, extra)
     Fa = F / m
-    D = Df(t, x, extra)
+    D, Dextra = Df(t, x, extra)
     Da = D / m
     a = Fa + Da + g
-    return np.concatenate((np.array(x[3:]), a)), xdotextra(m, g, F, D, Fextra)
-
+    return np.concatenate((np.array(x[3:]), a)), xdotextra(m, g, F, D, Fextra, Dextra)
 
 def RK4(t, x, dt, extra=None):
     k1, extout = xdot(t, x, extra)
@@ -230,7 +254,6 @@ def RK4(t, x, dt, extra=None):
     k3 = xdot(t + dt / 2, x + dt * k2 / 2, extra)[0]
     k4 = xdot(t + dt, x + dt * k3, extra)[0]
     return x + dt * (k1 + 2 * k2 + 2 * k3 + k4) / 6, extout
-
 
 def shoot(x0, t0, t1, dt=0.125, extra=None):
     """
@@ -286,15 +309,28 @@ def shoot(x0, t0, t1, dt=0.125, extra=None):
         # Calculate the forces and accelerations
         tlist.append(t)
         xlist.append(x)
-        x, extout = RK4(t=t, x=x, dt=dt, extra=extra)
+        x2, extout = RK4(t=t, x=x, dt=dt, extra=extra)
+        vl = vlength(x2[3:6])
+        if not np.isfinite(vl):
+            print("Something happened!")
         extoutlist.append(extout)
-        n = n + 1
         h = vlength(x[:3]) - Re
-        t = t0 + dt * n
-        rl = vlength(x[:3])
-        vl = vlength(x[3:6])
+        rl = vlength(x2[:3])
         vcirc = sqrt(mu / rl)
-    return (x, tlist, xlist, extoutlist)
+        n = n + 1
+        x=x2
+        t = t0 + dt * n
+    if not (t<t1):
+        term="Time expired"
+    elif not (h>=0):
+        term="Crashed into ground"
+    elif not (vlength(extout.F)>0):
+        term="Out of fuel"
+    elif not (vl<vcirc):
+        term="Vcirc achieved"
+    else:
+        term="Huh? None of the termination conditions tripped"
+    return (x, tlist, xlist, extoutlist,term)
 
 
 if __name__ == '__main__':
@@ -313,10 +349,11 @@ if __name__ == '__main__':
                     + 0.5  # Empty mass of FL-T800 tank
                     + 0.5  # LV-909 engine
                     ) * 1000],  # convert tons to kg, mass for each stage
-             'pitchover': 10
+             'pitchover': 15
              }
     print(istage(60, extra))
-    x1, tlist, xlist, extoutlist = shoot(x0, 0, 1200, extra=extra)
+    x1, tlist, xlist, extoutlist, term = shoot(x0, 0, 1200, extra=extra)
+    print(term)
     print(x1)
     hlist = []
     Xlist = []
@@ -328,10 +365,18 @@ if __name__ == '__main__':
     alphalist = []
     ppolylist = []
     pgravlist = []
+    Zlist=[]
+    spdlist=[]
+    qlist=[]
+    Falist=[]
+    Calist=[]
+    Mlist=[]
+    Flist=[]
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
         vlist.append(vlength(xlist[i][3:6]))
+        Flist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
         hlist.append(vlength(xlist[i][0:3]) - Re)
         pitchlist.append(extoutlist[i].Fextra.pitch)
         mlist.append(extoutlist[i].m)
@@ -339,7 +384,14 @@ if __name__ == '__main__':
         alphalist.append(extoutlist[i].Fextra.alpha)
         ppolylist.append(extoutlist[i].Fextra.pitchpoly)
         pgravlist.append(extoutlist[i].Fextra.pitchgrav)
+        Zlist.append(extoutlist[i].Dextra.Z)
+        spdlist.append(extoutlist[i].Dextra.spd)
+        qlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
+        Falist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
+        Calist.append(extoutlist[i].Dextra.Ca)
+        Mlist.append(extoutlist[i].Dextra.M)
         print(tlist[i], xlist[i], extoutlist[i])
+    print(term)
     rl = vlength(x1[:3])
     vl = vlength(x1[3:6])
     vcirc = sqrt(mu / rl)
@@ -348,12 +400,28 @@ if __name__ == '__main__':
     Ylist = np.array(Ylist)
     plt.figure(7)
     surf = sqrt(Re ** 2 - Ylist ** 2) - Re
-    plt.plot(Ylist, Xlist - Re, Ylist, surf)
+    plt.plot(Ylist, Xlist - Re,'b-', Ylist, surf,'g-',Ylist[0::80],Xlist[0::80]-Re,'bx')
     plt.axis('equal')
     plt.xlabel("Y/m")
     plt.ylabel("X/m")
     plt.figure(8)
-    plt.plot(tlist, ppolylist, tlist, pgravlist, tlist, pitchlist)
-    plt.xlabel("t/s")
+    plt.plot(spdlist, ppolylist, 'b-',spdlist, pgravlist, 'g-',spdlist, pitchlist,'r--')
+    plt.xlabel("spd/(m/s)")
     plt.ylabel("pitch/deg")
+    plt.figure(9)
+    plt.plot(tlist,Zlist)
+    plt.xlabel("t/s")
+    plt.ylabel("Altitude/m")
+    plt.figure(10)
+    plt.plot(tlist,spdlist)
+    plt.xlabel("t/s")
+    plt.ylabel("spd/(m/s)")
+    plt.figure(11)
+    plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
+    plt.xlabel("t/s")
+    plt.ylabel("acc/(m/s^2)")
+    plt.figure(12)
+    plt.plot(tlist,Calist,'b-',tlist,Mlist,'g-')
+    plt.xlabel("t/s")
+    plt.ylabel("Ca,Mach")
     plt.show()

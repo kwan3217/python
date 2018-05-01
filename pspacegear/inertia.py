@@ -160,11 +160,20 @@ def SphereV(r):
     """
     return r**3*np.pi*4.0/3.0
 
-def SphereA(r,l):
+def SphereA(r,z0=None,z1=None):
     """
-    Calculate surface area of cylinder, not including end caps
+    Calculate surface area of segment of sphere. Calculates for a whole sphere by default
+
+    :param r: Radius of sphere
+    :param z0: Lower bound of segment, -r by default
+    :param z1: Upper bound of segment, r by default
+    :return: Area of segment, not including circular end caps.
     """
-    A=r*2*np.pi*4
+    if z0 is None:
+        z0=-r
+    if z1 is None:
+        z1=r
+    A=2*np.pi*r*(z1-z0)
     return A
 
 def HollowSphereV(rOuter,rInner):
@@ -203,31 +212,36 @@ def SolidSphereI(r,m=1):
     I=np.identity(3)*I
     return I
 
-def ThinSphereI(r,m=1):
+def ThinSphereI(r,m=1,rho=None,z0=None,z1=None):
     """
-    Calculate inertia tensor for a thin-walled sphere.
+    Calculate inertia tensor for a thin-walled spherical segment (whole sphere by default). Segment is cut by planes
+    of constant z, so the z axis remains an axis of wheel symmetry for the segment.
 
-    Inertia tensor is relative to sphere center of mass.
+    Inertia tensor is relative to the center of the sphere this is a segment of. This might
+    not be the center of mass, if the segment isn't symmetrical about the equator of the sphere.
 
-    Parameters
-    ----------
-    m : real
-        Total mass of sphere
-    r : real
-        radius of sphere
-
-    Returns
-    -------
-    I : numpy 3x3 matrix
-        Inertia tensor with respect to the center of mass and these axes.
+    :param r: Radius of sphere
+    :param m: Mass of sphere
+    :param rho: Areal density of sphere. Optional, but if passed, m is ignored.
+    :param z0: Lower bound of segment, bottom of sphere by default
+    :param z1: Upper bound of segment, top of sphere by default
+    :return: Inertia tensor with respect to the center of the sphere.
     """
-    I=2*m*r*r/3;
-    I=np.identity(3)*I
+    if rho is None:
+        A=SphereA(r,z0,z1)
+        rho=m/A
+    z1int=(z1-z0)
+    z3int=(z1**3-z0**3)/3
+    Izz=2*np.pi*rho*r**3*(z1int-z3int)
+    Ixx=Izz/2+2*np.pi*rho*r*z3int
+    I=np.array((Ixx,0,0),
+               (0,Ixx,0),
+               (0,0,Izz))
     return I
 
 def HollowSphereI(rOuter, rInner,m=1):
     """
-    Calculate inertia tensor for a solid sphere.
+    Calculate inertia tensor for a hollow thick-walled sphere.
 
     Inertia tensor is relative to sphere center of mass.
 
@@ -466,7 +480,7 @@ def spheroidRho(x,y,z,a=1,b=1,zz0=None,zz1=None):
         return 0
     if z>zz1:
         return 0
-    if(x**2/a**2+y**2/a**2+z**2/b**2<1):
+    if x**2/a**2+y**2/a**2+z**2/b**2<1:
         return 1
     return 0
 
