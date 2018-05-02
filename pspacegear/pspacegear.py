@@ -20,21 +20,26 @@ def vangle(a, b):
 
 
 # Earth
-# mu=398600.4415e9  #Gravitational parameter of Earth
-# w=2*pi/86164.09 #Rotation speed of Earth
-# Re=6378137         #Equatorial radius of Earth
+mu=398600.4415e9  #Gravitational parameter of Earth
+#w=2*pi/86164.09 #Rotation speed of Earth
+Re=6378137         #Equatorial radius of Earth
+g0=9.80665         #Standard 1-G magnitude in m/s^2
 
 # Kerbin
-mu = 3.5316000e12  # Gravitational parameter, m^3/s^2
-# w=2*pi/(21549.425) #Rotation speed, rad/s (calculated from Sidereal period)
-w = 0
-Re = 600000  # Equatorial radius, m
-pole = w * np.array([0, 0, 1])  # Direction is direction of North Pole, magnitude is spin
-# rate in radians/sec. It happens that the wind speed
-# at any point is the cross product of this vector with
-# the position vector of the point
-g0 = 9.82  # m/s^2, standard acceleration of gravity used for Isp-ve
+#mu = 3.5316000e12  # Gravitational parameter, m^3/s^2
+#w=2*pi/(21549.425) #Rotation speed, rad/s (calculated from Sidereal period)
+#Re = 600000  # Equatorial radius, m
 
+#Rotation
+w = 0
+pole = w * np.array([0, 0, 1])  # Direction is direction of North Pole, magnitude is spin
+                                # rate in radians/sec. It happens that the wind speed
+                                # at any point is the cross product of this vector with
+                                # the position vector of the point
+#g0 = 9.81  # m/s^2, standard acceleration of gravity used for Isp-ve
+
+#Sea-level atmosphere
+a1=atm(0)
 
 # conversion
 def gf(t, x, extra=None):
@@ -109,6 +114,9 @@ def mf(t, x, extra=None):
     m = mp + extra["m0"][i]  # remaining prop and inert mass of current stage
     for j in range(i + 1, len(extra["mp"])):
         m = m + extra["m0"][j] + extra["mp"][j]  # All prop and inert mass of each higher stage
+    for tdrop in extra["mdrop"]:
+        if t<tdrop:
+            m+=extra["mdrop"][tdrop]
     return m
 
 
@@ -117,27 +125,15 @@ Ffextra = collections.namedtuple("Ffextra",
                                   "pitchpoly"])
 
 
-def Ff(t, x, extra=None):
+def Ff(t, x, a, m, extra=None):
     """
-    Calculate thrust vector for vessel
-    Parameters
-    ----------
-    t : real
-        range time in time units. (SI - second)
-    r : numpy array
-        Position vector of vessel in meters relative to center of planet
-        in implied distance units. (SI - meters)
-    v : numpy array
-        Inertial velocity vector in meters relative to center of planet
-        in the same units as t and r (SI - m/s)
-    extra : dictionary
-        The passed dictionary must include the following elements (none yet
-        but this will include any parameters for the steering model)
 
-    Returns
-    -------
-    numpy array
-        Force in units consistent with t, r, v and m() (SI - N)
+    :param t: Range time in time units (SI - second)
+    :param x: State vector in length and time units (SI - m and m/s)
+    :param a: Atmosphere properties at given altitude
+    :param m: Mass of vehicle (SI - kg)
+    :param extra: Dictionary with whatever other parameters are needed
+    :return: Force in units consistent with t, x, and m (SI - N)
 
     Notes
     -----
@@ -170,9 +166,11 @@ def Ff(t, x, extra=None):
     # throttle, and presence of sufficient propellant
     Fm = 0
     i, prop = istage(t, extra)
+    Fm_max=50*m #Maximum thrust, which will limit to maximum acceleration of 5g
     if prop > 0:
         # Only add thrust if we have propellant left in this stage
-        Fm = extra["ve"][i] * extra["mdot"][i]
+        ve=extra["ve0"][i]*(1-a.P/a1.P)+extra["ve1"][i]*(a.P/a1.P) #Weighted average of sea-level and vacuum ve
+        Fm = ve * extra["mdot"][i]
     return Fv * Fm, Ffextra(np.rad2deg(pitch), vvert, vhorz, vverthat, vhorzhat,
                             Fv, mode, np.rad2deg(alpha), np.rad2deg(pitchgrav), np.rad2deg(pitchpoly))
 
@@ -186,67 +184,57 @@ drag_r=0.625
 drag_S=drag_r**2*np.pi
 
 Dfextra = collections.namedtuple("Dfextra",
-                                 ["spd","Z","atm","M", "q", "Ca", "Fa"])
-def Df(t, x, extra=None):
+                                 ["spd","M", "q", "Ca", "Fa"])
+def Df(t, x, a, m, F, extra=None):
     """
     Calculate aero force on vehicle
 
-    Parameters
-    ----------
-    t : real
-        range time in time units. (SI - second)
-    r : numpy array
-        Position vector of vessel in meters relative to center of planet
-        in implied distance units. (SI - meters)
-    v : numpy array
-        Inertial velocity vector in meters relative to center of planet
-        in the same units as t and r (SI - m/s)
-    extra : dictionary
-        The passed dictionary must include the following elements (none yet
-        but this will include any parameters for the steering model)
-
-    Returns
-    -------
-    numpy array
-        Force in units consistent with t, r, v and m() (SI - N)
+    :param t: Range time in time units (SI - second)
+    :param x: State vector in length and time units (SI - m and m/s)
+    :param a: Atmosphere properties at given altitude
+    :param m: Mass of vehicle (SI - kg)
+    :param F: Thrust vector in force units consistent with t, x, and m (SI - N)
+              Passed so that this function can calculate angle of attack
+    :param extra: Dictionary with whatever other parameters are needed
+    :return: Force in units consistent with t, x, and m (SI - N)
 
     Notes
     -----
         This is a force, which must be multiplied by mass. It is letter
         D for drag, but includes the total aerodynamic force on the vehicle
         in all three dimensions.
-        This function may call F() to get the thrust vector, the direction
-        of which implies the vehicle attitude. This may be needed for
-        angle-of-attack calculation.
     """
     r = np.array(x[:3])
     vorb = np.array(x[3:6])
     wind = cross(pole, r)
     vsur = vorb - wind
-    Z=vlength(r)-Re
-    a=atm(Z)
     spd=vlength(vsur)
     M=spd/a.Cs #Mach number
     q=a.rho*spd**2/2
-    Ca=f_Ca(M)
+    if M>drag_M[-1]:
+        Ca=drag_Ca[-1]
+    elif M<drag_M[0]:
+        Ca=drag_Ca[0]
+    else:
+        Ca=f_Ca(M)
     Fa=q*drag_S*Ca
     if spd==0:
-        return np.zeros(3),Dfextra(spd,Z,a,M,q,Ca,Fa)
+        return np.zeros(3),Dfextra(spd,M,q,Ca,Fa)
     if a.rho==0:
-        return np.zeros(3),Dfextra(spd,Z,a,M,q,Ca,Fa)
-    return -Fa*vsur/spd, Dfextra(spd,Z,a,M,q,Ca,Fa)
+        return np.zeros(3),Dfextra(spd,M,q,Ca,Fa)
+    return -Fa*vsur/spd, Dfextra(spd,M,q,Ca,Fa)
 
-xdotextra = collections.namedtuple("xdotextra", ["m", "g", "F", "D", "Fextra", "Dextra"])
+xdotextra = collections.namedtuple("xdotextra", ["m", "g", "Z", "atm", "F", "D", "Fextra", "Dextra"])
 
 def xdot(t, x, extra=None):
-    m = mf(t, x, extra)
-    g = gf(t, x, extra)
-    F, Fextra = Ff(t, x, extra)
-    Fa = F / m
-    D, Dextra = Df(t, x, extra)
-    Da = D / m
-    a = Fa + Da + g
-    return np.concatenate((np.array(x[3:]), a)), xdotextra(m, g, F, D, Fextra, Dextra)
+    Z=vlength(x[:3])-Re
+    at=atm(Z)
+    m = mf(t=t, x=x, extra=extra)
+    g = gf(t=t, x=x, extra=extra)
+    F, Fextra = Ff(t=t, x=x, a=at, m=m, extra=extra)
+    D, Dextra = Df(t=t, x=x, a=at, m=m, F=F, extra=extra)
+    a = (F + D)/m + g
+    return np.concatenate((np.array(x[3:]), a)), xdotextra(m, g, Z, at, F, D, Fextra, Dextra)
 
 def RK4(t, x, dt, extra=None):
     k1, extout = xdot(t, x, extra)
@@ -335,7 +323,8 @@ def shoot(x0, t0, t1, dt=0.125, extra=None):
 
 if __name__ == '__main__':
     x0 = np.array([Re, 0, 0, 1, 0.001, 0])
-    extra = {'ve': [320 * g0, 345 * g0],  # Specific impulse for each stage
+    Sandstone={'ve0': [320 * g0, 345 * g0],  # Vacuum specific impulse for each stage
+               've1': [320 * g0, 345 * g0],  #Sea-level specific impulse
              'mdot': [215000 / (320 * g0), 60000 / (345 * g0)],  # Mass flow rate for each stage
              'mp': [4 * 1000, 4 * 1000],  # Propellant mass of each FL-T800
              'm0': [(0.4  # TR16A decoupler (stage 1/2)
@@ -349,8 +338,25 @@ if __name__ == '__main__':
                     + 0.5  # Empty mass of FL-T800 tank
                     + 0.5  # LV-909 engine
                     ) * 1000],  # convert tons to kg, mass for each stage
+             'mdrop':{}, #No fairings etc to drop
              'pitchover': 15
              }
+    Atlas401={'ve0': [337.8*g0,450.5*g0],  #Vacuum specific impulse for each stage
+              've1': [311.3*g0,450.5*g0],  #Sea-level specific impulse
+             'mdot': [4.152e6/(337.8*g0), 99.2e3 / (450.5*g0)],  # Mass flow rate derived from vacuum thrust
+             'mp': [284089, 20830],        # Propellant mass of each FL-T800
+             'm0': [(21054    # Inert mass of booster
+                     + 947    # Interstage
+                     + 181.7  # Stub adapter
+                     )
+                 , (2243  # Inert mass of Centaur
+                    +39.5 #D1666 Payload Sep Ring
+                    +32.2 #C22 Launch Vehicle Adapter, 0.120" wall thickness
+                    )],
+             'mdrop':{250:2127}, #LPF
+             'pitchover': 15
+             }
+    extra=Atlas401
     print(istage(60, extra))
     x1, tlist, xlist, extoutlist, term = shoot(x0, 0, 1200, extra=extra)
     print(term)
@@ -384,7 +390,7 @@ if __name__ == '__main__':
         alphalist.append(extoutlist[i].Fextra.alpha)
         ppolylist.append(extoutlist[i].Fextra.pitchpoly)
         pgravlist.append(extoutlist[i].Fextra.pitchgrav)
-        Zlist.append(extoutlist[i].Dextra.Z)
+        Zlist.append(extoutlist[i].Z)
         spdlist.append(extoutlist[i].Dextra.spd)
         qlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
         Falist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
