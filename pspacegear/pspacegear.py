@@ -6,7 +6,6 @@ Created on Jan 17, 2017
 
 import numpy as np
 from numpy.linalg import norm as vlength
-from numpy import cross, dot, cos, sin, arccos as acos, sqrt, pi
 import matplotlib.pyplot as plt
 import collections
 from atmosphere.earth import lower_atmosphere as atm
@@ -16,12 +15,12 @@ class shooter:
     pass
 
 def vangle(a, b):
-    return acos(dot(a, b) / (vlength(a) * vlength(b)))
+    return np.arccos(np.dot(a, b) / (vlength(a) * vlength(b)))
 
 
 # Earth
 mu=398600.4415e9  #Gravitational parameter of Earth
-#w=2*pi/86164.09 #Rotation speed of Earth
+w=2*np.pi/86164.09 #Rotation speed of Earth
 Re=6378137         #Equatorial radius of Earth
 g0=9.80665         #Standard 1-G magnitude in m/s^2
 
@@ -31,7 +30,7 @@ g0=9.80665         #Standard 1-G magnitude in m/s^2
 #Re = 600000  # Equatorial radius, m
 
 #Rotation
-w = 0
+#w = 0
 pole = w * np.array([0, 0, 1])  # Direction is direction of North Pole, magnitude is spin
                                 # rate in radians/sec. It happens that the wind speed
                                 # at any point is the cross product of this vector with
@@ -73,57 +72,25 @@ def gf(t, x, extra=None):
     r = np.array(x[:3])
     return -r * mu / (np.linalg.norm(r) ** 3)
 
-def istage(t, extra=None):
-    """
-    Figure out which stage is currently active.
-
-    Parameters
-    ----------
-    t : real
-        range time in time units. (SI - second)
-    extra : dictionary
-        The passed dictionary must include the following elements (none yet
-        but this will include any parameters for the steering model)
-
-    Returns
-    -------
-    A tuple
-      [0] Which stage is active. Stages below this should not include either
-          their propellant or inert mass
-      [1] Amount of fuel left in the current stage in kg. Zero if empty, never
-          negative
-
-    For now, any current stage lower than the top stage has fuel. If it
-    doesn't, it's not the current stage.
-    """
-    ttot = 0  # total amount of time that all previous stages have burned
-    for i in range(len(extra["mp"])):
-        stageTime = extra["mp"][i] / extra["mdot"][i]
-        if stageTime + ttot >= t:
-            tused = t - ttot  # Amount of time that this stage has been running
-            return (i, extra["mp"][i] - extra["mdot"][i] * tused)
-        ttot = ttot + stageTime
-    return (len(extra["mp"]) - 1, 0)  # All stages are empty
-
-
 def mf(t, x, extra=None):
     """
     Calculate mass of vehicle
     """
-    i, mp = istage(t, extra)
-    m = mp + extra["m0"][i]  # remaining prop and inert mass of current stage
-    for j in range(i + 1, len(extra["mp"])):
-        m = m + extra["m0"][j] + extra["mp"][j]  # All prop and inert mass of each higher stage
+    props=x[6:]
+    i=0
+    for prop in props:
+        if prop>0:
+            break
+        i+=1
+    m = np.sum(x[6:])+np.sum(np.array(extra["m0"][i:]))  # remaining prop and inert mass of current stage
     for tdrop in extra["mdrop"]:
         if t<tdrop:
             m+=extra["mdrop"][tdrop]
     return m
 
-
 Ffextra = collections.namedtuple("Ffextra",
                                  ["pitch", "vvert", "vhorz", "vverthat", "vhorzhat", "Fv", "mode", "alpha", "pitchgrav",
                                   "pitchpoly"])
-
 
 def Ff(t, x, a, m, extra=None):
     """
@@ -133,8 +100,10 @@ def Ff(t, x, a, m, extra=None):
     :param a: Atmosphere properties at given altitude
     :param m: Mass of vehicle (SI - kg)
     :param extra: Dictionary with whatever other parameters are needed
-    :return: Force in units consistent with t, x, and m (SI - N)
-
+    :return: A tuple with three elements:
+        Force vector in units consistent with t, x, and m (SI - N)
+        mdot for each stage in units consistent with t and m (SI - kg/s)
+        Extra output structure (Ffextra named tuple)
     Notes
     -----
         This is a force, which must be multiplied by mass.
@@ -142,11 +111,12 @@ def Ff(t, x, a, m, extra=None):
     # Calculate the direction of the force
     r = np.array(x[:3])
     vorb = np.array(x[3:6])
-    wind = cross(pole, r)
+    props=np.array(x[6:]) #Propellant masses remaining in kg
+    wind = np.cross(pole, r)
     vsur = vorb - wind
     # Resolve the relative velocity into vertical and horizontal projections
-    vvert = dot(vsur, r) / dot(r, r) * r  # projection of vsur in vertical
-    vhorz = vsur - vvert  # rejection of vsur from vertical
+    vvert = np.dot(vsur, r) / np.dot(r, r) * r  # projection of vsur in vertical
+    vhorz = vsur - vvert                  # rejection of vsur from vertical
     vverthat = r / vlength(r)  # Since the rocket may travel down, don't
                                # use the vertical component as the basis
                                # vector, instead use the position vector.
@@ -162,12 +132,17 @@ def Ff(t, x, a, m, extra=None):
         mode = 0
     mdot=[0]*len(extra["ve0"])
     alpha = pitch - pitchgrav
-    Fv = vverthat * sin(pitch) + vhorzhat * cos(pitch)
+    Fv = vverthat * np.sin(pitch) + vhorzhat * np.cos(pitch)
     # Calculate the force magnitude, which depends on specific impulse,
     # throttle, and presence of sufficient propellant
     Fm = 0
-    i, prop = istage(t, extra)
     Fm_max=50*m #Maximum thrust, which will limit to maximum acceleration of 5g
+    i=0
+    for prop in props:
+        if prop>0:
+            break
+        i+=1
+    prop=props[i]
     if prop > 0:
         # Only add thrust if we have propellant left in this stage
         ve=extra["ve0"][i]*(1-a.P/a1.P)+extra["ve1"][i]*(a.P/a1.P) #Weighted average of sea-level and vacuum ve
@@ -185,11 +160,11 @@ drag_Ca=np.array((0.373,0.347,0.345,0.350,0.365,0.391,0.425,0.481,0.565,0.610,0.
 f_Ca=interp1d(drag_M,drag_Ca)
 
 #drag_r=(5*0.3048) #Effective radius of rocket body, m. This is used to describe a circle which is the drag reference area
-drag_r=0.625
+drag_r=2 #Atlas with 4m fairing
+#drag_r=0.625
 drag_S=drag_r**2*np.pi
 
-Dfextra = collections.namedtuple("Dfextra",
-                                 ["spd","M", "q", "Ca", "Fa"])
+Dfextra = collections.namedtuple("Dfextra", ["spd","M", "q", "Ca", "Fa"])
 def Df(t, x, a, m, F, extra=None):
     """
     Calculate aero force on vehicle
@@ -211,7 +186,7 @@ def Df(t, x, a, m, F, extra=None):
     """
     r = np.array(x[:3])
     vorb = np.array(x[3:6])
-    wind = cross(pole, r)
+    wind = np.cross(pole, r)
     vsur = vorb - wind
     spd=vlength(vsur)
     M=spd/a.Cs #Mach number
@@ -230,23 +205,22 @@ def Df(t, x, a, m, F, extra=None):
     return -Fa*vsur/spd, Dfextra(spd,M,q,Ca,Fa)
 
 xdotextra = collections.namedtuple("xdotextra", ["m", "g", "Z", "atm", "F", "D", "Fextra", "Dextra"])
-
 def xdot(t, x, extra=None):
     Z=vlength(x[:3])-Re
     at=atm(Z)
-    m = mf(t=t, x=x, extra=extra)
-    g = gf(t=t, x=x, extra=extra)
-    F, mdot, Fextra = Ff(t=t, x=x, a=at, m=m, extra=extra)
-    D, Dextra = Df(t=t, x=x, a=at, m=m, F=F, extra=extra)
+    m               = mf(t=t, x=x,                 extra=extra)
+    g               = gf(t=t, x=x,                 extra=extra)
+    F, mdot, Fextra = Ff(t=t, x=x, a=at, m=m,      extra=extra)
+    D,       Dextra = Df(t=t, x=x, a=at, m=m, F=F, extra=extra)
     a = (F + D)/m + g
-    return np.concatenate((np.array(x[3:]), a, np.array(mdot))), xdotextra(m, g, Z, at, F, D, Fextra, Dextra)
+    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))), xdotextra(m, g, Z, at, F, D, Fextra, Dextra)
 
 def RK4(t, x, dt, extra=None):
-    k1, extout = xdot(t, x, extra)
-    k2 = xdot(t + dt / 2, x + dt * k1 / 2, extra)[0]
-    k3 = xdot(t + dt / 2, x + dt * k2 / 2, extra)[0]
-    k4 = xdot(t + dt, x + dt * k3, extra)[0]
-    return x + dt * (k1 + 2 * k2 + 2 * k3 + k4) / 6, extout
+    k1,extout = xdot(t     , x        , extra)
+    k2,_      = xdot(t+dt/2, x+dt*k1/2, extra)
+    k3,_      = xdot(t+dt/2, x+dt*k2/2, extra)
+    k4,_      = xdot(t+dt  , x+dt*k3  , extra)
+    return x+dt*(k1+2*k2+2*k3+k4)/6, extout
 
 def shoot(x0, t0, t1, dt=0.125, extra=None):
     """
@@ -294,7 +268,7 @@ def shoot(x0, t0, t1, dt=0.125, extra=None):
     x = x0
     rl = vlength(x[:3])
     vl = vlength(x[3:6])
-    vcirc = sqrt(mu / rl)
+    vcirc = np.sqrt(mu / rl)
     h = rl - Re
     extout = RK4(t=t, x=x, dt=dt, extra=extra)[1]
     print(t, vl, vcirc)
@@ -309,7 +283,7 @@ def shoot(x0, t0, t1, dt=0.125, extra=None):
         extoutlist.append(extout)
         h = vlength(x[:3]) - Re
         rl = vlength(x2[:3])
-        vcirc = sqrt(mu / rl)
+        vcirc = np.sqrt(mu / rl)
         n = n + 1
         x=x2
         t = t0 + dt * n
@@ -327,7 +301,6 @@ def shoot(x0, t0, t1, dt=0.125, extra=None):
 
 
 if __name__ == '__main__':
-    x0 = np.array([Re, 0, 0, 1, 0.001, 0])
     Sandstone={'ve0': [320 * g0, 345 * g0],  # Vacuum specific impulse for each stage
                've1': [320 * g0, 345 * g0],  #Sea-level specific impulse
              'mdot': [215000 / (320 * g0), 60000 / (345 * g0)],  # Mass flow rate for each stage
@@ -359,10 +332,13 @@ if __name__ == '__main__':
                     +32.2 #C22 Launch Vehicle Adapter, 0.120" wall thickness
                     )],
              'mdrop':{250:2127}, #LPF
-             'pitchover': 15
+             'pitchover': 16
              }
     extra=Atlas401
-    print(istage(60, extra))
+    r0=np.array([Re,0,0])
+    wind = np.cross(pole, r0)
+    v0=np.array([1,0,0.001])+wind
+    x0 = np.hstack((r0,v0,np.array(Atlas401['mp'])))
     x1, tlist, xlist, extoutlist, term = shoot(x0, 0, 1200, extra=extra)
     print(term)
     print(x1)
@@ -383,11 +359,15 @@ if __name__ == '__main__':
     Calist=[]
     Mlist=[]
     Flist=[]
+    aFlist=[]
+    aqlist=[]
+    adlist=[]
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
         vlist.append(vlength(xlist[i][3:6]))
-        Flist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
+        Flist.append(vlength(extoutlist[i].F))
+        aFlist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
         hlist.append(vlength(xlist[i][0:3]) - Re)
         pitchlist.append(extoutlist[i].Fextra.pitch)
         mlist.append(extoutlist[i].m)
@@ -397,20 +377,22 @@ if __name__ == '__main__':
         pgravlist.append(extoutlist[i].Fextra.pitchgrav)
         Zlist.append(extoutlist[i].Z)
         spdlist.append(extoutlist[i].Dextra.spd)
-        qlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
-        Falist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
+        qlist.append(extoutlist[i].Dextra.q)
+        aqlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
+        Falist.append(extoutlist[i].Dextra.Fa)
+        adlist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
         print(tlist[i], xlist[i], extoutlist[i])
     print(term)
     rl = vlength(x1[:3])
     vl = vlength(x1[3:6])
-    vcirc = sqrt(mu / rl)
+    vcirc = np.sqrt(mu / rl)
     print(vl, vcirc, pitchlist[-1])
     Xlist = np.array(Xlist)
     Ylist = np.array(Ylist)
     plt.figure(7)
-    surf = sqrt(Re ** 2 - Ylist ** 2) - Re
+    surf = np.sqrt(Re ** 2 - Ylist ** 2) - Re
     plt.plot(Ylist, Xlist - Re,'b-', Ylist, surf,'g-',Ylist[0::80],Xlist[0::80]-Re,'bx')
     plt.axis('equal')
     plt.xlabel("Y/m")
@@ -428,11 +410,23 @@ if __name__ == '__main__':
     plt.xlabel("t/s")
     plt.ylabel("spd/(m/s)")
     plt.figure(11)
-    plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
+    plt.plot(tlist,aqlist,'b-',tlist,adlist,'g-',tlist,aFlist,'r-')
     plt.xlabel("t/s")
     plt.ylabel("acc/(m/s^2)")
     plt.figure(12)
     plt.plot(tlist,Calist,'b-',tlist,Mlist,'g-')
     plt.xlabel("t/s")
     plt.ylabel("Ca,Mach")
+    plt.figure(13)
+    plt.plot(tlist,mlist,'b-')
+    plt.xlabel("t/s")
+    plt.ylabel("Mass/kg")
+    plt.figure(14)
+    plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
+    plt.xlabel("t/s")
+    plt.ylabel("F/N")
+    plt.figure(15)
+    plt.plot(tlist, ppolylist, 'b-',tlist, pgravlist, 'g-',tlist, pitchlist,'r--')
+    plt.xlabel("t/s")
+    plt.ylabel("pitch/deg")
     plt.show()
