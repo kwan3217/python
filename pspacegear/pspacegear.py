@@ -133,8 +133,10 @@ def Ff(t, x, a, m, extra=None):
     :param a: Atmosphere properties at given altitude
     :param m: Mass of vehicle (SI - kg)
     :param extra: Dictionary with whatever other parameters are needed
-    :return: Force in units consistent with t, x, and m (SI - N)
-
+    :return: A tuple with three elements:
+        Force vector in units consistent with t, x, and m (SI - N)
+        mdot for each stage in units consistent with t and m (SI - kg/s)
+        Extra output structure (Ffextra named tuple)
     Notes
     -----
         This is a force, which must be multiplied by mass.
@@ -142,6 +144,7 @@ def Ff(t, x, a, m, extra=None):
     # Calculate the direction of the force
     r = np.array(x[:3])
     vorb = np.array(x[3:6])
+    props=np.array(x[6:]) #Propellant masses remaining in kg
     wind = cross(pole, r)
     vsur = vorb - wind
     # Resolve the relative velocity into vertical and horizontal projections
@@ -165,12 +168,18 @@ def Ff(t, x, a, m, extra=None):
     # Calculate the force magnitude, which depends on specific impulse,
     # throttle, and presence of sufficient propellant
     Fm = 0
-    i, prop = istage(t, extra)
     Fm_max=50*m #Maximum thrust, which will limit to maximum acceleration of 5g
+    i=0
+    for prop in props:
+        if prop>0:
+            break
+        i+=1
+    prop=props[i]
     if prop > 0:
         # Only add thrust if we have propellant left in this stage
         ve=extra["ve0"][i]*(1-a.P/a1.P)+extra["ve1"][i]*(a.P/a1.P) #Weighted average of sea-level and vacuum ve
         Fm = ve * extra["mdot"][i]
+        mdot=extra["mdot"][i]
     return Fv * Fm, Ffextra(np.rad2deg(pitch), vvert, vhorz, vverthat, vhorzhat,
                             Fv, mode, np.rad2deg(alpha), np.rad2deg(pitchgrav), np.rad2deg(pitchpoly))
 
@@ -430,4 +439,8 @@ if __name__ == '__main__':
     plt.plot(tlist,Calist,'b-',tlist,Mlist,'g-')
     plt.xlabel("t/s")
     plt.ylabel("Ca,Mach")
+    plt.figure(13)
+    plt.plot(tlist,mlist,'b-')
+    plt.xlabel("t/s")
+    plt.ylabel("Mass/kg")
     plt.show()
