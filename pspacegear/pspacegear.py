@@ -160,6 +160,7 @@ def Ff(t, x, a, m, extra=None):
         # Velocity-dependent pitch
         pitch = pitchpoly
         mode = 0
+    mdot=[0]*len(extra["ve0"])
     alpha = pitch - pitchgrav
     Fv = vverthat * sin(pitch) + vhorzhat * cos(pitch)
     # Calculate the force magnitude, which depends on specific impulse,
@@ -171,7 +172,11 @@ def Ff(t, x, a, m, extra=None):
         # Only add thrust if we have propellant left in this stage
         ve=extra["ve0"][i]*(1-a.P/a1.P)+extra["ve1"][i]*(a.P/a1.P) #Weighted average of sea-level and vacuum ve
         Fm = ve * extra["mdot"][i]
-    return Fv * Fm, Ffextra(np.rad2deg(pitch), vvert, vhorz, vverthat, vhorzhat,
+        mdot[i]=-extra["mdot"][i]
+        if Fm>Fm_max:
+            Fm=Fm_max
+            mdot[i]=-Fm/ve
+    return Fv * Fm, mdot, Ffextra(np.rad2deg(pitch), vvert, vhorz, vverthat, vhorzhat,
                             Fv, mode, np.rad2deg(alpha), np.rad2deg(pitchgrav), np.rad2deg(pitchpoly))
 
 #Axial force for Atlas SLV3. This can be taken as drag coefficient as long as the rocket has zero angle of attack.
@@ -231,10 +236,10 @@ def xdot(t, x, extra=None):
     at=atm(Z)
     m = mf(t=t, x=x, extra=extra)
     g = gf(t=t, x=x, extra=extra)
-    F, Fextra = Ff(t=t, x=x, a=at, m=m, extra=extra)
+    F, mdot, Fextra = Ff(t=t, x=x, a=at, m=m, extra=extra)
     D, Dextra = Df(t=t, x=x, a=at, m=m, F=F, extra=extra)
     a = (F + D)/m + g
-    return np.concatenate((np.array(x[3:]), a)), xdotextra(m, g, Z, at, F, D, Fextra, Dextra)
+    return np.concatenate((np.array(x[3:]), a, np.array(mdot))), xdotextra(m, g, Z, at, F, D, Fextra, Dextra)
 
 def RK4(t, x, dt, extra=None):
     k1, extout = xdot(t, x, extra)
