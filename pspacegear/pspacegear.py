@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import collections
 from atmosphere.earth import lower_atmosphere as atmf
 from scipy.interpolate import interp1d
+import guidance.peg
 import copy
 
 def vangle(a, b):
@@ -158,6 +159,7 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     tlist = []
     xlist = []
     extoutlist = []
+    discretelist=[]
     n = 0
     t = t0
     x = x0
@@ -165,12 +167,12 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     vl = vlength(x[3:6])
     vcirc = np.sqrt(mu / rl)
     h = rl - Re
-    _,extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
     print(t, vl, vcirc)
     while t < t1 and h >= 0 and vl < vcirc:
         # Calculate the forces and accelerations
         tlist.append(t)
         xlist.append(x)
+        discretelist.append(copy.copy(discrete))
         x2, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
         vl = vlength(x2[3:6])
         if not np.isfinite(vl):
@@ -190,7 +192,7 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
         term="Vcirc achieved"
     else:
         term="Huh? None of the termination conditions tripped"
-    return (x, tlist, xlist, extoutlist,term)
+    return (x, tlist, xlist, extoutlist,term, discretelist)
 
 class Discrete:
     def __init__(self,PropAttached,InertAttached,EngineOn,Done):
@@ -365,9 +367,10 @@ class AtlasDiscrete(Discrete):
         self.tAtlasDrop=250
         self.tCentaurStart=260
         self.tFairingDrop=268
-        self.pegA=0.4
-        self.pegB=0.0
+        self.pegA=-2
         self.pegT=400
+        self.pegB=-self.pegA/self.pegT
+        self.pegLastt=float('nan')
 
 class Atlas401(Vessel):
     ve0=[337.8*g0,450.5*g0]  #Vacuum specific impulse for each stage
@@ -418,18 +421,7 @@ class Atlas401(Vessel):
           * Fractional throttle for each engine - 0 means no thrust, 1.0 means full thrust
           * Extra guidance output
         """
-        res=resolve(x,pole)
-        pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
-        pitchgrav = vangle(res.hrelhat, res.vrel)
-        if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
-            pitch = pitchgrav
-            mode = 1
-        else:
-            # Velocity-dependent pitch
-            pitch = pitchpoly
-            mode = 0
-        alpha = pitch - pitchgrav
-        Fv = res.zhat * np.sin(pitch) + res.hrelhat * np.cos(pitch)
+
         #Decide which engines are on
         Fn=[0.0]*2
         if discrete.EngineOn[0]:
@@ -463,6 +455,34 @@ class Atlas401(Vessel):
             discrete.EngineOn[1]=True
         if discrete.InertAttached[2] and t>discrete.tFairingDrop:
             discrete.InertAttached[2]=False
+
+        res=resolve(x,pole)
+        if not discrete.EngineOn[1]:
+            pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
+            pitchgrav = vangle(res.hrelhat, res.vrel)
+            if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
+                pitch = pitchgrav
+                mode = 1
+            else:
+                # Velocity-dependent pitch
+                pitch = pitchpoly
+                mode = 0
+            alpha = pitch - pitchgrav
+            Fv = res.zhat * np.sin(pitch) + res.hrelhat * np.cos(pitch)
+        else:
+            if not np.isfinite(discrete.pegLastt):
+                dt=0
+                n=10
+            else:
+                dt=t-discrete.pegLastt
+                n=1
+            discrete.pegLastt=t
+            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdotq)=guidance.peg.peg(
+                A=discrete.pegA, B=discrete.pegB, T=discrete.pegT, dt=dt,
+                a=Fmax[1]/m, ve=self.ve0[1], r=vlength(x[0:3]), rdot=res.zv, vq=res.hiv,
+                rT=Re+185000, rdotT=0, vqT=np.sqrt(mu/Re+185000), mu=mu, n=n
+            )
+            Fv=res.zhat*fdotr+res.hihat*fdotq
         return Fv,Fn
 
 if __name__ == '__main__':
@@ -472,7 +492,7 @@ if __name__ == '__main__':
     v0=np.array([1,0,0.001])+wind
     x0 = np.hstack((r0,v0,np.array(extra.mp)))
     discrete=copy.copy(extra.discrete0)
-    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
+    x1, tlist, xlist, extoutlist, term, discretelist = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
     print(term)
     print(x1)
     hlist = []

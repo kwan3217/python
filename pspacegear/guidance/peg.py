@@ -3,7 +3,6 @@ Powered Explicit Guidance - see the wiki
 """
 
 import numpy as np #Use numpy math and trig functions, in case we get passed an array
-import numpy.log as ln
 
 def b(n,T,tau,ve):
     """
@@ -16,7 +15,7 @@ def b(n,T,tau,ve):
     :return: nth moment of acceleration
     """
     if n==0:
-        return -ve*ln(1-T/tau)
+        return -ve*np.log(1-T/tau)
     else:
         return b(n-1,T,tau,ve)*tau-(ve*T**n)/n
 
@@ -67,42 +66,52 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
     #Intermediate values which are determined from given parameters
     tau=ve/a #Time to burn the entire rocket as if it was fuel
     omega=vq/r
-    omegaT=vqT/rT
-    aT=a/(1-T/tau) #Acceleration at end of burn
+    omegaT = vqT / rT
 
-    #Iterate as requested
-    for i in range(n):
-        #Calculate new T
-        rbar=(r+rT)/2 #Eqn 26
-        hT=vqT*rT
-        h=vq*r
-        deltah=hT-h #Eqn 33
-        fh=0 #No yaw steering for now
-        fhdot=0
-        #Approximate value and derivative of vertical component of fhat
-        fr=A+(mu/r**2-omega**2*r)/a          #Eqn 22b
-        frT=A+B*T+(mu/rT**2-omegaT**2*rT)/aT
-        frdot=(frT-fr)/T                     #Eqn 22c corrected
-        #Approximate value and derivatives of downrange component of fhat
-        fq=1-fr**2/2-fh**2/2                 #Eqn 25a
-        fqdot=-fr*frdot-fh*fhdot             #Eqn 25b
-        fqdotdot=-frdot**2/2-fhdot**2/2      #Eqn 25c
-        deltaV=(deltah/rbar+ve*T*(fqdot+fqdotdot*tau)+fqdotdot*ve*T**2/2)(fq+fqdot*tau+fqdotdot*tau**2) #Eqn 36
-        T=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
+    if T>10:
+        #If T<10, then just coast on the time-updated constants from before
+        #Iterate as requested
+        for i in range(n):
+            #Calculate new T
+            aT = a / (1 - T / tau)  # Acceleration at end of burn
+            rbar=(r+rT)/2 #Eqn 26
+            hT=vqT*rT
+            h=vq*r
+            deltah=hT-h #Eqn 33
+            fh=0 #No yaw steering for now
+            fhdot=0
+            #Approximate value and derivative of vertical component of fhat
+            fr=A+(mu/r**2-omega**2*r)/a          #Eqn 22b
+            frT=A+B*T+(mu/rT**2-omegaT**2*rT)/aT
+            frdot=(frT-fr)/T                     #Eqn 22c corrected
+            #Approximate value and derivatives of downrange component of fhat
+            fq=1-fr**2/2-fh**2/2                 #Eqn 25a
+            fqdot=-fr*frdot-fh*fhdot             #Eqn 25b
+            fqdotdot=-frdot**2/2-fhdot**2/2      #Eqn 25c
+            # Eqn 36
+            N1=deltah/rbar
+            N2=ve*T*(fqdot+fqdotdot*tau)
+            N3=fqdotdot*ve*T**2/2
+            N=N1+N2+N3
+            D=(fq+fqdot*tau+fqdotdot*tau**2)
+            deltaV=N/D
+            T=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
 
-        #Calculate new A and B
-        kb=rdotT-rdot
-        kc=rT-r-rdot*T
-        b0=b(0,T,tau,ve)
-        b1=b(1,T,tau,ve)
-        c0=c(0,T,tau,ve)
-        c1=c(1,T,tau,ve)
-        B=(kc*b0-c0*kb)/(c1*b0-c0*b1)
-        A=kb/b0-b1/b0*B
+            #Calculate new A and B
+            kb=rdotT-rdot
+            kc=rT-r-rdot*T
+            b0=b(0,T,tau,ve)
+            b1=b(1,T,tau,ve)
+            c0=c(0,T,tau,ve)
+            c1=c(1,T,tau,ve)
+            B=(kc*b0-c0*kb)/(c1*b0-c0*b1)
+            A=kb/b0-b1/b0*B
 
     #Calculate vector components of fhat
     fdotr=A+(mu/r**2-omega**2*r)/a
     fdotq=np.sqrt(1-fdotr**2)
+    if not np.isfinite(fdotq):
+        print("Something happened!")
 
     #Return the results
     return A,B,T,fdotr,fdotq
