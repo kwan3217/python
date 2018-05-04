@@ -286,25 +286,7 @@ class Vessel:
             *mdot for each stage in units consistent with t and m (SI - kg/s)
             *Extra output, a namedtuple of type Ffextra
         """
-        # Calculate the direction of the force
-        r = np.array(x[:3])
-        vorb = np.array(x[3:6])
         props=np.array(x[6:]) #Propellant masses remaining in kg
-        wind = np.cross(pole, r)
-        vrel = vorb - wind
-        # Resolve the relative velocity into vertical and horizontal projections
-        zv = np.dot(vrel, r) / np.dot(r, r) * r  # projection of vsur in vertical
-        hv = vrel - zv                  # rejection of vsur from vertical
-        zvhat = r / vlength(r)  # Since the rocket may travel down, don't
-                                   # use the vertical component as the basis
-                                   # vector, instead use the position vector.
-        hvhat = hv / vlength(hv)
-        evhat=wind/vlength(wind)
-        nvhat=np.cross(zvhat,evhat)
-        zv=zvhat*np.dot(vrel,zvhat)
-        hv=hvhat*np.dot(vrel,hvhat)
-        ev=evhat*np.dot(vrel,evhat)
-        nv=nvhat*np.dot(vrel,nvhat)
 
         Fmax=[0.0]*len(self.ve0)
         mdot=[0.0]*len(self.ve0)
@@ -319,7 +301,7 @@ class Vessel:
             else:
                 #Engine is out of propellant
                 Fmax[i]=0
-        Fhat,throttle=self.guide(t=t,x=x,discrete=discrete,vrel=vrel,zv=zv,hv=hv,ev=ev,nv=nv,zvhat=zvhat,hvhat=hvhat,evhat=evhat,nvhat=nvhat,Fmax=Fmax, m=m,props=props)
+        Fhat,throttle=self.guide(t=t,x=x,discrete=discrete,Fmax=Fmax, m=m,props=props)
         # Calculate the force magnitude, which depends on specific impulse,
         # throttle, and presence of sufficient propellant
         Fmag=0
@@ -353,10 +335,39 @@ class Sandstone(Vessel):
     drag_r=0.625 #Radius of FT800 tank and Mk1 command pod
     drag_S=drag_r**2*np.pi #Reference drag area
 
+resolved=collections.namedtuple("resolved",["zhat","ehat","nhat","hihat","hrelhat","vrel","zv","nv","eiv","erelv","hiv","hrelv"])
+def resolve(x,pole):
+    r=x[0:3]
+    vi=x[3:6]
+    #Component of velocity in vertical direction
+    zhat=r/vlength(r)
+    wind=np.cross(pole, r)
+    ehat=wind/vlength(wind)
+    nhat=np.cross(zhat,ehat)
+    vrel=vi-wind
+    ziv=np.dot(zhat,vi)
+    zrelv=np.dot(zhat,vrel) #Should be the same as ziv
+    niv=np.dot(nhat,vi)
+    nrelv=np.dot(nhat,vrel) #Should be the same as niv
+    eiv=np.dot(ehat,vi)
+    erelv=np.dot(ehat,vrel) #Not the same as eiv
+    hi=vi-zhat*ziv #Subtract off vertical component of velocity to get horizontal inertial velocity
+    hiv=vlength(hi)
+    hihat=hi/hiv
+    hrel=vrel-zhat*ziv #Subtract off vertical component of velocity to get horizontal relative velocity
+    hrelv=vlength(hrel)
+    hrelhat=hrel/hrelv
+    return resolved(zhat=zhat,ehat=ehat,nhat=nhat,hihat=hihat,hrelhat=hrelhat,vrel=vrel,zv=ziv,nv=niv,eiv=eiv,erelv=erelv,hiv=hiv,hrelv=hrelv)
+
 class AtlasDiscrete(Discrete):
     def __init__(self):
         super().__init__([True,True],[True,True,True],[True,False],True)
-        self.tfairingdrop=250
+        self.tAtlasDrop=250
+        self.tCentaurStart=260
+        self.tFairingDrop=268
+        self.pegA=0.4
+        self.pegB=0.0
+        self.pegT=400
 
 class Atlas401(Vessel):
     ve0=[337.8*g0,450.5*g0]  #Vacuum specific impulse for each stage
@@ -374,11 +385,11 @@ class Atlas401(Vessel):
         ),(
           2127  #LPF
         )]
-    pitchover= 17
+    pitchover= 18
     discrete0=AtlasDiscrete()
     drag_r = 2  # Atlas with 4m fairing
     drag_S=drag_r**2*np.pi #Reference drag area
-    def guide(self,t=None,x=None,discrete=None,vrel=None,zv=None,hv=None,ev=None,nv=None,zvhat=None,hvhat=None,evhat=None,nvhat=None,Fmax=None,m=None,props=None):
+    def guide(self,t=None,x=None,discrete=None,Fmax=None,m=None,props=None):
         """
         Decide what direction the vehicle is going to point
 
@@ -389,14 +400,17 @@ class Atlas401(Vessel):
         :param t: Range time in time units (SI - second)
         :param x: State vector in length and time units (SI - m and m/s)
         :param discrete:
-        :param vvert: vertical surface-relative velocity in same units as state vector
-        :param vhorz: horizontal surface-relative velocity in same units as state vector
-        :param ve: Eastbound surface-relative velocity in same units as state vector
-        :param vn: Northbound surface-relative velocity in same units as state vector
-        :param vvhat: normalized local vertical
-        :param vehat: normalized east direction
-        :param vnhat: normalized north direction
-        :param vhorzhat: normalized horizontal vector
+        :param zv: vertical surface-relative speed in same units as state vector
+        :param hvi: horizontal inertial speed in same units as state vector
+        :param hvrel: horizontal surface-relative speed in same units as state vector
+        :param ev: Eastbound inertial speed in same units as state vector
+        :param evrel: Eastbound surface-relative speed in same units as state vector
+        :param nv: Northbound surface-relative speed in same units as state vector
+        :param zvhat: normalized local vertical
+        :param evhat: normalized east direction
+        :param nvhat: normalized north direction
+        :param hvihat: normalized horizontal vector
+        :param hvrelhat: normalized horizontal vector
         :param Fmax: Maximum available thrust (SI - N)
         :param m: Current mass (SI - kg)
         :return: A tuple
@@ -404,9 +418,10 @@ class Atlas401(Vessel):
           * Fractional throttle for each engine - 0 means no thrust, 1.0 means full thrust
           * Extra guidance output
         """
-        pitchpoly = np.deg2rad(90 - vlength(vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
-        pitchgrav = vangle(hvhat, vrel)
-        if vlength(vrel) > 300 and pitchpoly < pitchgrav:
+        res=resolve(x,pole)
+        pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
+        pitchgrav = vangle(res.hrelhat, res.vrel)
+        if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
             pitch = pitchgrav
             mode = 1
         else:
@@ -414,7 +429,7 @@ class Atlas401(Vessel):
             pitch = pitchpoly
             mode = 0
         alpha = pitch - pitchgrav
-        Fv = zvhat * np.sin(pitch) + hvhat * np.cos(pitch)
+        Fv = res.zhat * np.sin(pitch) + res.hrelhat * np.cos(pitch)
         #Decide which engines are on
         Fn=[0.0]*2
         if discrete.EngineOn[0]:
@@ -435,15 +450,19 @@ class Atlas401(Vessel):
                 Fn[0]=Fn_max
             if props[0]<500:
                 discrete.EngineOn[0]=False
-                discrete.PropAttached[0]=False
-                discrete.InertAttached[0]=False
-                discrete.EngineOn[1]=True
-                discrete.tfairingdrop=t+8
+                discrete.tAtlasDrop=t+8
+                discrete.tCentaurStart=discrete.tAtlasDrop+10
+                discrete.tFairingDrop=discrete.tCentaurStart+8
+        elif discrete.PropAttached[0] and t>discrete.tAtlasDrop:
+            discrete.PropAttached[0] = False
+            discrete.InertAttached[0] = False
         if discrete.EngineOn[1]:
             #Centaur engine is on
             Fn[1]=1
-            if discrete.InertAttached[2] and t>discrete.tfairingdrop:
-                discrete.InertAttached[2]=False
+        elif t>discrete.tCentaurStart:
+            discrete.EngineOn[1]=True
+        if discrete.InertAttached[2] and t>discrete.tFairingDrop:
+            discrete.InertAttached[2]=False
         return Fv,Fn
 
 if __name__ == '__main__':
@@ -453,7 +472,7 @@ if __name__ == '__main__':
     v0=np.array([1,0,0.001])+wind
     x0 = np.hstack((r0,v0,np.array(extra.mp)))
     discrete=copy.copy(extra.discrete0)
-    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=800, discrete=discrete, extra=extra)
+    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
     print(term)
     print(x1)
     hlist = []
@@ -501,7 +520,7 @@ if __name__ == '__main__':
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
         Aproplist.append(xlist[i][6])
-        print(tlist[i], xlist[i], extoutlist[i])
+#        print(tlist[i], xlist[i], extoutlist[i])
     print(term)
     rl = vlength(x1[:3])
     vl = vlength(x1[3:6])
