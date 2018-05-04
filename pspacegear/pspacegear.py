@@ -88,12 +88,12 @@ def xdot(t=None, x=None, discrete=None, dt=None, extra=None):
     """
     Z=vlength(x[:3])-Re
     atm=atmf(Z)
-    g                         = gf(t=t, x=x)
-    m                         = extra.mf(t=t, x=x, discrete=discrete)
-    F, discrete, mdot = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
-    D,                 Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
+    g         = gf(t=t, x=x)
+    m         = extra.mf(t=t, x=x, discrete=discrete)
+    F, mdot   = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
+    D, Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
     a=(F+D)/m + g
-    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),discrete,xdotextra(m, g, Z, atm, F, D, None, Dextra)
+    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),xdotextra(m, g, Z, atm, F, D, None, Dextra)
 
 def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
     """
@@ -111,11 +111,11 @@ def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
        * New discrete value(s)
        * extout from first step
     """
-    k1,discrete,extout = xdot(t=t     , x=x        , discrete=discrete, dt=dt/2, extra=extra)
-    k2,discrete,_      = xdot(t=t+dt/2, x=x+dt*k1/2, discrete=discrete, dt=dt/2, extra=extra)
-    k3,discrete,_      = xdot(t=t+dt/2, x=x+dt*k2/2, discrete=discrete, dt=dt/2, extra=extra)
-    k4,discrete,_      = xdot(t=t+dt  , x=x+dt*k3  , discrete=discrete, dt=dt/2, extra=extra)
-    return x+dt*(k1+2*k2+2*k3+k4)/6, discrete, extout
+    k1,extout = xdot(t=t     , x=x        , discrete=discrete, dt=dt/2, extra=extra)
+    k2,_      = xdot(t=t+dt/2, x=x+dt*k1/2, discrete=discrete, dt=dt/2, extra=extra)
+    k3,_      = xdot(t=t+dt/2, x=x+dt*k2/2, discrete=discrete, dt=dt/2, extra=extra)
+    k4,_      = xdot(t=t+dt  , x=x+dt*k3  , discrete=discrete, dt=dt/2, extra=extra)
+    return x+dt*(k1+2*k2+2*k3+k4)/6, extout
 
 def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     """
@@ -165,13 +165,13 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     vl = vlength(x[3:6])
     vcirc = np.sqrt(mu / rl)
     h = rl - Re
-    _,_,extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
+    _,extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
     print(t, vl, vcirc)
-    while t < t1 and h >= 0 and vlength(extout.F) > 0 and vl < vcirc:
+    while t < t1 and h >= 0 and vl < vcirc:
         # Calculate the forces and accelerations
         tlist.append(t)
         xlist.append(x)
-        x2, discrete, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
+        x2, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
         vl = vlength(x2[3:6])
         if not np.isfinite(vl):
             print("Something happened!")
@@ -186,13 +186,18 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
         term="Time expired"
     elif not (h>=0):
         term="Crashed into ground"
-    elif not (vlength(extout.F)>0):
-        term="Out of fuel"
     elif not (vl<vcirc):
         term="Vcirc achieved"
     else:
         term="Huh? None of the termination conditions tripped"
     return (x, tlist, xlist, extoutlist,term)
+
+class Discrete:
+    def __init__(self,PropAttached,InertAttached,EngineOn,Done):
+        self.PropAttached=PropAttached
+        self.InertAttached=InertAttached
+        self.EngineOn=EngineOn
+        self.Done=Done
 
 class Vessel:
     # Axial force for Atlas SLV3. This can be taken as drag coefficient as long as the rocket has zero angle of attack.
@@ -208,16 +213,14 @@ class Vessel:
         """
         Calculate mass of vehicle
         """
+        m=0
         props = x[6:]
-        i = 0
-        for prop in props:
-            if prop > 0:
-                break
-            i += 1
-        m = np.sum(x[6:]) + np.sum(np.array(self.m0[i:]))  # remaining prop and inert mass of current stage
-        for tdrop in self.mdrop:
-            if t < tdrop:
-                m += self.mdrop[tdrop]
+        for i,prop in enumerate(props):
+            if discrete.PropAttached[i]:
+                m+=prop
+        for i,m0 in enumerate(self.m0):
+            if discrete.InertAttached[i]:
+                m+=m0
         return m
     Dfextra = collections.namedtuple("Dfextra", ["spd","M", "q", "Ca", "Fa"])
     def Df(self, t=None, x=None, discrete=None, atm=None, m=None, F=None):
@@ -326,7 +329,7 @@ class Vessel:
                 mdot[i]=-(Fmax[i]*throttle[i])/ve[i]
             else:
                 mdot[i]=0
-        return Fhat * Fmag, discrete, mdot
+        return Fhat * Fmag, mdot
 
 class Sandstone(Vessel):
     ve0=[320 * g0, 345 * g0]  # Vacuum specific impulse for each stage
@@ -350,6 +353,11 @@ class Sandstone(Vessel):
     drag_r=0.625 #Radius of FT800 tank and Mk1 command pod
     drag_S=drag_r**2*np.pi #Reference drag area
 
+class AtlasDiscrete(Discrete):
+    def __init__(self):
+        super().__init__([True,True],[True,True,True],[True,False],True)
+        self.tfairingdrop=250
+
 class Atlas401(Vessel):
     ve0=[337.8*g0,450.5*g0]  #Vacuum specific impulse for each stage
     ve1=[311.3*g0,450.5*g0]  #Sea-level specific impulse
@@ -363,10 +371,11 @@ class Atlas401(Vessel):
            +39.5 #D1666 Payload Sep Ring
            +32.2 #C22 Launch Vehicle Adapter, 0.120" wall thickness
            +721  #Insight total payload mass
+        ),(
+          2127  #LPF
         )]
-    mdrop={250:2127} #LPF
-    pitchover= 16
-    discrete0=None
+    pitchover= 17
+    discrete0=AtlasDiscrete()
     drag_r = 2  # Atlas with 4m fairing
     drag_S=drag_r**2*np.pi #Reference drag area
     def guide(self,t=None,x=None,discrete=None,vrel=None,zv=None,hv=None,ev=None,nv=None,zvhat=None,hvhat=None,evhat=None,nvhat=None,Fmax=None,m=None,props=None):
@@ -408,7 +417,7 @@ class Atlas401(Vessel):
         Fv = zvhat * np.sin(pitch) + hvhat * np.cos(pitch)
         #Decide which engines are on
         Fn=[0.0]*2
-        if props[0]>0:
+        if discrete.EngineOn[0]:
             #Atlas RD-180 is on. Do thrust limiting.
             if t<100:
                 Fn_max=1.0
@@ -424,9 +433,17 @@ class Atlas401(Vessel):
                 Fn[0]=Fn_amax
             else:
                 Fn[0]=Fn_max
-        else:
+            if props[0]<500:
+                discrete.EngineOn[0]=False
+                discrete.PropAttached[0]=False
+                discrete.InertAttached[0]=False
+                discrete.EngineOn[1]=True
+                discrete.tfairingdrop=t+8
+        if discrete.EngineOn[1]:
             #Centaur engine is on
             Fn[1]=1
+            if discrete.InertAttached[2] and t>discrete.tfairingdrop:
+                discrete.InertAttached[2]=False
         return Fv,Fn
 
 if __name__ == '__main__':
@@ -436,12 +453,13 @@ if __name__ == '__main__':
     v0=np.array([1,0,0.001])+wind
     x0 = np.hstack((r0,v0,np.array(extra.mp)))
     discrete=copy.copy(extra.discrete0)
-    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=1200, discrete=discrete, extra=extra)
+    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=800, discrete=discrete, extra=extra)
     print(term)
     print(x1)
     hlist = []
     Xlist = []
     Ylist = []
+    Zlist = []
     vlist = []
  #   pitchlist = []
     mlist = []
@@ -449,7 +467,7 @@ if __name__ == '__main__':
     alphalist = []
     ppolylist = []
     pgravlist = []
-    Zlist=[]
+    altlist=[]
     spdlist=[]
     qlist=[]
     Falist=[]
@@ -459,9 +477,11 @@ if __name__ == '__main__':
     aFlist=[]
     aqlist=[]
     adlist=[]
+    Aproplist=[]
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
+        Zlist.append(xlist[i][2])
         vlist.append(vlength(xlist[i][3:6]))
         Flist.append(vlength(extoutlist[i].F))
         aFlist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
@@ -472,7 +492,7 @@ if __name__ == '__main__':
  #       alphalist.append(extoutlist[i].Fextra.alpha)
 #        ppolylist.append(extoutlist[i].Fextra.pitchpoly)
 #        pgravlist.append(extoutlist[i].Fextra.pitchgrav)
-        Zlist.append(extoutlist[i].Z)
+        altlist.append(extoutlist[i].Z)
         spdlist.append(extoutlist[i].Dextra.spd)
         qlist.append(extoutlist[i].Dextra.q)
         aqlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
@@ -480,6 +500,7 @@ if __name__ == '__main__':
         adlist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
+        Aproplist.append(xlist[i][6])
         print(tlist[i], xlist[i], extoutlist[i])
     print(term)
     rl = vlength(x1[:3])
@@ -488,18 +509,19 @@ if __name__ == '__main__':
     print(vl, vcirc)#, pitchlist[-1])
     Xlist = np.array(Xlist)
     Ylist = np.array(Ylist)
+    Zlist = np.array(Zlist)
     plt.figure(7)
-    surf = np.sqrt(Re ** 2 - Ylist ** 2) - Re
-    plt.plot(Ylist, Xlist - Re,'b-', Ylist, surf,'g-',Ylist[0::80],Xlist[0::80]-Re,'bx')
+    surf = np.sqrt(Re ** 2 - Zlist ** 2) - Re
+    plt.plot(Zlist, Xlist - Re,'b-', Zlist, surf,'g-',Zlist[0::80],Xlist[0::80]-Re,'bx')
     plt.axis('equal')
-    plt.xlabel("Y/m")
+    plt.xlabel("Z/m")
     plt.ylabel("X/m")
 #    plt.figure(8)
 #    plt.plot(spdlist, ppolylist, 'b-',spdlist, pgravlist, 'g-',spdlist, pitchlist,'r--')
 #    plt.xlabel("spd/(m/s)")
 #    plt.ylabel("pitch/deg")
     plt.figure(9)
-    plt.plot(tlist,Zlist)
+    plt.plot(tlist,altlist)
     plt.xlabel("t/s")
     plt.ylabel("Altitude/m")
     plt.figure(10)
