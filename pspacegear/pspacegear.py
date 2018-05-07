@@ -89,12 +89,12 @@ def xdot(t=None, x=None, discrete=None, dt=None, extra=None):
     """
     Z=vlength(x[:3])-Re
     atm=atmf(Z)
-    g         = gf(t=t, x=x)
-    m         = extra.mf(t=t, x=x, discrete=discrete)
-    F, mdot   = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
-    D, Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
+    g                = gf(t=t, x=x)
+    m                = extra.mf(t=t, x=x, discrete=discrete)
+    F, mdot  ,Fextra = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
+    D,        Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
     a=(F+D)/m + g
-    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),xdotextra(m, g, Z, atm, F, D, None, Dextra)
+    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),xdotextra(m, g, Z, atm, F, D, Fextra, Dextra)
 
 def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
     """
@@ -171,18 +171,17 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     while t < t1 and h >= 0 and vl < vcirc:
         # Calculate the forces and accelerations
         tlist.append(t)
-        xlist.append(x)
+        xlist.append(copy.copy(x))
         discretelist.append(copy.copy(discrete))
-        x2, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
-        vl = vlength(x2[3:6])
+        x, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
+        extoutlist.append(extout)
+        vl = vlength(x[3:6])
         if not np.isfinite(vl):
             print("Something happened!")
-        extoutlist.append(extout)
         h = vlength(x[:3]) - Re
-        rl = vlength(x2[:3])
+        rl = vlength(x[:3])
         vcirc = np.sqrt(mu / rl)
         n = n + 1
-        x=x2
         t = t0 + dt * n
     if not (t<t1):
         term="Time expired"
@@ -303,7 +302,7 @@ class Vessel:
             else:
                 #Engine is out of propellant
                 Fmax[i]=0
-        Fhat,throttle=self.guide(t=t,x=x,discrete=discrete,Fmax=Fmax, m=m,props=props)
+        Fhat,throttle,guidextra=self.guide(t=t,x=x,discrete=discrete,Fmax=Fmax, m=m,props=props)
         # Calculate the force magnitude, which depends on specific impulse,
         # throttle, and presence of sufficient propellant
         Fmag=0
@@ -313,7 +312,7 @@ class Vessel:
                 mdot[i]=-(Fmax[i]*throttle[i])/ve[i]
             else:
                 mdot[i]=0
-        return Fhat * Fmag, mdot
+        return Fhat * Fmag, mdot, guidextra
 
 class Sandstone(Vessel):
     ve0=[320 * g0, 345 * g0]  # Vacuum specific impulse for each stage
@@ -388,10 +387,11 @@ class Atlas401(Vessel):
         ),(
           2127  #LPF
         )]
-    pitchover= 18
+    pitchover= 17
     discrete0=AtlasDiscrete()
     drag_r = 2  # Atlas with 4m fairing
     drag_S=drag_r**2*np.pi #Reference drag area
+    GuidExtra=collections.namedtuple("GuidExtra",["fdotr","fdoth","pegextra"])
     def guide(self,t=None,x=None,discrete=None,Fmax=None,m=None,props=None):
         """
         Decide what direction the vehicle is going to point
@@ -457,7 +457,7 @@ class Atlas401(Vessel):
             discrete.InertAttached[2]=False
 
         res=resolve(x,pole)
-        if not discrete.EngineOn[1]:
+        if discrete.InertAttached[2]: #Run pitch program/gravity turn through fairing drop
             pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
             pitchgrav = vangle(res.hrelhat, res.vrel)
             if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
@@ -468,8 +468,17 @@ class Atlas401(Vessel):
                 pitch = pitchpoly
                 mode = 0
             alpha = pitch - pitchgrav
-            Fv = res.zhat * np.sin(pitch) + res.hrelhat * np.cos(pitch)
+            fdotr=np.sin(pitch)
+            fdoth=np.cos(pitch)
+            Fv = res.zhat * fdotr + res.hrelhat * fdoth
+            pegextra=None
         else:
+            hT=200000
+            rT=Re+hT
+            vT=np.sqrt(mu/rT)
+            rdotT=-100
+            vqT=np.sqrt(vT**2-rdotT**2)
+            #Run PEG after fairing drop
             if not np.isfinite(discrete.pegLastt):
                 dt=0
                 n=10
@@ -477,13 +486,13 @@ class Atlas401(Vessel):
                 dt=t-discrete.pegLastt
                 n=1
             discrete.pegLastt=t
-            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdotq)=guidance.peg.peg(
+            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdoth,pegextra)=guidance.peg.peg(
                 A=discrete.pegA, B=discrete.pegB, T=discrete.pegT, dt=dt,
                 a=Fmax[1]/m, ve=self.ve0[1], r=vlength(x[0:3]), rdot=res.zv, vq=res.hiv,
-                rT=Re+185000, rdotT=0, vqT=np.sqrt(mu/Re+185000), mu=mu, n=n
+                rT=rT, rdotT=rdotT, vqT=vqT, mu=mu, n=n
             )
-            Fv=res.zhat*fdotr+res.hihat*fdotq
-        return Fv,Fn
+            Fv=res.zhat*fdotr+res.hihat*fdoth
+        return Fv,Fn,self.GuidExtra(fdotr=fdotr,fdoth=fdoth,pegextra=pegextra)
 
 if __name__ == '__main__':
     extra=Atlas401()
@@ -500,7 +509,7 @@ if __name__ == '__main__':
     Ylist = []
     Zlist = []
     vlist = []
- #   pitchlist = []
+    fdotrlist = []
     mlist = []
     modelist = []
     alphalist = []
@@ -517,6 +526,9 @@ if __name__ == '__main__':
     aqlist=[]
     adlist=[]
     Aproplist=[]
+    Alist=[]
+    Blist=[]
+    Tlist=[]
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
@@ -526,6 +538,7 @@ if __name__ == '__main__':
         aFlist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
         hlist.append(vlength(xlist[i][0:3]) - Re)
  #       pitchlist.append(extoutlist[i].Fextra.pitch)
+        fdotrlist.append(extoutlist[i].Fextra.fdotr)
         mlist.append(extoutlist[i].m)
  #       modelist.append(extoutlist[i].Fextra.mode)
  #       alphalist.append(extoutlist[i].Fextra.alpha)
@@ -540,7 +553,15 @@ if __name__ == '__main__':
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
         Aproplist.append(xlist[i][6])
-#        print(tlist[i], xlist[i], extoutlist[i])
+        if extoutlist[i].Fextra.pegextra is not None:
+            Alist.append(extoutlist[i].Fextra.pegextra.A)
+            Blist.append(extoutlist[i].Fextra.pegextra.B*100)
+            Tlist.append(extoutlist[i].Fextra.pegextra.T/100)
+        else:
+            Alist.append(float('NaN'))
+            Blist.append(float('NaN'))
+            Tlist.append(float('NaN'))
+        print(tlist[i], xlist[i], extoutlist[i])
     print(term)
     rl = vlength(x1[:3])
     vl = vlength(x1[3:6])
@@ -583,8 +604,12 @@ if __name__ == '__main__':
     plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
     plt.xlabel("t/s")
     plt.ylabel("F/N")
-#    plt.figure(15)
-#    plt.plot(tlist, ppolylist, 'b-',tlist, pgravlist, 'g-',tlist, pitchlist,'r--')
-#    plt.xlabel("t/s")
-#    plt.ylabel("pitch/deg")
+    plt.figure(15)
+    plt.plot(tlist, fdotrlist, 'b-')
+    plt.xlabel("t/s")
+    plt.ylabel("fdotr")
+    plt.figure(16)
+    plt.plot(tlist, Alist, 'b-',tlist, Blist, 'g-',tlist, Tlist,'r-')
+    plt.xlabel("t/s")
+    plt.ylabel("pitch/deg")
     plt.show()

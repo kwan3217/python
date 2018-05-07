@@ -3,10 +3,11 @@ Powered Explicit Guidance - see the wiki
 """
 
 import numpy as np #Use numpy math and trig functions, in case we get passed an array
+import collections
 
 def b(n,T,tau,ve):
     """
-    nth moment of integrated rocket acceleration. Zeroth moment is effectively Delta-V
+    nth moment of integrated rocket acceleration. Zeroth moment is ideal Delta-V
     bn(T)=\int_0^T t^n a(t) dt
     :param T: Time to burn in time units (SI - seconds)
     :param tau: Time needed to burn the entire vessel as fuel, given the current mass flow rate (SI - seconds)
@@ -34,6 +35,10 @@ def c(n,T,tau,ve):
     else:
         return c(n-1,T,tau,ve)*tau-(ve*T**(n+1))/(n*(n+1))
 
+
+PegExtra = collections.namedtuple("PegExtra",
+                                  ["A","B","T","rdot","vq","aT", "rbar", "hT", "h", "deltah", "fr", "frT", "frdot", "fq", "fqdot", "fqdotdot",
+                                   "N1", "N2", "N3", "N", "D0", "D1", "D2", "D", "deltaV","fdotr","fdotq"])
 def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
     """
     Execute Powered Explicit Guidance
@@ -67,7 +72,7 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
     tau=ve/a #Time to burn the entire rocket as if it was fuel
     omega=vq/r
     omegaT = vqT / rT
-
+    pegextra=None
     if T>10:
         #If T<10, then just coast on the time-updated constants from before
         #Iterate as requested
@@ -93,8 +98,14 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
             N2=ve*T*(fqdot+fqdotdot*tau)
             N3=fqdotdot*ve*T**2/2
             N=N1+N2+N3
-            D=(fq+fqdot*tau+fqdotdot*tau**2)
-            deltaV=N/D
+            D0=fq
+            D1=fqdot*tau
+            D2=fqdotdot*tau**2
+            D=D0+D1+D2
+            #if N/D>0:
+            #deltaV=N/D
+            #else:
+            deltaV=N1 #Equivalent to just thrusting horizontal
             T=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
 
             #Calculate new A and B
@@ -106,13 +117,21 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
             c1=c(1,T,tau,ve)
             B=(kc*b0-c0*kb)/(c1*b0-c0*b1)
             A=kb/b0-b1/b0*B
-
-    #Calculate vector components of fhat
-    fdotr=A+(mu/r**2-omega**2*r)/a
-    fdotq=np.sqrt(1-fdotr**2)
-    if not np.isfinite(fdotq):
-        print("Something happened!")
-
+        # Calculate vector components of fhat
+        fdotr = A + (mu / r ** 2 - omega ** 2 * r) / a
+        fdotq = np.sqrt(1 - fdotr ** 2)
+        if not np.isfinite(fdotq):
+            print("Something happened!")
+        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=aT,rbar=rbar,hT=hT,h=h,deltah=deltah,fr=fr,frT=frT,frdot=frdot,fq=fq,
+                          fqdot=fqdot,fqdotdot=fqdotdot,N1=N1,N2=N2,N3=N3,N=N,D0=D0,D1=D1,D2=D2,D=D,deltaV=deltaV,fdotr=fdotr,fdotq=fdotq)
+    else:
+        # Calculate vector components of fhat
+        fdotr = A + (mu / r ** 2 - omega ** 2 * r) / a
+        fdotq = np.sqrt(1 - fdotr ** 2)
+        if not np.isfinite(fdotq):
+            print("Something happened!")
+        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=None,rbar=None,hT=None,h=None,deltah=None,fr=None,frT=None,frdot=None,fq=None,
+                          fqdot=None,fqdotdot=None,N1=None,N2=None,N3=None,N=None,D0=None,D1=None,D2=None,D=None,deltaV=None,fdotr=None,fdotq=None)
     #Return the results
-    return A,B,T,fdotr,fdotq
+    return A,B,T,fdotr,fdotq,pegextra
 
