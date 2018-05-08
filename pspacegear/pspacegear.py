@@ -298,8 +298,6 @@ class Vessel:
         hvhat = hv / vlength(hv)
         evhat=wind/vlength(wind)
         nvhat=np.cross(zvhat,evhat)
-        zv=zvhat*np.dot(vrel,zvhat)
-        hv=hvhat*np.dot(vrel,hvhat)
         ev=evhat*np.dot(vrel,evhat)
         nv=nvhat*np.dot(vrel,nvhat)
 
