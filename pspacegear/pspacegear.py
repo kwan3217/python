@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import collections
 from atmosphere.earth import lower_atmosphere as atmf
 from scipy.interpolate import interp1d
+import guidance.peg
 import copy
 
 def vangle(a, b):
@@ -88,12 +89,12 @@ def xdot(t=None, x=None, discrete=None, dt=None, extra=None):
     """
     Z=vlength(x[:3])-Re
     atm=atmf(Z)
-    g                         = gf(t=t, x=x)
-    m                         = extra.mf(t=t, x=x, discrete=discrete)
-    F, discrete, mdot = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
-    D,                 Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
+    g                = gf(t=t, x=x)
+    m                = extra.mf(t=t, x=x, discrete=discrete)
+    F, mdot  ,Fextra = extra.Ff(t=t, x=x, discrete=discrete, atm=atm, m=m, dt=dt)
+    D,        Dextra = extra.Df(t=t, x=x, discrete=discrete, atm=atm, m=m, F=F)
     a=(F+D)/m + g
-    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),discrete,xdotextra(m, g, Z, atm, F, D, None, Dextra)
+    return np.concatenate((np.array(x[3:6]), a, np.array(mdot))),xdotextra(m, g, Z, atm, F, D, Fextra, Dextra)
 
 def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
     """
@@ -111,11 +112,11 @@ def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
        * New discrete value(s)
        * extout from first step
     """
-    k1,discrete,extout = xdot(t=t     , x=x        , discrete=discrete, dt=dt/2, extra=extra)
-    k2,discrete,_      = xdot(t=t+dt/2, x=x+dt*k1/2, discrete=discrete, dt=dt/2, extra=extra)
-    k3,discrete,_      = xdot(t=t+dt/2, x=x+dt*k2/2, discrete=discrete, dt=dt/2, extra=extra)
-    k4,discrete,_      = xdot(t=t+dt  , x=x+dt*k3  , discrete=discrete, dt=dt/2, extra=extra)
-    return x+dt*(k1+2*k2+2*k3+k4)/6, discrete, extout
+    k1,extout = xdot(t=t     , x=x        , discrete=discrete, dt=dt/2, extra=extra)
+    k2,_      = xdot(t=t+dt/2, x=x+dt*k1/2, discrete=discrete, dt=dt/2, extra=extra)
+    k3,_      = xdot(t=t+dt/2, x=x+dt*k2/2, discrete=discrete, dt=dt/2, extra=extra)
+    k4,_      = xdot(t=t+dt  , x=x+dt*k3  , discrete=discrete, dt=dt/2, extra=extra)
+    return x+dt*(k1+2*k2+2*k3+k4)/6, extout
 
 def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     """
@@ -158,6 +159,7 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     tlist = []
     xlist = []
     extoutlist = []
+    discretelist=[]
     n = 0
     t = t0
     x = x0
@@ -165,34 +167,38 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     vl = vlength(x[3:6])
     vcirc = np.sqrt(mu / rl)
     h = rl - Re
-    _,_,extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
     print(t, vl, vcirc)
-    while t < t1 and h >= 0 and vlength(extout.F) > 0 and vl < vcirc:
+    while t < t1 and h >= 0 and vl < vcirc:
         # Calculate the forces and accelerations
         tlist.append(t)
-        xlist.append(x)
-        x2, discrete, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
-        vl = vlength(x2[3:6])
+        xlist.append(copy.copy(x))
+        discretelist.append(copy.copy(discrete))
+        x, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
+        extoutlist.append(extout)
+        vl = vlength(x[3:6])
         if not np.isfinite(vl):
             print("Something happened!")
-        extoutlist.append(extout)
         h = vlength(x[:3]) - Re
-        rl = vlength(x2[:3])
+        rl = vlength(x[:3])
         vcirc = np.sqrt(mu / rl)
         n = n + 1
-        x=x2
         t = t0 + dt * n
     if not (t<t1):
         term="Time expired"
     elif not (h>=0):
         term="Crashed into ground"
-    elif not (vlength(extout.F)>0):
-        term="Out of fuel"
     elif not (vl<vcirc):
         term="Vcirc achieved"
     else:
         term="Huh? None of the termination conditions tripped"
-    return (x, tlist, xlist, extoutlist,term)
+    return (x, tlist, xlist, extoutlist,term, discretelist)
+
+class Discrete:
+    def __init__(self,PropAttached,InertAttached,EngineOn,Done):
+        self.PropAttached=PropAttached
+        self.InertAttached=InertAttached
+        self.EngineOn=EngineOn
+        self.Done=Done
 
 class Vessel:
     # Axial force for Atlas SLV3. This can be taken as drag coefficient as long as the rocket has zero angle of attack.
@@ -208,16 +214,14 @@ class Vessel:
         """
         Calculate mass of vehicle
         """
+        m=0
         props = x[6:]
-        i = 0
-        for prop in props:
-            if prop > 0:
-                break
-            i += 1
-        m = np.sum(x[6:]) + np.sum(np.array(self.m0[i:]))  # remaining prop and inert mass of current stage
-        for tdrop in self.mdrop:
-            if t < tdrop:
-                m += self.mdrop[tdrop]
+        for i,prop in enumerate(props):
+            if discrete.PropAttached[i]:
+                m+=prop
+        for i,m0 in enumerate(self.m0):
+            if discrete.InertAttached[i]:
+                m+=m0
         return m
     Dfextra = collections.namedtuple("Dfextra", ["spd","M", "q", "Ca", "Fa"])
     def Df(self, t=None, x=None, discrete=None, atm=None, m=None, F=None):
@@ -283,23 +287,7 @@ class Vessel:
             *mdot for each stage in units consistent with t and m (SI - kg/s)
             *Extra output, a namedtuple of type Ffextra
         """
-        # Calculate the direction of the force
-        r = np.array(x[:3])
-        vorb = np.array(x[3:6])
         props=np.array(x[6:]) #Propellant masses remaining in kg
-        wind = np.cross(pole, r)
-        vrel = vorb - wind
-        # Resolve the relative velocity into vertical and horizontal projections
-        zv = np.dot(vrel, r) / np.dot(r, r) * r  # projection of vsur in vertical
-        hv = vrel - zv                  # rejection of vsur from vertical
-        zvhat = r / vlength(r)  # Since the rocket may travel down, don't
-                                   # use the vertical component as the basis
-                                   # vector, instead use the position vector.
-        hvhat = hv / vlength(hv)
-        evhat=wind/vlength(wind)
-        nvhat=np.cross(zvhat,evhat)
-        ev=evhat*np.dot(vrel,evhat)
-        nv=nvhat*np.dot(vrel,nvhat)
 
         Fmax=[0.0]*len(self.ve0)
         mdot=[0.0]*len(self.ve0)
@@ -314,7 +302,7 @@ class Vessel:
             else:
                 #Engine is out of propellant
                 Fmax[i]=0
-        Fhat,throttle=self.guide(t=t,x=x,discrete=discrete,vrel=vrel,zv=zv,hv=hv,ev=ev,nv=nv,zvhat=zvhat,hvhat=hvhat,evhat=evhat,nvhat=nvhat,Fmax=Fmax, m=m,props=props)
+        Fhat,throttle,guidextra=self.guide(t=t,x=x,discrete=discrete,Fmax=Fmax, m=m,props=props)
         # Calculate the force magnitude, which depends on specific impulse,
         # throttle, and presence of sufficient propellant
         Fmag=0
@@ -324,7 +312,7 @@ class Vessel:
                 mdot[i]=-(Fmax[i]*throttle[i])/ve[i]
             else:
                 mdot[i]=0
-        return Fhat * Fmag, discrete, mdot
+        return Fhat * Fmag, mdot, guidextra
 
 class Sandstone(Vessel):
     ve0=[320 * g0, 345 * g0]  # Vacuum specific impulse for each stage
@@ -348,6 +336,41 @@ class Sandstone(Vessel):
     drag_r=0.625 #Radius of FT800 tank and Mk1 command pod
     drag_S=drag_r**2*np.pi #Reference drag area
 
+resolved=collections.namedtuple("resolved",["zhat","ehat","nhat","hihat","hrelhat","vrel","zv","nv","eiv","erelv","hiv","hrelv"])
+def resolve(x,pole):
+    r=x[0:3]
+    vi=x[3:6]
+    #Component of velocity in vertical direction
+    zhat=r/vlength(r)
+    wind=np.cross(pole, r)
+    ehat=wind/vlength(wind)
+    nhat=np.cross(zhat,ehat)
+    vrel=vi-wind
+    ziv=np.dot(zhat,vi)
+    zrelv=np.dot(zhat,vrel) #Should be the same as ziv
+    niv=np.dot(nhat,vi)
+    nrelv=np.dot(nhat,vrel) #Should be the same as niv
+    eiv=np.dot(ehat,vi)
+    erelv=np.dot(ehat,vrel) #Not the same as eiv
+    hi=vi-zhat*ziv #Subtract off vertical component of velocity to get horizontal inertial velocity
+    hiv=vlength(hi)
+    hihat=hi/hiv
+    hrel=vrel-zhat*ziv #Subtract off vertical component of velocity to get horizontal relative velocity
+    hrelv=vlength(hrel)
+    hrelhat=hrel/hrelv
+    return resolved(zhat=zhat,ehat=ehat,nhat=nhat,hihat=hihat,hrelhat=hrelhat,vrel=vrel,zv=ziv,nv=niv,eiv=eiv,erelv=erelv,hiv=hiv,hrelv=hrelv)
+
+class AtlasDiscrete(Discrete):
+    def __init__(self):
+        super().__init__([True,True],[True,True,True],[True,False],True)
+        self.tAtlasDrop=250
+        self.tCentaurStart=260
+        self.tFairingDrop=268
+        self.pegA=-2
+        self.pegT=400
+        self.pegB=-self.pegA/self.pegT
+        self.pegLastt=float('nan')
+
 class Atlas401(Vessel):
     ve0=[337.8*g0,450.5*g0]  #Vacuum specific impulse for each stage
     ve1=[311.3*g0,450.5*g0]  #Sea-level specific impulse
@@ -361,13 +384,15 @@ class Atlas401(Vessel):
            +39.5 #D1666 Payload Sep Ring
            +32.2 #C22 Launch Vehicle Adapter, 0.120" wall thickness
            +721  #Insight total payload mass
+        ),(
+          2127  #LPF
         )]
-    mdrop={250:2127} #LPF
-    pitchover= 16
-    discrete0=None
+    pitchover= 17
+    discrete0=AtlasDiscrete()
     drag_r = 2  # Atlas with 4m fairing
     drag_S=drag_r**2*np.pi #Reference drag area
-    def guide(self,t=None,x=None,discrete=None,vrel=None,zv=None,hv=None,ev=None,nv=None,zvhat=None,hvhat=None,evhat=None,nvhat=None,Fmax=None,m=None,props=None):
+    GuidExtra=collections.namedtuple("GuidExtra",["fdotr","fdoth","pegextra"])
+    def guide(self,t=None,x=None,discrete=None,Fmax=None,m=None,props=None):
         """
         Decide what direction the vehicle is going to point
 
@@ -378,14 +403,17 @@ class Atlas401(Vessel):
         :param t: Range time in time units (SI - second)
         :param x: State vector in length and time units (SI - m and m/s)
         :param discrete:
-        :param vvert: vertical surface-relative velocity in same units as state vector
-        :param vhorz: horizontal surface-relative velocity in same units as state vector
-        :param ve: Eastbound surface-relative velocity in same units as state vector
-        :param vn: Northbound surface-relative velocity in same units as state vector
-        :param vvhat: normalized local vertical
-        :param vehat: normalized east direction
-        :param vnhat: normalized north direction
-        :param vhorzhat: normalized horizontal vector
+        :param zv: vertical surface-relative speed in same units as state vector
+        :param hvi: horizontal inertial speed in same units as state vector
+        :param hvrel: horizontal surface-relative speed in same units as state vector
+        :param ev: Eastbound inertial speed in same units as state vector
+        :param evrel: Eastbound surface-relative speed in same units as state vector
+        :param nv: Northbound surface-relative speed in same units as state vector
+        :param zvhat: normalized local vertical
+        :param evhat: normalized east direction
+        :param nvhat: normalized north direction
+        :param hvihat: normalized horizontal vector
+        :param hvrelhat: normalized horizontal vector
         :param Fmax: Maximum available thrust (SI - N)
         :param m: Current mass (SI - kg)
         :return: A tuple
@@ -393,20 +421,10 @@ class Atlas401(Vessel):
           * Fractional throttle for each engine - 0 means no thrust, 1.0 means full thrust
           * Extra guidance output
         """
-        pitchpoly = np.deg2rad(90 - vlength(vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
-        pitchgrav = vangle(hvhat, vrel)
-        if vlength(vrel) > 300 and pitchpoly < pitchgrav:
-            pitch = pitchgrav
-            mode = 1
-        else:
-            # Velocity-dependent pitch
-            pitch = pitchpoly
-            mode = 0
-        alpha = pitch - pitchgrav
-        Fv = zvhat * np.sin(pitch) + hvhat * np.cos(pitch)
+
         #Decide which engines are on
         Fn=[0.0]*2
-        if props[0]>0:
+        if discrete.EngineOn[0]:
             #Atlas RD-180 is on. Do thrust limiting.
             if t<100:
                 Fn_max=1.0
@@ -422,10 +440,59 @@ class Atlas401(Vessel):
                 Fn[0]=Fn_amax
             else:
                 Fn[0]=Fn_max
-        else:
+            if props[0]<500:
+                discrete.EngineOn[0]=False
+                discrete.tAtlasDrop=t+8
+                discrete.tCentaurStart=discrete.tAtlasDrop+10
+                discrete.tFairingDrop=discrete.tCentaurStart+8
+        elif discrete.PropAttached[0] and t>discrete.tAtlasDrop:
+            discrete.PropAttached[0] = False
+            discrete.InertAttached[0] = False
+        if discrete.EngineOn[1]:
             #Centaur engine is on
             Fn[1]=1
-        return Fv,Fn
+        elif t>discrete.tCentaurStart:
+            discrete.EngineOn[1]=True
+        if discrete.InertAttached[2] and t>discrete.tFairingDrop:
+            discrete.InertAttached[2]=False
+
+        res=resolve(x,pole)
+        if discrete.InertAttached[2]: #Run pitch program/gravity turn through fairing drop
+            pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
+            pitchgrav = vangle(res.hrelhat, res.vrel)
+            if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
+                pitch = pitchgrav
+                mode = 1
+            else:
+                # Velocity-dependent pitch
+                pitch = pitchpoly
+                mode = 0
+            alpha = pitch - pitchgrav
+            fdotr=np.sin(pitch)
+            fdoth=np.cos(pitch)
+            Fv = res.zhat * fdotr + res.hrelhat * fdoth
+            pegextra=None
+        else:
+            hT=200000
+            rT=Re+hT
+            vT=np.sqrt(mu/rT)
+            rdotT=-100
+            vqT=np.sqrt(vT**2-rdotT**2)
+            #Run PEG after fairing drop
+            if not np.isfinite(discrete.pegLastt):
+                dt=0
+                n=10
+            else:
+                dt=t-discrete.pegLastt
+                n=1
+            discrete.pegLastt=t
+            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdoth,pegextra)=guidance.peg.peg(
+                A=discrete.pegA, B=discrete.pegB, T=discrete.pegT, dt=dt,
+                a=Fmax[1]/m, ve=self.ve0[1], r=vlength(x[0:3]), rdot=res.zv, vq=res.hiv,
+                rT=rT, rdotT=rdotT, vqT=vqT, mu=mu, n=n
+            )
+            Fv=res.zhat*fdotr+res.hihat*fdoth
+        return Fv,Fn,self.GuidExtra(fdotr=fdotr,fdoth=fdoth,pegextra=pegextra)
 
 if __name__ == '__main__':
     extra=Atlas401()
@@ -434,20 +501,21 @@ if __name__ == '__main__':
     v0=np.array([1,0,0.001])+wind
     x0 = np.hstack((r0,v0,np.array(extra.mp)))
     discrete=copy.copy(extra.discrete0)
-    x1, tlist, xlist, extoutlist, term = shoot(x0=x0, t0=0, t1=1200, discrete=discrete, extra=extra)
+    x1, tlist, xlist, extoutlist, term, discretelist = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
     print(term)
     print(x1)
     hlist = []
     Xlist = []
     Ylist = []
+    Zlist = []
     vlist = []
- #   pitchlist = []
+    fdotrlist = []
     mlist = []
     modelist = []
     alphalist = []
     ppolylist = []
     pgravlist = []
-    Zlist=[]
+    altlist=[]
     spdlist=[]
     qlist=[]
     Falist=[]
@@ -457,20 +525,26 @@ if __name__ == '__main__':
     aFlist=[]
     aqlist=[]
     adlist=[]
+    Aproplist=[]
+    Alist=[]
+    Blist=[]
+    Tlist=[]
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
+        Zlist.append(xlist[i][2])
         vlist.append(vlength(xlist[i][3:6]))
         Flist.append(vlength(extoutlist[i].F))
         aFlist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
         hlist.append(vlength(xlist[i][0:3]) - Re)
  #       pitchlist.append(extoutlist[i].Fextra.pitch)
+        fdotrlist.append(extoutlist[i].Fextra.fdotr)
         mlist.append(extoutlist[i].m)
  #       modelist.append(extoutlist[i].Fextra.mode)
  #       alphalist.append(extoutlist[i].Fextra.alpha)
 #        ppolylist.append(extoutlist[i].Fextra.pitchpoly)
 #        pgravlist.append(extoutlist[i].Fextra.pitchgrav)
-        Zlist.append(extoutlist[i].Z)
+        altlist.append(extoutlist[i].Z)
         spdlist.append(extoutlist[i].Dextra.spd)
         qlist.append(extoutlist[i].Dextra.q)
         aqlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
@@ -478,6 +552,15 @@ if __name__ == '__main__':
         adlist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
+        Aproplist.append(xlist[i][6])
+        if extoutlist[i].Fextra.pegextra is not None:
+            Alist.append(extoutlist[i].Fextra.pegextra.A)
+            Blist.append(extoutlist[i].Fextra.pegextra.B*100)
+            Tlist.append(extoutlist[i].Fextra.pegextra.T/100)
+        else:
+            Alist.append(float('NaN'))
+            Blist.append(float('NaN'))
+            Tlist.append(float('NaN'))
         print(tlist[i], xlist[i], extoutlist[i])
     print(term)
     rl = vlength(x1[:3])
@@ -486,18 +569,19 @@ if __name__ == '__main__':
     print(vl, vcirc)#, pitchlist[-1])
     Xlist = np.array(Xlist)
     Ylist = np.array(Ylist)
+    Zlist = np.array(Zlist)
     plt.figure(7)
-    surf = np.sqrt(Re ** 2 - Ylist ** 2) - Re
-    plt.plot(Ylist, Xlist - Re,'b-', Ylist, surf,'g-',Ylist[0::80],Xlist[0::80]-Re,'bx')
+    surf = np.sqrt(Re ** 2 - Zlist ** 2) - Re
+    plt.plot(Zlist, Xlist - Re,'b-', Zlist, surf,'g-',Zlist[0::80],Xlist[0::80]-Re,'bx')
     plt.axis('equal')
-    plt.xlabel("Y/m")
+    plt.xlabel("Z/m")
     plt.ylabel("X/m")
 #    plt.figure(8)
 #    plt.plot(spdlist, ppolylist, 'b-',spdlist, pgravlist, 'g-',spdlist, pitchlist,'r--')
 #    plt.xlabel("spd/(m/s)")
 #    plt.ylabel("pitch/deg")
     plt.figure(9)
-    plt.plot(tlist,Zlist)
+    plt.plot(tlist,altlist)
     plt.xlabel("t/s")
     plt.ylabel("Altitude/m")
     plt.figure(10)
@@ -520,8 +604,12 @@ if __name__ == '__main__':
     plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
     plt.xlabel("t/s")
     plt.ylabel("F/N")
-#    plt.figure(15)
-#    plt.plot(tlist, ppolylist, 'b-',tlist, pgravlist, 'g-',tlist, pitchlist,'r--')
-#    plt.xlabel("t/s")
-#    plt.ylabel("pitch/deg")
+    plt.figure(15)
+    plt.plot(tlist, fdotrlist, 'b-')
+    plt.xlabel("t/s")
+    plt.ylabel("fdotr")
+    plt.figure(16)
+    plt.plot(tlist, Alist, 'b-',tlist, Blist, 'g-',tlist, Tlist,'r-')
+    plt.xlabel("t/s")
+    plt.ylabel("pitch/deg")
     plt.show()

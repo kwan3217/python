@@ -1,11 +1,13 @@
-from datasystem.python_lib.log import log
-log("import numpy as np")
+#from datasystem.python_lib.log import log
+#log("import numpy as np")
 import numpy as np
 import matplotlib.image as mpimg
-log("import matplotlib.pyplot as plt")
+#log("import matplotlib.pyplot as plt")
 import matplotlib.pyplot as plt
-from datasystem import ANC
+#from datasystem import ANC
 import csv
+log=print
+ANC='./'
 
 def dms2rad(d,m,s):
     return np.radians(d+m/60+s/3600)
@@ -122,7 +124,7 @@ def main(lat0=dms2rad( 42, 21, 47),
             tracklat.append(float(row[2]))
             tracklon.append(float(row[1]))
     #Set up the destination image
-    log("Calculating projection")
+    #log("Calculating projection")
     x=np.arange(0,xsize)
     y=np.arange(0,ysize)
     x.shape=(1,xsize)
