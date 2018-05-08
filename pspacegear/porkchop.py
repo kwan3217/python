@@ -38,27 +38,34 @@ def porkchop(etd0, etd1, nd, eta0, eta1, na, bodyd, bodya,frame="J2000"):
 def exercise_porkchop():
     import os
     import matplotlib.pyplot as plt
-    os.chdir("/home/chrisj/workspace/Data/spice/generic/")
+    os.chdir("/Users/jeppesen/workspace/Data/spice/generic/")
     cspice.furnsh("generic.tm")
     etd0=cspice.str2et("2018-05-05 00:00:00 TDB")
     etd1=cspice.str2et("2018-06-09 00:00:00 TDB")
+    id=0
     eta0=cspice.str2et("2018-11-26 00:00:00 TDB")-30*86400
+    ia=30
     eta1=eta0+60*86400
     nd=int((etd1-etd0)//86400+1)
     na=int((eta1-eta0)//86400+1)
     result=porkchop(etd0,etd1,nd,eta0,eta1,na,"3","4",frame="J2000")
     dvd=result.dv_sc-result.dv_planet
     avd=result.av_sc-result.av_planet
-    c3=np.sum(dvd**2,axis=2)
-    cs=plt.contour(c3,range(21))
+    dc3=np.sum(dvd**2,axis=2)
+    ac3=np.sum(avd**2,axis=2)
+    cs=plt.contour(dc3,range(21))
     plt.clabel(cs)
     #plt.plot(range(nd),c3.transpose())
 
     rpark=cspice.gdpool("BODY399_RADII",0,1)[0]+185
     dmu=cspice.gdpool("BODY399_GM",0,1)[0]
+    amu=cspice.gdpool("BODY499_GM",0,1)[0]
+    rentry=cspice.gdpool("BODY499_RADII",0,1)[0]+125
     vpark=np.sqrt(dmu/rpark)
-    dvinf=np.sqrt(c3)
-    da=-dmu/c3
+    dvinf=np.sqrt(dc3)
+    avinf=np.sqrt(ac3)
+    da=-dmu/dc3
+    aa=-amu/ac3
     dvp=np.sqrt(2*dmu/rpark-dmu/da)
     departv=dvp-vpark
     dla=np.degrees(np.arctan2(dvd[:,:,2],np.sqrt(dvd[:,:,0]**2+dvd[:,:,1]**2)))
