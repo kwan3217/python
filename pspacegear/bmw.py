@@ -470,6 +470,10 @@ def test_kepler():
     (r1_cu,v1_cu)=kepler(r0_cu,v0_cu,dt)
     print("test_kepler() Calculated: ",r1_cu,v1_cu)
     print("test_kepler() Documented: ",r1_cu_standard,v1_cu_standard)
+    diffr=np.sqrt(np.sum((r1_cu-r1_cu_standard)**2))
+    diffv=np.sqrt(np.sum((v1_cu-v1_cu_standard)**2))
+    print("test_gauss1() difference: ",diffr,diffv)
+    assert(diffr<3e-7 and diffv<3e-7)
 
 def plot_kepler():
     import matplotlib.pyplot as plt
@@ -499,6 +503,10 @@ def test_gauss1():
     (v0_cu,v1_cu)=gauss(r0_cu,r1_cu,dt)
     print("test_gauss1() Calculated: ",v0_cu,v1_cu)
     print("test_gauss1() Documented: ",v0_cu_standard,v1_cu_standard)
+    diff0=np.sqrt(np.sum((v0_cu-v0_cu_standard)**2))
+    diff1=np.sqrt(np.sum((v1_cu-v1_cu_standard)**2))
+    print("test_gauss1() difference: ",diff0,diff1)
+    assert(diff0<3e-6 and diff1<3e-6)
 
 def test_gauss2():
     #Same numbers as from test_kepler, but we use begin and end positions
@@ -511,7 +519,12 @@ def test_gauss2():
     (v0_cu,v1_cu)=gauss(r0_cu,r1_cu,dt,Type=1)
     print("test_gauss2() Calculated: ",v0_cu,v1_cu)
     print("test_gauss2() Documented: ",v0_cu_standard,v1_cu_standard)
+    diff0=np.sqrt(np.sum((v0_cu-v0_cu_standard)**2))
+    diff1=np.sqrt(np.sum((v1_cu-v1_cu_standard)**2))
+    print("test_gauss2() difference: ",diff0,diff1)
+    assert diff0<3e-6 and diff1<3e-6
 
+"""
 def test_herrick_gibbs():
     rr1=np.array([3419.85564,6019.82602,2784.60022])
     rr2=np.array([2935.91195,6326.18324,2660.59584])
@@ -530,11 +543,12 @@ def test_herrick_gibbs():
     vv2_cu=herrick_gibbs(rr1_cu,rr2_cu,rr3_cu,t1_cu,t2_cu,t3_cu)
     vv2=su_to_cu(vv2_cu,re,mu,1,-1,inverse=True)
     print(vv2)
+"""
 
 if __name__=="__main__":
-    test_herrick_gibbs()
-    #test_kepler()
-    #test_gauss1()
-    #test_gauss2()
+    #test_herrick_gibbs()
+    test_kepler()
+    test_gauss1()
+    test_gauss2()
     #print(elorb(np.array([1,0,0]),np.array([0,0,1])))
 
