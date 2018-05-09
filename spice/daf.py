@@ -4,6 +4,7 @@ parses Spice files, it only makes minimal use of the spice libraries (date conve
 """
 
 import struct
+from spiceypy import etcal as cspice_etcal
 
 class daf_summary:
     @staticmethod
@@ -62,15 +63,15 @@ class daf_SPKsummary(daf_summary):
     addr1 =property(fget=getaddr1 ,doc="Address of last element of segment data")
     def __str__(self):
         result=(("%s\n"+
-                 "ET0:    %30.14f\n"+
-                 "ET1:    %30.14f\n"+
+                 "ET0:    %30.14f (%s)\n"+
+                 "ET1:    %30.14f (%s)\n"+
                  "Target: %d\n"+
                  "Center: %d\n"+
                  "Frame:  %d\n"+
                  "Type:   %d\n"+
                  "Addr0:  %d\n"+
                  "Addr1:  %d") %
-                (self.name,self.et0,self.et1,self.target,self.center,self.frame,self.type,self.addr0,self.addr1))
+                (self.name,self.et0,cspice_etcal(self.et0),self.et1,cspice_etcal(self.et1),self.target,self.center,self.frame,self.type,self.addr0,self.addr1))
         return result
     def segment(self):
         if self.type==9:
@@ -78,7 +79,7 @@ class daf_SPKsummary(daf_summary):
 
 class daf_SPKSegment:
     csvheaders=[0]*10
-    csvheaders[9]="ET,x,y,z,dxdt,dydt,dzdt"
+    csvheaders[9]="ET,ETCAL*,x,y,z,dxdt,dydt,dzdt"
     def __init__(self,summary,daf):
         self.summary=summary
         self.daf=daf
@@ -107,7 +108,7 @@ class daf_SPK09line:
         self.dzdt=buf[i*6+5]
         self.et=buf[N*6+i]
     def __str__(self):
-        result="%30.14f,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e"%(self.et,self.x,self.y,self.z,self.dxdt,self.dydt,self.dzdt)
+        result="%30.14f,%s,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e"%(self.et,cspice_etcal(self.et),self.x,self.y,self.z,self.dxdt,self.dydt,self.dzdt)
         return result
 
 class daf_summary_record:
@@ -209,7 +210,7 @@ class double_array_file:
                 self.inf.seek((result.NEXT-1)*1024)
 
 if __name__=="__main__":
-    with double_array_file("/home/chrisj/workspace/Data/spice/insight/insight_nom_2016e09o_edl_v1.bsp") as in_daf:
+    with double_array_file("../../Data/spice/insight/insight_nom_2016e09o_edl_v1.bsp") as in_daf:
         print(str(in_daf))
         for i,sr in enumerate(in_daf):
             print("Summary record %d"%i)
@@ -217,6 +218,6 @@ if __name__=="__main__":
             for j,sum in enumerate(sr):
                 print("Summary %d" % j)
                 print(str(sum))
-                print("i,"+sum.segment().csvheader())
+                print("i*,"+sum.segment().csvheader())
                 for k,line in enumerate(sum.segment()):
                     print(k,","+str(line))
