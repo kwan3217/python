@@ -1,6 +1,6 @@
-update=Thu 20 Jul 2017 12:19:47 PM MDT
+update=Wed 09 May 2018 01:29:03 PM MDT
 version=1
-last_client=eeschema
+last_client=kicad
 [general]
 version=1
 RootSch=
@@ -62,3 +62,4 @@ LibName28=contrib
 LibName29=valves
 LibName30=kwire
 LibName31=switches
+LibName32=/home/chrisj/workspace/kicad/KwanSystems

@@ -1,4 +1,4 @@
-update=22/05/2015 07:44:53
+update=Wed 09 May 2018 01:13:40 PM MDT
 version=1
 last_client=kicad
 [general]
@@ -60,3 +60,5 @@ LibName26=opto
 LibName27=atmel
 LibName28=contrib
 LibName29=valves
+LibName30=kwire
+LibName31=/home/chrisj/workspace/kicad/KwanSystems
