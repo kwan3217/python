@@ -39,7 +39,7 @@ def c(n,T,tau,ve):
 PegExtra = collections.namedtuple("PegExtra",
                                   ["A","B","T","rdot","vq","aT", "rbar", "hT", "h", "deltah", "fr", "frT", "frdot", "fq", "fqdot", "fqdotdot",
                                    "N1", "N2", "N3", "N", "D0", "D1", "D2", "D", "deltaV","fdotr","fdotq"])
-def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
+def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1,warn=True):
     """
     Execute Powered Explicit Guidance
 
@@ -105,8 +105,22 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
             #if N/D>0:
             #deltaV=N/D
             #else:
-            deltaV=N1 #Equivalent to just thrusting horizontal
-            T=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
+            #Do this on our own. Look at fq (newly calculated, not eqn25a) and fqT
+            #to get representative fraction of thrust in downrange direction. If
+            #fr and frT are opposite signs, then we went through horizontal, and some of our thrust was more effective
+            #than that on either end. The representative value is then the weighted mean of fq, fqT and 1 weighted
+            #twice as heavy. If they are the same sign, then we just use the mean of fq and fqT
+            fq =np.sqrt(1-fr **2)
+            fqT=np.sqrt(1-frT**2)
+            if fr*frT>0:
+                #Same sign
+                fqR=(fq+fqT)/2
+            else:
+                #Opposite sign
+                w1=2
+                fqR=(fq+fqT+1*w1)/(2+w1)
+            deltaV=N1/fqR
+            nextT=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
 
             #Calculate new A and B
             kb=rdotT-rdot
@@ -115,8 +129,20 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
             b1=b(1,T,tau,ve)
             c0=c(0,T,tau,ve)
             c1=c(1,T,tau,ve)
-            B=(kc*b0-c0*kb)/(c1*b0-c0*b1)
-            A=kb/b0-b1/b0*B
+            nextB=(kc*b0-c0*kb)/(c1*b0-c0*b1)
+            nextA=kb/b0-b1/b0*nextB
+            aT = a / (1 - nextT / tau)  # Acceleration at end of burn
+            nextfr=nextA+(mu/r**2-omega**2*r)/a          #Eqn 22b
+            nextfrT=nextA+nextB*nextT+(mu/rT**2-omegaT**2*rT)/aT
+            if np.abs(nextfr)>1 or np.abs(nextfrT)>1:
+                if warn:
+                    print("Being asked to fly an impossible trajectory: fr=%f,frT=%f"%(nextfr,nextfrT))
+                    warn=False
+                break
+            else:
+                A=nextA
+                B=nextB
+                T=nextT
         # Calculate vector components of fhat
         fdotr = A + (mu / r ** 2 - omega ** 2 * r) / a
         fdotq = np.sqrt(1 - fdotr ** 2)
@@ -133,5 +159,5 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
         pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=None,rbar=None,hT=None,h=None,deltah=None,fr=None,frT=None,frdot=None,fq=None,
                           fqdot=None,fqdotdot=None,N1=None,N2=None,N3=None,N=None,D0=None,D1=None,D2=None,D=None,deltaV=None,fdotr=None,fdotq=None)
     #Return the results
-    return A,B,T,fdotr,fdotq,pegextra
+    return A,B,T,fdotr,fdotq,pegextra,warn
 

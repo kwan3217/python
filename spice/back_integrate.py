@@ -85,23 +85,50 @@ def RK4(t=None, x=None, discrete=None, dt=None, extra=None):
     return x+dt*(k1+2*k2+2*k3+k4)/6
 
 x0=cspice.spkezr("-189", et0, "J2000", "NONE", "0")[0]
-t0=cspice.str2et("2018 MAY 05 11:05:00 UTC") #Best available value of T0 for launch
-print(cspice.etcal(t0))
-tsep=t0+5600
-print(cspice.etcal(tsep))
-x=copy.copy(x0)
-et=et0
-dt=-1
 
-with open("nsyt_backprop.csv","w") as ouf:
-    i=0
-    while et>tsep:
-        earth_state = cspice.spkezr("399", et, "J2000", "NONE", "0")[0]
-        acc=xdot(t=et,x=x)[3:6]
-        print("%d,%50.20f,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e"%((i,et)+tuple(x-earth_state)+tuple(acc)),file=ouf)
-        x=RK4(et,x,dt=dt)
-        et+=dt
-        i+=1
-        if i%1000==0:
-            print(i)
+#Backpropagation
+do_backprop=False
+if do_backprop:
+    t0=cspice.str2et("2018 MAY 05 11:05:00 UTC") #Best available value of T0 for launch
+    print(cspice.etcal(t0))
+    tsep=t0+5600
+    print(cspice.etcal(tsep))
+    x=copy.copy(x0)
+    et=et0
+    dt=-1
+
+    with open("nsyt_backprop.csv","w") as ouf:
+        i=0
+        while et>tsep:
+            earth_state = cspice.spkezr("399", et, "J2000", "NONE", "0")[0]
+            acc=xdot(t=et,x=x)[3:6]
+            print("%d,%50.20f,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e"%((i,et)+tuple(x-earth_state)+tuple(acc)),file=ouf)
+            x=RK4(et,x,dt=dt)
+            et+=dt
+            i+=1
+            if i%1000==0:
+                print(i)
+
+# Fwd propagation, to check accuracy and effect of rcs
+do_fwdprop = True
+if do_fwdprop:
+    x = copy.copy(x0)
+    et = et0
+
+    dt=1
+    et2=et0+30000
+    with open("nsyt_fwdprop.csv", "w") as ouf:
+        i = 0
+        print("i,et,x,y,z,xd,yd,zd,x_spice,y_spice,z_spice,xd_spice,yd_spice,zd_spice,ax,ay,az",file=ouf)
+        while et < et2:
+            earth_state = cspice.spkezr("399", et, "J2000", "NONE", "0")[0]
+            spice_state=cspice.spkezr("-189",et,"J2000","NONE","0")[0]
+            acc = xdot(t=et, x=x)[3:6]
+            print("%d,%50.20f,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e,%20.16e" % (
+            (i, et) + tuple(x - earth_state)+ tuple(spice_state - earth_state) + tuple(acc)), file=ouf)
+            x = RK4(et, x, dt=dt)
+            et += dt
+            i += 1
+            if i % 1000 == 0:
+                print(i)
 
