@@ -168,11 +168,11 @@ def shoot(x0, t0, t1, dt=0.125, discrete=None, extra=None):
     vcirc = np.sqrt(mu / rl)
     h = rl - Re
     print(t, vl, vcirc)
-    while t < t1 and h >= 0 and vl < vcirc:
+    while t < t1 and h >= 0 and not discrete.Done:
         # Calculate the forces and accelerations
         tlist.append(t)
-        xlist.append(copy.copy(x))
-        discretelist.append(copy.copy(discrete))
+        xlist.append(copy.deepcopy(x))
+        discretelist.append(copy.deepcopy(discrete))
         x, extout = RK4(t=t, x=x, dt=dt, discrete=discrete, extra=extra)
         extoutlist.append(extout)
         vl = vlength(x[3:6])
@@ -362,14 +362,16 @@ def resolve(x,pole):
 
 class AtlasDiscrete(Discrete):
     def __init__(self):
-        super().__init__([True,True],[True,True,True],[True,False],True)
+        super().__init__([True,True],[True,True,True],[True,False],False)
         self.tAtlasDrop=250
         self.tCentaurStart=260
         self.tFairingDrop=268
         self.pegA=-2
         self.pegT=400
         self.pegB=-self.pegA/self.pegT
+        self.pitchover=16
         self.pegLastt=float('nan')
+        self.warn=True
 
 class Atlas401(Vessel):
     ve0=[337.8*g0,450.5*g0]  #Vacuum specific impulse for each stage
@@ -387,7 +389,6 @@ class Atlas401(Vessel):
         ),(
           2127  #LPF
         )]
-    pitchover= 17
     discrete0=AtlasDiscrete()
     drag_r = 2  # Atlas with 4m fairing
     drag_S=drag_r**2*np.pi #Reference drag area
@@ -453,12 +454,18 @@ class Atlas401(Vessel):
             Fn[1]=1
         elif t>discrete.tCentaurStart:
             discrete.EngineOn[1]=True
+        res=resolve(x,pole)
         if discrete.InertAttached[2] and t>discrete.tFairingDrop:
             discrete.InertAttached[2]=False
-
-        res=resolve(x,pole)
+            hT=200000
+            rT=Re+hT
+            vT=np.sqrt(mu/rT)
+            rdotT=-100
+            vqT=np.sqrt(vT**2-rdotT**2)
+            print("PEG start a=%f, ve=%f, r=%f, h=%f, rdot=%f, vq=%f, rT=%f, rdotT=%f, vqT=%f, mu=%f"%(Fmax[1]/m, self.ve0[1], vlength(x[0:3]), vlength(x[0:3])-Re,res.zv,res.hiv,
+                rT, rdotT, vqT, mu))
         if discrete.InertAttached[2]: #Run pitch program/gravity turn through fairing drop
-            pitchpoly = np.deg2rad(90 - vlength(res.vrel) / extra.pitchover)  # pitch down 1 degree for each 12m/s of velocity
+            pitchpoly = np.deg2rad(90 - vlength(res.vrel) / discrete.pitchover)  # pitch down 1 degree for each 12m/s of velocity
             pitchgrav = vangle(res.hrelhat, res.vrel)
             if vlength(res.vrel) > 300 and pitchpoly < pitchgrav:
                 pitch = pitchgrav
@@ -486,24 +493,25 @@ class Atlas401(Vessel):
                 dt=t-discrete.pegLastt
                 n=1
             discrete.pegLastt=t
-            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdoth,pegextra)=guidance.peg.peg(
+            (discrete.pegA,discrete.pegB,discrete.pegT,fdotr,fdoth,pegextra,discrete.warn)=guidance.peg.peg(
                 A=discrete.pegA, B=discrete.pegB, T=discrete.pegT, dt=dt,
                 a=Fmax[1]/m, ve=self.ve0[1], r=vlength(x[0:3]), rdot=res.zv, vq=res.hiv,
-                rT=rT, rdotT=rdotT, vqT=vqT, mu=mu, n=n
+                rT=rT, rdotT=rdotT, vqT=vqT, mu=mu, n=n,warn=discrete.warn
             )
+            discrete.Done=discrete.pegT<=0
             Fv=res.zhat*fdotr+res.hihat*fdoth
         return Fv,Fn,self.GuidExtra(fdotr=fdotr,fdoth=fdoth,pegextra=pegextra)
 
-if __name__ == '__main__':
-    extra=Atlas401()
-    r0=np.array([Re,0,0])
-    wind = np.cross(pole, r0)
-    v0=np.array([1,0,0.001])+wind
-    x0 = np.hstack((r0,v0,np.array(extra.mp)))
-    discrete=copy.copy(extra.discrete0)
-    x1, tlist, xlist, extoutlist, term, discretelist = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
-    print(term)
-    print(x1)
+def plot_shot(x1,tlist,xlist,extoutlist,term,discretelist,fignum):
+    fdotrlist = []
+    for i in range(len(tlist)):
+        fdotrlist.append(extoutlist[i].Fextra.fdotr)
+        #print(tlist[i], xlist[i], extoutlist[i])
+    print(term,discretelist[0].pitchover,tlist[-1],fdotrlist[-1])
+
+def plot_shot_all(x1,tlist,xlist,extoutlist,term,discretelist,fignum=1):
+    #print(term)
+    #print(x1)
     hlist = []
     Xlist = []
     Ylist = []
@@ -515,101 +523,124 @@ if __name__ == '__main__':
     alphalist = []
     ppolylist = []
     pgravlist = []
-    altlist=[]
-    spdlist=[]
-    qlist=[]
-    Falist=[]
-    Calist=[]
-    Mlist=[]
-    Flist=[]
-    aFlist=[]
-    aqlist=[]
-    adlist=[]
-    Aproplist=[]
-    Alist=[]
-    Blist=[]
-    Tlist=[]
+    altlist = []
+    spdlist = []
+    qlist = []
+    Falist = []
+    Calist = []
+    Mlist = []
+    Flist = []
+    aFlist = []
+    aqlist = []
+    adlist = []
+    Aproplist = []
+    Alist = []
+    Blist = []
+    Tlist = []
     for i in range(len(tlist)):
         Xlist.append(xlist[i][0])
         Ylist.append(xlist[i][1])
         Zlist.append(xlist[i][2])
         vlist.append(vlength(xlist[i][3:6]))
         Flist.append(vlength(extoutlist[i].F))
-        aFlist.append(vlength(extoutlist[i].F)/extoutlist[i].m)
+        aFlist.append(vlength(extoutlist[i].F) / extoutlist[i].m)
         hlist.append(vlength(xlist[i][0:3]) - Re)
- #       pitchlist.append(extoutlist[i].Fextra.pitch)
+        #       pitchlist.append(extoutlist[i].Fextra.pitch)
         fdotrlist.append(extoutlist[i].Fextra.fdotr)
         mlist.append(extoutlist[i].m)
- #       modelist.append(extoutlist[i].Fextra.mode)
- #       alphalist.append(extoutlist[i].Fextra.alpha)
-#        ppolylist.append(extoutlist[i].Fextra.pitchpoly)
-#        pgravlist.append(extoutlist[i].Fextra.pitchgrav)
+        #       modelist.append(extoutlist[i].Fextra.mode)
+        #       alphalist.append(extoutlist[i].Fextra.alpha)
+        #        ppolylist.append(extoutlist[i].Fextra.pitchpoly)
+        #        pgravlist.append(extoutlist[i].Fextra.pitchgrav)
         altlist.append(extoutlist[i].Z)
         spdlist.append(extoutlist[i].Dextra.spd)
         qlist.append(extoutlist[i].Dextra.q)
-        aqlist.append(extoutlist[i].Dextra.q/extoutlist[i].m)
+        aqlist.append(extoutlist[i].Dextra.q / extoutlist[i].m)
         Falist.append(extoutlist[i].Dextra.Fa)
-        adlist.append(extoutlist[i].Dextra.Fa/extoutlist[i].m)
+        adlist.append(extoutlist[i].Dextra.Fa / extoutlist[i].m)
         Calist.append(extoutlist[i].Dextra.Ca)
         Mlist.append(extoutlist[i].Dextra.M)
         Aproplist.append(xlist[i][6])
         if extoutlist[i].Fextra.pegextra is not None:
             Alist.append(extoutlist[i].Fextra.pegextra.A)
-            Blist.append(extoutlist[i].Fextra.pegextra.B*100)
-            Tlist.append(extoutlist[i].Fextra.pegextra.T/100)
+            Blist.append(extoutlist[i].Fextra.pegextra.B * 100)
+            Tlist.append(extoutlist[i].Fextra.pegextra.T / 100)
         else:
             Alist.append(float('NaN'))
             Blist.append(float('NaN'))
             Tlist.append(float('NaN'))
-        print(tlist[i], xlist[i], extoutlist[i])
-    print(term)
+#        print(tlist[i], xlist[i], extoutlist[i])
+    #print(term)
     rl = vlength(x1[:3])
     vl = vlength(x1[3:6])
     vcirc = np.sqrt(mu / rl)
-    print(vl, vcirc)#, pitchlist[-1])
+    #print(vl, vcirc)  # , pitchlist[-1])
     Xlist = np.array(Xlist)
     Ylist = np.array(Ylist)
     Zlist = np.array(Zlist)
-    plt.figure(7)
-    surf = np.sqrt(Re ** 2 - Zlist ** 2) - Re
-    plt.plot(Zlist, Xlist - Re,'b-', Zlist, surf,'g-',Zlist[0::80],Xlist[0::80]-Re,'bx')
-    plt.axis('equal')
-    plt.xlabel("Z/m")
-    plt.ylabel("X/m")
-#    plt.figure(8)
-#    plt.plot(spdlist, ppolylist, 'b-',spdlist, pgravlist, 'g-',spdlist, pitchlist,'r--')
-#    plt.xlabel("spd/(m/s)")
-#    plt.ylabel("pitch/deg")
-    plt.figure(9)
-    plt.plot(tlist,altlist)
-    plt.xlabel("t/s")
-    plt.ylabel("Altitude/m")
-    plt.figure(10)
-    plt.plot(tlist,spdlist)
-    plt.xlabel("t/s")
-    plt.ylabel("spd/(m/s)")
-    plt.figure(11)
-    plt.plot(tlist,aqlist,'b-',tlist,adlist,'g-',tlist,aFlist,'r-')
-    plt.xlabel("t/s")
-    plt.ylabel("acc/(m/s^2)")
-    plt.figure(12)
-    plt.plot(tlist,Calist,'b-',tlist,Mlist,'g-')
-    plt.xlabel("t/s")
-    plt.ylabel("Ca,Mach")
-    plt.figure(13)
-    plt.plot(tlist,mlist,'b-')
-    plt.xlabel("t/s")
-    plt.ylabel("Mass/kg")
-    plt.figure(14)
-    plt.plot(tlist,qlist,'b-',tlist,Falist,'g-',tlist,Flist,'r-')
-    plt.xlabel("t/s")
-    plt.ylabel("F/N")
-    plt.figure(15)
+    #plt.figure(7)
+    #surf = np.sqrt(Re ** 2 - Zlist ** 2) - Re
+    #plt.plot(Zlist, Xlist - Re, 'b-', Zlist, surf, 'g-', Zlist[0::80], Xlist[0::80] - Re, 'bx')
+    #plt.axis('equal')
+    #plt.xlabel("Z/m")
+    #plt.ylabel("X/m")
+    #    plt.figure(8)
+    #    plt.plot(spdlist, ppolylist, 'b-',spdlist, pgravlist, 'g-',spdlist, pitchlist,'r--')
+    #    plt.xlabel("spd/(m/s)")
+    #    plt.ylabel("pitch/deg")
+    #plt.figure(9)
+    #plt.plot(tlist, altlist)
+    #plt.xlabel("t/s")
+    #plt.ylabel("Altitude/m")
+    #plt.figure(10)
+    #plt.plot(tlist, spdlist)
+    #plt.xlabel("t/s")
+    #plt.ylabel("spd/(m/s)")
+    #plt.figure(11)
+    #plt.plot(tlist, aqlist, 'b-', tlist, adlist, 'g-', tlist, aFlist, 'r-')
+    #plt.xlabel("t/s")
+    #plt.ylabel("acc/(m/s^2)")
+    #plt.figure(12)
+    #plt.plot(tlist, Calist, 'b-', tlist, Mlist, 'g-')
+    #plt.xlabel("t/s")
+    #plt.ylabel("Ca,Mach")
+    #    plt.figure(13)
+    #    plt.plot(tlist, mlist, 'b-')
+    #    plt.xlabel("t/s")
+    #    plt.ylabel("Mass/kg")
+    #    plt.figure(14)
+    #    plt.plot(tlist, qlist, 'b-', tlist, Falist, 'g-', tlist, Flist, 'r-')
+    #    plt.xlabel("t/s")
+    #    plt.ylabel("F/N")
+    plt.figure(fignum)
     plt.plot(tlist, fdotrlist, 'b-')
     plt.xlabel("t/s")
     plt.ylabel("fdotr")
-    plt.figure(16)
-    plt.plot(tlist, Alist, 'b-',tlist, Blist, 'g-',tlist, Tlist,'r-')
-    plt.xlabel("t/s")
-    plt.ylabel("pitch/deg")
+    #    plt.figure(16)
+    #    plt.plot(tlist, Alist, 'b-', tlist, Blist, 'g-', tlist, Tlist, 'r-')
+    #    plt.xlabel("t/s")
+    #    plt.ylabel("A,B,T/100")
+    print(term,discretelist[0].pitchover,tlist[-1],fdotrlist[-1])
+
+if __name__ == '__main__':
+    for i in range(20):
+        extra=Atlas401()
+        lat0=np.radians(34.5)
+        r0=np.array([Re*np.cos(lat0),0,Re*np.sin(lat0)])
+        wind = np.cross(pole, r0)
+        azimuth=np.radians(148.9)
+        v0e=0.001*np.sin(azimuth)
+        v0n=0.001*np.cos(azimuth)
+        v0r=1
+        res=resolve(np.hstack((r0,wind)),pole)
+        vrel=res.ehat*v0e+res.nhat*v0n+res.zhat*v0r
+        v0=vrel+wind
+        x0 = np.hstack((r0,v0,np.array(extra.mp)))
+        discrete=copy.deepcopy(extra.discrete0)
+        discrete.pitchover=16+i/10
+        print(i,discrete.pitchover)
+        x1, tlist, xlist, extoutlist, term, discretelist = shoot(x0=x0, t0=0, t1=900, discrete=discrete, extra=extra)
+        plot_shot_all(x1,tlist,xlist,extoutlist,term,discretelist,i)
+        #if i==24:
+        #    plot_shot_all(x1,tlist,xlist,extoutlist,term,discretelist)
     plt.show()

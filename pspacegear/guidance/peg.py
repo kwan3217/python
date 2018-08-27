@@ -37,9 +37,8 @@ def c(n,T,tau,ve):
 
 
 PegExtra = collections.namedtuple("PegExtra",
-                                  ["A","B","T","rdot","vq","aT", "rbar", "hT", "h", "deltah", "fr", "frT", "frdot", "fq", "fqdot", "fqdotdot",
-                                   "N1", "N2", "N3", "N", "D0", "D1", "D2", "D", "deltaV","fdotr","fdotq"])
-def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
+                                  ["A","B","T","rdot","vq","aT", "rbar", "hT", "h", "deltah", "fr", "frT", "fq", "fqT", "N1", "deltaV","fdotr","fdotq"])
+def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1,warn=True):
     """
     Execute Powered Explicit Guidance
 
@@ -72,66 +71,165 @@ def peg(A,B,T,dt,a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=1):
     tau=ve/a #Time to burn the entire rocket as if it was fuel
     omega=vq/r
     omegaT = vqT / rT
-    pegextra=None
+    rbar = (r + rT) / 2  # Eqn 26
+    hT = vqT * rT
+    h = vq * r
+    deltah = hT - h  # Eqn 33
     if T>10:
         #If T<10, then just coast on the time-updated constants from before
         #Iterate as requested
         for i in range(n):
             #Calculate new T
             aT = a / (1 - T / tau)  # Acceleration at end of burn
-            rbar=(r+rT)/2 #Eqn 26
-            hT=vqT*rT
-            h=vq*r
-            deltah=hT-h #Eqn 33
-            fh=0 #No yaw steering for now
-            fhdot=0
             #Approximate value and derivative of vertical component of fhat
             fr=A+(mu/r**2-omega**2*r)/a          #Eqn 22b
             frT=A+B*T+(mu/rT**2-omegaT**2*rT)/aT
-            frdot=(frT-fr)/T                     #Eqn 22c corrected
-            #Approximate value and derivatives of downrange component of fhat
-            fq=1-fr**2/2-fh**2/2                 #Eqn 25a
-            fqdot=-fr*frdot-fh*fhdot             #Eqn 25b
-            fqdotdot=-frdot**2/2-fhdot**2/2      #Eqn 25c
             # Eqn 36
             N1=deltah/rbar
-            N2=ve*T*(fqdot+fqdotdot*tau)
-            N3=fqdotdot*ve*T**2/2
-            N=N1+N2+N3
-            D0=fq
-            D1=fqdot*tau
-            D2=fqdotdot*tau**2
-            D=D0+D1+D2
-            #if N/D>0:
-            #deltaV=N/D
-            #else:
-            deltaV=N1 #Equivalent to just thrusting horizontal
-            T=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
+            #Do this on our own. Look at fq (newly calculated, not eqn25a) and fqT
+            #to get representative fraction of thrust in downrange direction. If
+            #fr and frT are opposite signs, then we went through horizontal, and some of our thrust was more effective
+            #than that on either end. The representative value is then the weighted mean of fq, fqT and 1 weighted
+            #twice as heavy. If they are the same sign, then we just use the mean of fq and fqT
+            fq =np.sqrt(1-fr **2)
+            fqT=np.sqrt(1-frT**2)
+            if fr*frT>0:
+                #Same sign
+                fqR=(fq+fqT)/2
+            else:
+                #Opposite sign
+                w1=2
+                fqR=(fq+fqT+1*w1)/(2+w1)
+            deltaV=N1/fqR
+            nextT=tau*(1-np.exp(-deltaV/ve))         #Eqn 37b
 
             #Calculate new A and B
             kb=rdotT-rdot
-            kc=rT-r-rdot*T
-            b0=b(0,T,tau,ve)
-            b1=b(1,T,tau,ve)
-            c0=c(0,T,tau,ve)
-            c1=c(1,T,tau,ve)
-            B=(kc*b0-c0*kb)/(c1*b0-c0*b1)
-            A=kb/b0-b1/b0*B
+            kc=rT-r-rdot*nextT
+            b0=b(0,nextT,tau,ve)
+            b1=b(1,nextT,tau,ve)
+            c0=c(0,nextT,tau,ve)
+            c1=c(1,nextT,tau,ve)
+            nextB=(kc*b0-c0*kb)/(c1*b0-c0*b1)
+            nextA=kb/b0-b1/b0*nextB
+            aT = a / (1 - nextT / tau)  # Acceleration at end of burn
+            nextfr=nextA+(mu/r**2-omega**2*r)/a          #Eqn 22b
+            nextfrT=nextA+nextB*nextT+(mu/rT**2-omegaT**2*rT)/aT
+            if np.abs(nextfr)>1 or np.abs(nextfrT)>1:
+                if warn:
+                    print("Being asked to fly an impossible trajectory: fr=%f,frT=%f"%(nextfr,nextfrT))
+                    warn=False
+                break
+            else:
+                A=nextA
+                B=nextB
+                T=nextT
         # Calculate vector components of fhat
         fdotr = A + (mu / r ** 2 - omega ** 2 * r) / a
         fdotq = np.sqrt(1 - fdotr ** 2)
         if not np.isfinite(fdotq):
             print("Something happened!")
-        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=aT,rbar=rbar,hT=hT,h=h,deltah=deltah,fr=fr,frT=frT,frdot=frdot,fq=fq,
-                          fqdot=fqdot,fqdotdot=fqdotdot,N1=N1,N2=N2,N3=N3,N=N,D0=D0,D1=D1,D2=D2,D=D,deltaV=deltaV,fdotr=fdotr,fdotq=fdotq)
+        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=aT,rbar=rbar,hT=hT,h=h,deltah=deltah,fr=fr,frT=frT,N1=N1,fq=fq,fqT=fqT,deltaV=deltaV,fdotr=fdotr,fdotq=fdotq)
     else:
         # Calculate vector components of fhat
         fdotr = A + (mu / r ** 2 - omega ** 2 * r) / a
         fdotq = np.sqrt(1 - fdotr ** 2)
         if not np.isfinite(fdotq):
             print("Something happened!")
-        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,aT=None,rbar=None,hT=None,h=None,deltah=None,fr=None,frT=None,frdot=None,fq=None,
-                          fqdot=None,fqdotdot=None,N1=None,N2=None,N3=None,N=None,D0=None,D1=None,D2=None,D=None,deltaV=None,fdotr=None,fdotq=None)
+        pegextra=PegExtra(A=A,B=B,T=T,rdot=rdot,vq=vq,N1=None,aT=None,rbar=None,hT=None,h=None,deltah=None,fr=None,frT=None,fq=None,fqT=None,deltaV=None,fdotr=fdotr,fdotq=fdotq)
     #Return the results
-    return A,B,T,fdotr,fdotq,pegextra
+    return A,B,T,fdotr,fdotq,pegextra,warn
 
+def peg_startup(a,ve,r,rdot,vq,rT,rdotT,vqT,mu,n=10):
+    """
+    Estimate starting values for steering constants A, B, T
+
+    :param a: Current rocket acceleration
+    :param ve: Current effective exhaust velocity
+    :param r: Current distance from center of planet
+    :param rdot: Current vertical speed
+    :param vq: Current horizontal speed
+    :param rT: Target distance from center of planet
+    :param rdotT: Target vertical speed
+    :param vqT: Target horizontal speed
+    :param mu: Gravitational parameter for planet
+    :param n: Number of times to run to convergence
+    :return: A tuple
+      Initial guess for A constant
+      Initial guess for B constant
+      Initial guess for T constant
+    """
+
+    #Intermediate values which are determined from given parameters
+    tau=ve/a #Time to burn the entire rocket as if it was fuel
+    omega=vq/r
+    omegaT = vqT / rT
+    #If T<10, then just coast on the time-updated constants from before
+    #Iterate as requested
+
+    #Assume that the initial thrust vector is parallel to the current motion
+    fr=rdot/np.sqrt(rdot**2+vq**2)
+    #Calculate initial A from that
+    A=fr-(mu/r**2-omega**2*r)/a
+    #Assume that the final thrust vector is parallel to the target motion
+    frT=rdotT/np.sqrt(rdotT**2+vqT**2)
+    #Calculate T from that
+    rbar = (r + rT) / 2  # Eqn 26
+    hT = vqT * rT
+    h = vq * r
+    deltah = hT - h  # Eqn 33
+    N1 = deltah / rbar
+    # Do this on our own. Look at fq (newly calculated, not eqn25a) and fqT
+    # to get representative fraction of thrust in downrange direction. If
+    # fr and frT are opposite signs, then we went through horizontal, and some of our thrust was more effective
+    # than that on either end. The representative value is then the weighted mean of fq, fqT and 1 weighted
+    # twice as heavy. If they are the same sign, then we just use the mean of fq and fqT
+    fq = np.sqrt(1 - fr ** 2)
+    fqT = np.sqrt(1 - frT ** 2)
+    if fr * frT > 0:
+        # Same sign
+        fqR = (fq + fqT) / 2
+    else:
+        # Opposite sign
+        w1 = 2
+        fqR = (fq + fqT + 1 * w1) / (2 + w1)
+    deltaV = N1 / fqR
+    T = tau * (1 - np.exp(-deltaV / ve))  # Eqn 37b
+    #Now that we have A and T, calculate B to hit assumed frT
+    aT = a / (1 - T / tau)  # Acceleration at end of burn
+    B=(frT-A- (mu / rT ** 2 - omegaT ** 2 * rT) / aT)/T
+
+    A,B,T,_,_,_,_=peg(A=A, B=B, T=T, dt=0, a=a, ve=ve, r=r, rdot=rdot, vq=vq, rT=rT, rdotT=rdotT, vqT=vqT, mu=mu, n=n, warn=False)
+
+    return A,B,T
+
+if __name__=="__main__":
+    a    =      3.843015
+    ve   =   4417.895825
+    Re   =6378137
+    mu   = 398600.4415e9
+    rdot0=    750
+    rdot1=   1500
+    drdot=     10
+    vq0  =   4000
+    vq1  =   5000
+    dvq  =    100
+    h0   = 130000
+    h1   = 200000
+    dh   =   1000
+    rT   = 200000+Re
+    rdotT=   -100
+    vqT  =   7783.691397
+    nh   =len(range(   h0,   h1,dh   ))
+    nrdot=len(range(rdot0,rdot1,drdot))
+    nvq  =len(range(  vq0,  vq1,dvq  ))
+    print(nh,nrdot,nvq,nh*nrdot*nvq)
+    A=np.zeros((nh,nrdot,nvq))
+    B=np.zeros((nh,nrdot,nvq))
+    T=np.zeros((nh,nrdot,nvq))
+    for ih,h in enumerate(range(h0,h1,dh)):
+        print(ih,h)
+        for irdot,rdot in enumerate(range(rdot0,rdot1,drdot)):
+            for ivq,vq in enumerate(range(vq0,vq1,dvq)):
+                A[ih, irdot, ivq],B[ih,irdot,ivq],T[ih,irdot,ivq]=peg_startup(a=a,ve=ve,mu=mu,r=h+Re,rdot=rdot,vq=vq,rT=rT,rdotT=rdotT,vqT=vqT)
+    pass

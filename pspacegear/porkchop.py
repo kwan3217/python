@@ -38,14 +38,17 @@ def porkchop(etd0, etd1, nd, eta0, eta1, na, bodyd, bodya,frame="J2000"):
 def exercise_porkchop():
     import os
     import matplotlib.pyplot as plt
-    os.chdir("/Users/jeppesen/workspace/Data/spice/generic/")
+    os.chdir("../../Data/spice/generic/")
     cspice.furnsh("generic.tm")
-    etd0=cspice.str2et("2018-05-05 00:00:00 TDB")
-    etd1=cspice.str2et("2018-06-09 00:00:00 TDB")
+    #etd0=cspice.str2et("2018-05-05 00:00:00 TDB")
+    #etd1=cspice.str2et("2018-06-09 00:00:00 TDB")
+    etd0=cspice.str2et("2016-03-02 00:00:00 TDB")
+    etd1=cspice.str2et("2016-04-13 00:00:00 TDB")
     id=0
-    eta0=cspice.str2et("2018-11-26 00:00:00 TDB")-30*86400
+    #eta0=cspice.str2et("2018-11-26 00:00:00 TDB")-30*86400
+    eta0=cspice.str2et("2016-09-17 00:00:00 TDB")
+    eta1=cspice.str2et("2016-11-05 00:00:00 TDB")
     ia=30
-    eta1=eta0+60*86400
     nd=int((etd1-etd0)//86400+1)
     na=int((eta1-eta0)//86400+1)
     result=porkchop(etd0,etd1,nd,eta0,eta1,na,"3","4",frame="J2000")
@@ -53,7 +56,8 @@ def exercise_porkchop():
     avd=result.av_sc-result.av_planet
     dc3=np.sum(dvd**2,axis=2)
     ac3=np.sum(avd**2,axis=2)
-    cs=plt.contour(dc3,range(21))
+    plt.figure(1)
+    cs=plt.contour(dc3,range(31))
     plt.clabel(cs)
     #plt.plot(range(nd),c3.transpose())
 
@@ -66,9 +70,18 @@ def exercise_porkchop():
     avinf=np.sqrt(ac3)
     da=-dmu/dc3
     aa=-amu/ac3
+    #Use the velocity formula to find velocity at entry interface. Note that this doesn't
+    #depend on entry angle(!)
+    aventry=np.sqrt(2*amu/rentry-amu/aa)
     dvp=np.sqrt(2*dmu/rpark-dmu/da)
     departv=dvp-vpark
     dla=np.degrees(np.arctan2(dvd[:,:,2],np.sqrt(dvd[:,:,0]**2+dvd[:,:,1]**2)))
+    plt.figure(2)
+    cs2=plt.contour(avinf)
+    plt.clabel(cs2)
+    plt.figure(3)
+    cs3=plt.contour(dla)
+    plt.clabel(cs3)
     plt.show()
 
 if __name__=="__main__":
