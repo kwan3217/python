@@ -357,7 +357,9 @@ pocketpktdesc=OrderedDict({0x001:{'name': 'Version',
                                               'alt'  :{'pos':22,'type':t_float,'end':'<'}})}
                            })
 
-def parseYukari(infn,apid_blacklist=[0x009,0x00A,0x00C,0x00F,0x00E]):
+missing_apids=[]
+
+def parseYukari(infn,apid_blacklist=[0x009,0x00A,0x00C,0x00F,0x00E],skip=8):
     #This isn't great, no reentrancy, but it makes the interface to the packet handlers simpler
     global base,pktdesc,apidfirst
     import os.path
@@ -368,7 +370,7 @@ def parseYukari(infn,apid_blacklist=[0x009,0x00A,0x00C,0x00F,0x00E]):
         pass
     pktcount=0
     with open(infn,"rb") as inf:
-        inf.seek(8)
+        inf.seek(skip)
         done=False
         apidfirst=OrderedDict()
         lastproc=None
@@ -426,19 +428,20 @@ def parseYukari(infn,apid_blacklist=[0x009,0x00A,0x00C,0x00F,0x00E]):
                         pkt[name]=struct.unpack(typ,body[pos-6:pos-6+size])[0]
                 if pktdesc[apid]['handler'] is not None:
                     pktdesc[apid]['handler'](pkt)
+            elif apid not in pktdesc:
+                if apid not in missing_apids:
+                    missing_apids.append(apid)
+                    print("Packet apid 0x%03x not described"%apid)
 
 if __name__=="__main__":
     import glob
     import os.path
-    pktdesc=pocketpktdesc
-    frompath="o:/home/chrisj/Florida5/Southwest/"
-    topath  ="c:/Users/chrisj/Desktop/Southwest/"
-    for folder in ["20150316_1","20150317"]:
-        try:
-            os.mkdir(topath+folder)
-        except FileExistsError:
-            pass
-        for infn in glob.glob(frompath+folder+"/POCKET[0-9][0-9].SDS"):
-            print(infn)
-            base=topath+folder+"/"+os.path.basename(infn)[:-4]
-            parseYukari(infn)
+    pktdesc=southwestpktdesc
+    frompath="/home/chrisj/workspace/Data/NMEA/"
+    topath  ="/home/chrisj/workspace/Data/NMEA/"
+    for infn in glob.glob(frompath+"SOUTHW0?.SDS"):
+        print(infn)
+        base=topath+os.path.basename(infn)[:-4]
+        parseYukari(infn,apid_blacklist=[0x024,0x004,0x00a],skip=8)
+#        parseYukari(infn,apid_blacklist=[],skip=8)
+
