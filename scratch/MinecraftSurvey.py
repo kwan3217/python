@@ -19,7 +19,7 @@ rxmax = float('-inf')
 rxmin = float('inf')
 rzmax = float('-inf')
 rzmin = float('inf')
-for infn in glob.glob("o:\\home\\chrisj\\backup20180826\\region\\r.*.*.mca"):
+for infn in glob.glob("G:\\home\\chrisj\\multimc~\\MultiMC\\instances\\StoneBlock-1.0.26\\minecraft\\saves\\Mines of Kwania\\region\\r.*.*.mca"):
     base_infn=os.path.basename(infn)
     (_,rx,rz,_)=base_infn.split(".")
     rx=int(rx)

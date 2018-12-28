@@ -81,7 +81,7 @@ for ak in aks:
     if wire_len[ak[1]]<placement[ak]:
         wire_len[ak[1]]=placement[ak]
 print(wire_len)
-with open("/home/jeppesen/workspace/kicad/Precision/Charlieplex16.sch","w") as ouf:
+with open("Charlieplex16.sch","w") as ouf:
     row0 = 600
     row1 = 100
     drow = -400
@@ -134,8 +134,8 @@ with open("/home/jeppesen/workspace/kicad/Precision/Charlieplex16.sch","w") as o
         print("Connection ~ %d %d "%(xdevice,ywire),file=ouf)
                 # Connection ~ 900  600
         print("$Comp",file=ouf)
-        print("L Device:LED %s"%name_diode(map_diode(i_pair,wires)),file=ouf)
-        print("U 1 0 %016x"%(0xC247B3F4E982C629+i_pair),file=ouf)
+        print("L Device:LED_Small %s"%name_diode(map_diode(i_pair,wires)),file=ouf)
+        print("U 1 0 %08x"%(0xC247B3F4+i_pair),file=ouf)
         print("P %d %d"%(xdevice,ydevice),file=ouf)
         print('F 0 "%s" H %d %d 59  0000 L BNN'%(name_diode(map_diode(i_pair,wires)),xdevice-150,ydevice+50),file=ouf)
         print('F 1 "%s" V %d %d 59  0001 L BNN'%("HOUR" if i_pair<60 else "MIN",xdevice,ydevice),file=ouf)
