@@ -437,9 +437,9 @@ if __name__=="__main__":
     import glob
     import os.path
     pktdesc=southwestpktdesc
-    frompath="/home/chrisj/workspace/Data/NMEA/"
-    topath  ="/home/chrisj/workspace/Data/NMEA/"
-    for infn in glob.glob(frompath+"SOUTHW0?.SDS"):
+    frompath="/home/jeppesen/workspace/Data/NMEA/"
+    topath  ="/home/jeppesen/workspace/Data/NMEA/"
+    for infn in glob.glob(frompath+"NightRoadTest?_YUKARI*.SDS"):
         print(infn)
         base=topath+os.path.basename(infn)[:-4]
         parseYukari(infn,apid_blacklist=[0x024,0x004,0x00a],skip=8)

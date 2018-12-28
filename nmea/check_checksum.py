@@ -1,6 +1,8 @@
 import re
 from math import cos,sin,radians,acos
 import matplotlib.pyplot as plt
+import os
+import os.path
 
 re_nmea=re.compile(".*\\$([^*]*)\*([0-9A-F][0-9A-F]).*")
 re_gga=re.compile(r"""
@@ -10,10 +12,10 @@ re_gga=re.compile(r"""
 (?P<lon>[0-9]{5}\.[0-9]+),(?P<EW>[EW]),         #Longitude and hemisphere
 (?P<fixq>[0-8])?,                             #(Optional) fix quality
 (?P<nsat>[0-9]+)?,                            #(Optional) number of satellites in the fix
-(?P<HDOP>[0-9]+.[0-9]+),                      #(Optional) Horizontal dillution of precision
+(?P<HDOP>[0-9]+.[0-9]+)?,                      #(Optional) Horizontal dillution of precision
 (?P<alt>-?[0-9]+.[0-9]+)?,(?P<altUnit>[M])?,      #(Optional) altitude and units
 (?P<geoid>-?[0-9]+.[0-9]+)?,(?P<geoidUnit>[M])?,  #(Optional) geoid altitude above ellipsoid and units
-, #Slots for DGPS update time and station number
+(?P<DGPStime>[^,]*),(?P<DGPSsta>.*) #Slots for DGPS update time and station number
 """,re.VERBOSE)
 re_rmb=re.compile(r"""
 (?P<gpstype>..)RMB,  #Type of GPS system
@@ -59,7 +61,7 @@ lineno = 0
 bad_alt=True
 
 def check_checksum(infn):
-    oufn = infn[:-4] + "fix.nmea"
+    oufn = infn + "fix.nmea"
     global old_lat,old_lon,old_time,old_date,old_spd,wpl_dict,lineno,bad_alt,high_alt,high_lineno
     old_lat = None
     old_lon = None
@@ -96,7 +98,7 @@ def check_checksum(infn):
             return 0
         d=dotp(a,b)
         if d>1:
-            print("dot product out of range")
+            #print("dot product out of range")
             return 0
         if d<-1:
             print("dot product out of range (negative)")
@@ -144,7 +146,7 @@ def check_checksum(infn):
                 old_lon = lon
                 old_time = time
                 old_spd = spd
-                if alt>high_alt:
+                if high_alt is not None and alt>high_alt:
                     high_alt=alt
                     high_lineno=lineno
         else:
@@ -152,8 +154,9 @@ def check_checksum(infn):
             old_lon = lon
             old_time = time
             old_spd = 0
-            high_alt = alt
-            high_lineno = lineno
+            if alt is not None:
+                high_alt = alt
+                high_lineno = lineno
         return True
 
     def handle_rmc(rmc_match):
@@ -166,7 +169,7 @@ def check_checksum(infn):
             dd = dist(lla2xyz(lat, lon), lla2xyz(old_lat, old_lon))
             if dt == 0:
                 if dd > 0:
-                    print("Position step on line ", lineno)
+#                    print("Position step on line ", lineno)
                     return False
                 else:
                     spd = 0
@@ -176,7 +179,7 @@ def check_checksum(infn):
                 acc = (spd - old_spd) / dt
             speed.append(spd)
             if abs(acc) > 99:
-                print("Position glitch on line ", lineno, data)
+#                print("Position glitch on line ", lineno, data)
                 return False
             else:
                 old_lat = lat
@@ -212,6 +215,7 @@ def check_checksum(infn):
 
     with open(oufn,"w",encoding="cp437") as ouf:
         with open(infn,"r",encoding="cp437") as inf:
+            npos=0
             lineno=1
             for line in inf:
                 result=re_nmea.match(line)
@@ -227,16 +231,20 @@ def check_checksum(infn):
                         if gga_match is not None:
                             if not handle_gga(gga_match):
                                 write_line=False
+                            else:
+                                npos+=1
                         elif data[2:5]=="GGA":
-                            print("Bad GGA at line ",lineno,data)
+                            #print("Bad GGA at line ",lineno,data)
                             write_line=False
                         rmc_match = re_rmc.match(data)
                         if rmc_match is not None:
                             write_line=not bad_alt
                             if not handle_rmc(rmc_match):
                                 write_line=False
+                            else:
+                                npos+=1
                         elif data[2:5]=="RMC":
-                            print("Bad RMC at line ",lineno,data)
+                            #print("Bad RMC at line ",lineno,data)
                             write_line=False
                         wpl_match = re_wpl.match(data)
                         if wpl_match is not None:
@@ -245,17 +253,24 @@ def check_checksum(infn):
                         elif data[2:5]=="WPL":
                             print("Bad WPL at line ",lineno,data)
                             write_line=False
+                        if data[0:4]=="PKWN":
+                            write_line=False #PKWN data is probably valid, but Google Earth doesn't care
                         if write_line:
                             print("$"+data+"*"+cksum_stored,file=ouf)
                     else:
                         print("Problem with checksum in line %d"%lineno)
                         pass
                 lineno+=1
+    print("Number of positions found in %s: %d"%(os.path.basename(infn),npos))
+    if npos==0:
+        pass
+        #os.remove(infn)
+        #os.remove(oufn)
 
 if __name__=="__main__":
     import glob
     #infns=glob.glob("/home/jeppesen/workspace/Data/recover_gps/SensorLogs/NMEA*.txt")
-    infns=glob.glob("/home/jeppesen/workspace/Data/recover_gps/SensorLogs/NMEA20140901T144147*.txt")
+    infns=glob.glob("/home/jeppesen/Desktop/MNSensorLogs/*NMEA*.txt")
     for infn in infns:
         if ".fix." not in infn:
             check_checksum(infn)
