@@ -61,7 +61,7 @@ lineno = 0
 bad_alt=True
 
 def check_checksum(infn):
-    oufn = infn + "fix.nmea"
+    oufn = infn + ".fix.nmea"
     global old_lat,old_lon,old_time,old_date,old_spd,wpl_dict,lineno,bad_alt,high_alt,high_lineno
     old_lat = None
     old_lon = None
@@ -213,6 +213,12 @@ def check_checksum(infn):
             else:
                 return False
 
+    def calc_checksum(data):
+        cksum_calc = 0x00
+        for char in data:
+            cksum_calc = cksum_calc ^ ord(char)
+        return cksum_calc
+
     with open(oufn,"w",encoding="cp437") as ouf:
         with open(infn,"r",encoding="cp437") as inf:
             npos=0
@@ -222,9 +228,7 @@ def check_checksum(infn):
                 if result is not None:
                     data=result.group(1)
                     cksum_stored=result.group(2)
-                    cksum_calc=0x00
-                    for char in data:
-                        cksum_calc=cksum_calc^ord(char)
+                    cksum_calc=calc_checksum(data)
                     if int("0x"+cksum_stored,16)==cksum_calc:
                         write_line=True
                         gga_match = re_gga.match(data)
@@ -256,7 +260,9 @@ def check_checksum(infn):
                         if data[0:4]=="PKWN":
                             write_line=False #PKWN data is probably valid, but Google Earth doesn't care
                         if write_line:
-                            print("$"+data+"*"+cksum_stored,file=ouf)
+                            data="GP"+data[2:]
+                            cksum_new=calc_checksum(data)
+                            print("$"+data+"*%02X"%cksum_new,file=ouf)
                     else:
                         print("Problem with checksum in line %d"%lineno)
                         pass
@@ -270,8 +276,9 @@ def check_checksum(infn):
 if __name__=="__main__":
     import glob
     #infns=glob.glob("/home/jeppesen/workspace/Data/recover_gps/SensorLogs/NMEA*.txt")
-    infns=glob.glob("/home/jeppesen/Desktop/MNSensorLogs/*NMEA*.txt")
+    infns=glob.glob("/home/chrisj/Florida7/*.nmea")
     for infn in infns:
-        if ".fix." not in infn:
+        print(infn)
+        if "fix" not in infn:
             check_checksum(infn)
             print(high_alt,high_lineno)
