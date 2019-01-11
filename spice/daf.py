@@ -85,6 +85,8 @@ class daf_CKsummary(daf_summary):
         super().__init__(sr,daf,buf,name)
     def getsclk0(self): return self.D[0]
     def getsclk1(self): return self.D[1]
+    def getet0(self): return cspice_sct2e(self.target//1000+1,self.sclk0)
+    def getet1(self): return cspice_sct2e(self.target//1000+1,self.sclk1)
     def gettarget(self): return self.I[0]
     def getframe (self): return self.I[1]
     def gettype  (self): return self.I[2]
@@ -93,6 +95,9 @@ class daf_CKsummary(daf_summary):
     def getaddr1 (self): return self.I[5]
     sclk0 =property(fget=getsclk0 ,doc="DP encoded sclk of beginning of segment")
     sclk1 =property(fget=getsclk1 ,doc="DP encoded sclk of end of segment")
+    et  =property(fget=getet0 ,doc="ephemeris time of beginning of segment")
+    et0 =property(fget=getet0 ,doc="ephemeris time of beginning of segment")
+    et1 =property(fget=getet1 ,doc="ephemeris time of end of segment")
     target=property(fget=gettarget,doc="Target NAIF code")
     frame =property(fget=getframe ,doc="Reference frame NAIF code")
     type  =property(fget=gettype  ,doc="CK segment type")
@@ -103,16 +108,16 @@ class daf_CKsummary(daf_summary):
         result ="%s\n"%self.name
         result+="SCLK0:    %20.15e" %self.sclk0
         try:
-            et=cspice_sct2e(self.target//1000,self.sclk0)
-            scdecd=cspice_scdecd(self.target//1000,self.sclk0)
+            et=cspice_sct2e(self.target//1000+1,self.sclk0)
+            scdecd=cspice_scdecd(self.target//1000+1,self.sclk0)
             result+=" (%s ET=%16.6f %s)"%(scdecd,et,cspice_etcal(et))
         except:
             pass #If there is an error, it means that the correct kernels aren't available.
         result+="\n"
         result+="SCLK1:    %20.15e" %self.sclk1
         try:
-            et=cspice_sct2e(self.target//1000,self.sclk1)
-            scdecd=cspice_scdecd(self.target//1000,self.sclk1)
+            et=cspice_sct2e(self.target//1000+1,self.sclk1)
+            scdecd=cspice_scdecd(self.target//1000+1,self.sclk1)
             result+=" (%s ET=%16.6f %s)"%(scdecd,et,cspice_etcal(et))
         except:
             pass #If there is an error, it means that the correct kernels aren't available.
@@ -129,17 +134,6 @@ class daf_CKsummary(daf_summary):
         return daf_CKSegment(self,self.daf)
 
 class daf_SPKSegment:
-    csvheaders=[0]*14
-    csvheaders[1]="dt*,ET,ETCAL*,TL"
-    for i in range(15):
-        csvheaders[1]+=",G[%02d]"%(i)
-    csvheaders[1]+=",X,DXDT,Y,DYDT,Z,DZDT"
-    for i in range(3):
-        for j in range(15):
-            csvheaders[1]+=",DT[%02d%02d]"%(i,j)
-    csvheaders[1]+=",KQMAX1,KQ[0],KQ[1],KQ[2]"
-    csvheaders[9]="ET,ETCAL*,x,y,z,dxdt,dydt,dzdt"
-    csvheaders[13]=csvheaders[9]
     def __init__(self,summary,daf):
         self.summary=summary
         self.daf=daf
@@ -148,25 +142,29 @@ class daf_SPKSegment:
         format="%s%d%s"%(daf.dformat[0],segment_size,daf.dformat[1])
         self.buf=struct.unpack(format,daf.inf.read(segment_size*8))
         self.N=int(self.buf[-1])
+        result=self.line(0)
+        self.csvheader = result.csvheader
     def line(self,i):
         if self.summary.type==1:
             return daf_SPK01line(self.N,i,self.buf)
-        elif self.summary.type==9 or self.summary.type==13:
-            return daf_SPKStateline(self.N,i,self.buf)
+        elif self.summary.type==2:
+            return daf_SPK02line(self.N,i,self.buf)
+        elif self.summary.type==9:
+            return daf_SPK09line(self.N,i,self.buf)
+        elif self.summary.type==13:
+            return daf_SPK13line(self.N,i,self.buf)
+        else:
+            raise ValueError("Unhandled SPK type %d"%self.summary.type)
     def __iter__(self):
         for i in range(self.N):
             result = self.line(i)
             yield result
-    def csvheader(self):
-        return self.csvheaders[self.summary.type]
     def __str__(self):
         result=(("N: %d") %
                 (self.N))
         return result
 
 class daf_CKSegment:
-    csvheaders=[0]*14
-    csvheaders[3]="SCLK,SCLK,ET,ETCAL,q0,q1,q2,q3,wx,wy,wz"
     def __init__(self,summary,daf):
         self.summary=summary
         self.daf=daf
@@ -174,16 +172,31 @@ class daf_CKSegment:
         segment_size=summary.addr1-summary.addr0+1
         format="%s%d%s"%(daf.dformat[0],segment_size,daf.dformat[1])
         self.buf=struct.unpack(format,daf.inf.read(segment_size*8))
-        self.N=int(self.buf[-1])
+        result = self.line(0)
+        self.csvheader = result.csvheader
+    def getN(self):
+        if self.summary.type==1:
+            return int(self.buf[-1])
+        elif self.summary.type==2:
+            return int(1+len(self.buf)/10.01)
+        elif self.summary.type==3:
+            return int(self.buf[-1])
+        else:
+            raise ValueError("Unknown CK type %d"%self.summary.type)
+    N=property(fget=getN ,doc="Number of pointing intervals in file")
     def line(self,i):
-        if self.summary.type==3:
-            return daf_CK03line(self.summary.target//1000,self.N,i,self.buf,self.summary.rates)
+        if self.summary.type==1:
+            return daf_CK01line(self.summary.target//1000+1,self.N,i,self.buf,self.summary.rates)
+        elif self.summary.type==2:
+            return daf_CK02line(self.summary.target//1000+1,self.N,i,self.buf)
+        elif self.summary.type == 3:
+            return daf_CK03line(self.summary.target//1000+1,self.N,i,self.buf,self.summary.rates)
+        else:
+            raise ValueError("Unknown CK type %d" % self.summary.type)
     def __iter__(self):
         for i in range(self.N):
             result = self.line(i)
             yield result
-    def csvheader(self):
-        return self.csvheaders[self.summary.type]
     def __str__(self):
         result=(("N: %d") %
                 (self.N))
@@ -199,9 +212,49 @@ class daf_SPKStateline:
         self.dydt=buf[i*6+4]
         self.dzdt=buf[i*6+5]
         self.et=buf[N*6+i]
+        self.csvheader="ET,ETCAL*,x,y,z,dxdt,dydt,dzdt"
     def __str__(self):
         result="%30.14f,%s,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e,%25.15e"%(self.et,cspice_etcal(self.et),self.x,self.y,self.z,self.dxdt,self.dydt,self.dzdt)
         return result
+
+class daf_SPK09line(daf_SPKStateline):
+    def __init__(self,N,i,buf):
+        daf_SPKStateline(self,N,i,buf)
+
+class daf_SPK13line(daf_SPKStateline):
+    def __init__(self,N,i,buf):
+        daf_SPKStateline(self,N,i,buf)
+
+class daf_SPK02line:
+    def __init__(self,N,i,buf):
+        self.RSIZE=int(buf[-2])
+        self.asize=(self.RSIZE-2)//3 #Number of elements in each component array
+        self.INTLEN=buf[-3]
+        self.INIT=buf[-4]
+        self.mid    =buf[i*self.RSIZE+0]
+        self.radius=buf[i*self.RSIZE+1]
+        self.et=self.mid-self.radius
+        self.x     =buf[i*self.RSIZE+2+self.asize*0:i*self.RSIZE+2+self.asize*1]
+        self.y     =buf[i*self.RSIZE+2+self.asize*1:i*self.RSIZE+2+self.asize*2]
+        self.z     =buf[i*self.RSIZE+2+self.asize*2:i*self.RSIZE+2+self.asize*3]
+        self.csvheader="ET*,ETCAL*,ETEND*,ETCALEND*,MID,MIDCAL*,RADIUS"
+        for i in range(self.asize):
+            self.csvheader+=",x[%02d]"%i
+        for i in range(self.asize):
+            self.csvheader+=",y[%02d]" % i
+        for i in range(self.asize):
+            self.csvheader+=",z[%02d]" % i
+    def __str__(self):
+        result="%30.14f,%s,%30.14f,%s,%30.14f,%s,%30.14f"%(self.et,cspice_etcal(self.et),self.mid+self.radius,cspice_etcal(self.mid+self.radius),self.mid,cspice_etcal(self.mid),self.radius)
+        for x in self.x:
+            result+=",%25.15e"%x
+        for y in self.y:
+            result+=",%25.15e"%y
+        for z in self.z:
+            result+=",%25.15e"%z
+        return result
+    def eval(self,ET):
+        pass
 
 class daf_SPK01line:
     n_elements=71
@@ -222,7 +275,16 @@ class daf_SPK01line:
         self.W = np.zeros(17)
 
         self.spke01(self.e[0],self.e)
-#        self.eval(self.TL)
+        self.csvheader= "ET,ETCAL*,TL"
+        for i in range(15):
+            self.csvheader += ",G[%02d]" % (i)
+        self.csvheader += ",X,DXDT,Y,DYDT,Z,DZDT"
+        for i in range(3):
+            for j in range(15):
+                self.csvheader += ",DT[%02d%02d]" % (i, j)
+                self.csvheader += ",KQMAX1,KQ[0],KQ[1],KQ[2]"
+
+    #        self.eval(self.TL)
     def __str__(self):
         result="%30.14f,%s" %(self.et,cspice_etcal(self.et))
         for i in range(self.n_elements):
@@ -600,18 +662,74 @@ class daf_SPK01line:
 
         return STATE
 
-class daf_CK03line:
+class daf_CK01line:
     def __init__(self,clknum,N,i,buf,rates):
         self.clknum=clknum
         self.rates=rates
+        self.csvheader="SCLK,SCLK*,ET*,ETCAL*,q0,q1,q2,q3"
         if self.rates:
             self.n_elements = 7
             self.w = buf[i * self.n_elements+4:(i + 1) * self.n_elements]
+            self.csvheader+=",wx,wy,wz"
         else:
             self.n_elements=4
         self.q = buf[i * self.n_elements:i * self.n_elements+4]
 
         self.sclk=buf[N*self.n_elements+i]
+        self.et =cspice_sct2e(self.clknum,self.sclk)
+    def __str__(self):
+        result="%25.15e"%self.sclk
+        try:
+            et=cspice_sct2e(self.clknum, self.sclk)
+            result+=",%s,%16.6f,%s" %(cspice_scdecd(self.clknum,self.sclk),et,cspice_etcal(et))
+        except:
+            result+=",,,"
+        for i in range(4):
+            result+=",%25.15e"%self.q[i]
+        if self.rates:
+            for i in range(3):
+                result += ",%25.15e" % self.w[i]
+        else:
+            result+=",,,"
+        return result
+
+class daf_CK02line:
+    def __init__(self,clknum,N,i,buf):
+        self.clknum=clknum
+        self.n_elements = 8
+        self.w = buf[i * self.n_elements+4:i * self.n_elements+7]
+        self.q = buf[i * self.n_elements:i * self.n_elements+4]
+        self.rate=buf[i*self.n_elements+7]
+        self.sclk=buf[N*self.n_elements+i]
+        self.sclk1=buf[N*self.n_elements+N+i]
+        self.et =cspice_sct2e(self.clknum,self.sclk)
+        self.et1 =cspice_sct2e(self.clknum,self.sclk1)
+        self.csvheader="SCLK,SCLK*,SCLK1,SCLK1*,ET*,ETCAL*,ET1*,ETCAL1*,q0,q1,q2,q3,wx,wy,wz,rate"
+    def __str__(self):
+        result="%25.15e"%self.sclk
+        result+=",%s,%25.15e,%s,%16.6f,%s,%16.6f,%s" %(cspice_scdecd(self.clknum,self.sclk),self.sclk1,cspice_scdecd(self.clknum,self.sclk1),self.et,cspice_etcal(self.et),self.et1,cspice_etcal(self.et1))
+        for i in range(4):
+            result+=",%25.15e"%self.q[i]
+        for i in range(3):
+            result += ",%25.15e" % self.w[i]
+        result += ",%25.15e" % self.rate
+        return result
+
+class daf_CK03line:
+    def __init__(self,clknum,N,i,buf,rates):
+        self.clknum=clknum
+        self.rates=rates
+        self.csvheader="SCLK,SCLK*,ET*,ETCAL*,q0,q1,q2,q3"
+        if self.rates:
+            self.n_elements = 7
+            self.w = buf[i * self.n_elements+4:(i + 1) * self.n_elements]
+            self.csvheader+=",wx,wy,wz"
+        else:
+            self.n_elements=4
+        self.q = buf[i * self.n_elements:i * self.n_elements+4]
+
+        self.sclk=buf[N*self.n_elements+i]
+        self.et =cspice_sct2e(self.clknum,self.sclk)
     def __str__(self):
         result="%25.15e"%self.sclk
         try:
@@ -673,9 +791,13 @@ class double_array_file:
             self.needToClose=False
         buf=self.inf.read(1024) #Read the whole header record first
         self.LOCIDW=str(buf[0:0+8],encoding='ASCII')
-        if self.LOCIDW[0:4]!="DAF/":
-            raise ValueError("Not a DAF: Header is %s"%self.header)
-        self.subtype=self.LOCIDW[4:8].strip(" \t\n\r\0")
+        if self.LOCIDW[0:4]=="NAIF":
+            print("Old kernel type - guessing ")
+            self.subtype="CK"
+        elif self.LOCIDW[0:4]!="DAF/":
+            raise ValueError("Not a DAF: Header is %s"%self.LOCIDW)
+        else:
+            self.subtype=self.LOCIDW[4:8].strip(" \t\n\r\0")
         self.LOCFMT=str(buf[88:88+8],encoding='ASCII') #IEEE format string
         if self.LOCFMT=="LTL-IEEE":
             self.endian="<"
@@ -729,7 +851,7 @@ class double_array_file:
         print(str(self))
         if dump_comments:
             for line in self.comments():
-                print(line)
+                print('"'+line+'"')
         for i,sr in enumerate(self):
             print("Summary record %d"%i)
             print(str(sr))
@@ -737,8 +859,8 @@ class double_array_file:
                 print("Summary %d" % j)
                 print(str(sum))
                 print(str(sum.segment()))
-                print("i*,"+sum.segment().csvheader())
                 if dump_lines:
+                    print("i*,dt," + sum.segment().csvheader)
                     et0=sum.et0
                     for k,line in enumerate(sum.segment()):
                         dt=line.et-et0

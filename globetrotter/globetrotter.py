@@ -143,14 +143,14 @@ def main(lat0=dms2rad( 42, 21, 47),
     (r1,q1)=ll2rq(latm,lonm,lat1,lon1)
     (x,y)=rq2xy(np.array([r0,r1]),np.array([q0,q1]),xsize=xsize,ysize=ysize,rot=rot)
     plt.plot(x,y,'k')
-    #for i in range(24):
-    #    (r,q)=ll2rq(latm,lonm,np.radians(np.arange(-90,91)),np.radians(i*15))
-    #    (x,y)=rq2xy(r,q,xsize=xsize,ysize=ysize,rot=rot)
-    #    plt.plot(x,y,'b')
-    #for i in range(12):
-    #    (r,q)=ll2rq(latm,lonm,np.radians((i-6)*15),np.radians(np.arange(0,361)))
-    #    (x,y)=rq2xy(r,q,xsize=xsize,ysize=ysize,rot=rot)
-    #    plt.plot(x,y,'b')
+    for i in range(24):
+        (r,q)=ll2rq(latm,lonm,np.radians(np.arange(-90,91)),np.radians(i*15))
+        (x,y)=rq2xy(r,q,xsize=xsize,ysize=ysize,rot=rot)
+        plt.plot(x,y,'b')
+    for i in range(12):
+        (r,q)=ll2rq(latm,lonm,np.radians((i-6)*15),np.radians(np.arange(0,361)))
+        (x,y)=rq2xy(r,q,xsize=xsize,ysize=ysize,rot=rot)
+        plt.plot(x,y,'b')
     (r,q)=ll2rq(latm,lonm,np.radians(np.array(tracklat)),np.radians(np.array(tracklon)))
     (x,y)=rq2xy(r,q,xsize=xsize,ysize=ysize,rot=rot)
     plt.plot(x,y,'r')
