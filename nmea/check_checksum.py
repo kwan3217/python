@@ -139,7 +139,7 @@ def check_checksum(infn):
                 acc = (spd - old_spd) / dt
             speed.append(spd)
             if abs(acc) > 99:
-                print("Position glitch on line ", lineno, data)
+                print("Position glitch (acc=%f) on line %d %s"%(acc,lineno, data))
                 return False
             else:
                 old_lat = lat
@@ -276,7 +276,7 @@ def check_checksum(infn):
 if __name__=="__main__":
     import glob
     #infns=glob.glob("/home/jeppesen/workspace/Data/recover_gps/SensorLogs/NMEA*.txt")
-    infns=glob.glob("/home/chrisj/Florida7/*.nmea")
+    infns=glob.glob("c:\\Users\\chrisj\\Desktop\\SensorLogs California 19.01\\*.nmea")
     for infn in infns:
         print(infn)
         if "fix" not in infn:
