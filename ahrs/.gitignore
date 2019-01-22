@@ -3,4 +3,6 @@
 *.cpio*
 *.nmea
 *.csv
+*.prc
+*.xls*
 
