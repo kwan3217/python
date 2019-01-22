@@ -57,20 +57,140 @@ PKWNE,
 (?P<tag>\S+)                                 #waypoint tag
 """,re.VERBOSE)
 
-old_lat = None
-old_lon = None
-old_time = None
-old_date = None
-old_spd = None
-high_alt=None
-high_lineno=None
-wpl_dict = {}
+
+kml_header="""
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>2018-12-22.kml</name>
+	<Style id="s_ylw-pushpin">
+		<IconStyle>
+			<scale>1.1</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+	</Style>
+	<StyleMap id="multiTrack">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#multiTrack_n</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#multiTrack_h</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="multiTrack_h">
+		<IconStyle>
+			<scale>1.2</scale>
+			<Icon>
+				<href>http://earth.google.com/images/kml-icons/track-directional/track-0.png</href>
+			</Icon>
+		</IconStyle>
+		<LineStyle>
+			<color>99ffac59</color>
+			<width>8</width>
+		</LineStyle>
+	</Style>
+	<StyleMap id="m_ylw-pushpin">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#s_ylw-pushpin</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#s_ylw-pushpin_hl</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Style id="s_ylw-pushpin_hl">
+		<IconStyle>
+			<scale>1.3</scale>
+			<Icon>
+				<href>http://maps.google.com/mapfiles/kml/pushpin/ylw-pushpin.png</href>
+			</Icon>
+			<hotSpot x="20" y="2" xunits="pixels" yunits="pixels"/>
+		</IconStyle>
+	</Style>
+	<Style id="multiTrack_n">
+		<IconStyle>
+			<Icon>
+				<href>http://earth.google.com/images/kml-icons/track-directional/track-0.png</href>
+			</Icon>
+		</IconStyle>
+		<LineStyle>
+			<color>99ffac59</color>
+			<width>6</width>
+		</LineStyle>
+	</Style>
+	<Folder>
+		<name>%s</name>
+		<open>1</open>
+"""
+kml_footer="""
+	</Folder>
+</Document>
+</kml>
+"""
+
+#Parameter: Name of track (from filename of event log)
+track_header="""
+		<Placemark>
+			<name>%s</name>
+			<styleUrl>#multiTrack</styleUrl>
+			<gx:Track>
+"""
+track_footer="""
+			</gx:Track>
+		</Placemark>
+"""
+#parameters: Time of track point in ISO8601 2018-12-25T12:34:56Z format
+when="""
+				<when>%s</when>
+"""
+# 4. Signed longitude in decimal degrees, positive east (so all locations in lower 48 are negative)
+# 5. Signed latitude in decimal degrees, positive north
+# 6. Altitude above geoid in meters
+coord="""
+				<gx:coord>%f %f %f</gx:coord>
+"""
+#parameters:
+# 1. Name of placemark
+# 2. Description (write the time of the placemark in original local time format)
+# 3. Time of placemark in ISO8601 2018-12-25T12:34:56Z format
+# 4. Signed longitude in decimal degrees, positive east (so all locations in lower 48 are negative)
+# 5. Signed latitude in decimal degrees, positive north
+# 6. Altitude above geoid in meters
+pkwne="""
+		<Placemark>
+			<name>%s</name>
+			<description>%s</description>
+			<LookAt>
+				<gx:TimeStamp><when>%s</when>
+</gx:TimeStamp>
+			</LookAt>
+			<styleUrl>#m_ylw-pushpin</styleUrl>
+			<Point>
+				<altitudeMode>absolute</altitudeMode>
+				<gx:drawOrder>1</gx:drawOrder>
+				<coordinates>%f,%f,%f</coordinates>
+			</Point>
+		</Placemark>
+"""
+
+lat = []
+lon = []
+time = []
+date=[]
+alt=[]
+spd=[]
 lineno = 0
 bad_alt=True
 
 def check_checksum(infn):
-    oufn = infn + ".fix.nmea"
-    global old_lat,old_lon,old_time,old_date,old_spd,wpl_dict,lineno,bad_alt,high_alt,high_lineno
+    oufn = infn[:-4] + ".fix.nmea"
+    global lat,lon,time,alt,spd,lineno,bad_alt
     old_lat = None
     old_lon = None
     old_time = None
@@ -118,92 +238,37 @@ def check_checksum(infn):
     speed=[]
     bad_alt=True
 
-    def handle_gga(gga_match):
-        """
-
-        :param gga_match:
-        :return:
-        """
-        global old_lat,old_lon,old_time,old_spd,bad_alt,lineno,high_alt,high_lineno
-        lat = get_lat(gga_match.group('lat'), gga_match.group('NS'))
-        lon = get_lat(gga_match.group('lon'), gga_match.group('EW'))
-        time = sod(gga_match.group('time'))
-        alt = gga_match.group('alt')
-        geoid = gga_match.group('geoid')
-        bad_alt = (alt == "-" + geoid) or ("-" + alt == geoid)
-        if bad_alt:
-            print("Bad altitude on line ", lineno, data)
-            return False
-        if old_lat is not None:
-            dt = time - old_time
-            dd = dist(lla2xyz(lat, lon), lla2xyz(old_lat, old_lon))
+    def handle_pos(match):
+        global lat,lon,alt,time,date,spd
+        this_lat = get_lat(match.group('lat'), match.group('NS'))
+        this_lon = get_lat(match.group('lon'), match.group('EW'))
+        this_alt = match.group('alt')
+        geoid = match.group('geoid')
+        if this_alt is not None:
+            bad_alt = (this_alt == "-" + geoid) or ("-" + this_alt == geoid)
+            if bad_alt:
+                print("Bad altitude on line ", lineno, data)
+                return
+        this_time = sod(match.group('time'))
+        if len(time)>0:
+            dt = this_time-time[-1]
+            dd = dist(lla2xyz(this_lat, this_lon), lla2xyz(lat[-1], lon[-1]))
             if dt == 0:
                 if dd > 10:
                     print("Position step on line ", lineno)
-                    return False
-                else:
-                    spd = 0
-                    acc = 0
+                return
             else:
-                spd = dd / dt
-                acc = (spd - old_spd) / dt
-            speed.append(spd)
-            if abs(acc) > 99:
+                this_spd = dd / dt
+                this_acc = (this_spd - spd[-1]) / dt
+            speed.append(this_spd)
+            if abs(this_acc) > 99:
                 print("Position glitch on line ", lineno, data)
-                return False
-            else:
-                old_lat = lat
-                old_lon = lon
-                old_time = time
-                old_spd = spd
-                if high_alt is not None and alt>high_alt:
-                    high_alt=alt
-                    high_lineno=lineno
-        else:
-            old_lat = lat
-            old_lon = lon
-            old_time = time
-            old_spd = 0
-            if alt is not None:
-                high_alt = alt
-                high_lineno = lineno
-        return True
-
-    def handle_rmc(rmc_match):
-        global old_lat,old_lon,old_time,old_spd,lineno,high_alt,high_lineno,printlat,printlon
-        printlat=rmc_match.group('lat')+","+rmc_match.group("NS")
-        printlon=rmc_match.group('lon')+","+rmc_match.group("EW")
-        lat = get_lat(rmc_match.group('lat'), rmc_match.group('NS'))
-        lon = get_lat(rmc_match.group('lon'), rmc_match.group('EW'))
-        time = sod(rmc_match.group('time'))
-        if old_lat is not None:
-            dt = time - old_time
-            dd = dist(lla2xyz(lat, lon), lla2xyz(old_lat, old_lon))
-            if dt == 0:
-                if dd > 0:
-#                    print("Position step on line ", lineno)
-                    return False
-                else:
-                    spd = 0
-                    acc = 0
-            else:
-                spd = dd / dt
-                acc = (spd - old_spd) / dt
-            speed.append(spd)
-            if abs(acc) > 99:
-#                print("Position glitch on line ", lineno, data)
-                return False
-            else:
-                old_lat = lat
-                old_lon = lon
-                old_time = time
-                old_spd = spd
-        else:
-            old_lat = lat
-            old_lon = lon
-            old_time = time
-            old_spd = 0
-        return True
+                return
+        lat.append(this_lat)
+        lon.append(this_lon)
+        time.append(this_time)
+        alt.append(None)
+        spd.append(this_spd)
 
     def handle_wpl(match):
         global wpl_dict
@@ -252,7 +317,7 @@ def check_checksum(infn):
                         write_line=True
                         gga_match = re_gga.match(data)
                         if gga_match is not None:
-                            if not handle_gga(gga_match):
+                            if not handle_pos(gga_match):
                                 write_line=False
                             else:
                                 npos+=1
@@ -262,7 +327,7 @@ def check_checksum(infn):
                         rmc_match = re_rmc.match(data)
                         if rmc_match is not None:
                             write_line=not bad_alt
-                            if not handle_rmc(rmc_match):
+                            if not handle_pos(rmc_match):
                                 write_line=False
                             else:
                                 npos+=1
