@@ -1,3 +1,7 @@
 Frames
 *.csv
+UltimateGPS
+android_gps
+*.txt
+*.nmea
 
