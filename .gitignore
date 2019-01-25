@@ -1,4 +1,10 @@
 __pycache__
 .idea
 venv
+.project
+.pydevproject
+bin/
+lib/
+lib64
+
 

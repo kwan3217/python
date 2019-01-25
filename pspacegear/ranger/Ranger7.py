@@ -18,7 +18,7 @@ import os
 import bmw
 
 old=os.getcwd()
-os.chdir('../../Data/spice/Ranger/')
+os.chdir('../../../Data/spice/Ranger/')
 cspice.furnsh('Ranger7Background.tm')
 os.chdir(old)
 
@@ -514,6 +514,7 @@ def plot_residuals(rcalcs,vcalcs,rs,vs,ts,subplot=411, title=''):
     plt.plot(tsus,bmw.su_to_cu(np.array(dvyfs),r_moon,mu_moon,1,-1,inverse=True),'g+',label='dvy')
     plt.plot(tsus,bmw.su_to_cu(np.array(dvzfs),r_moon,mu_moon,1,-1,inverse=True),'b+',label='dvz')
     plt.legend()
+    plt.show()
 
 def cache_earth(ts):
     """"
@@ -736,7 +737,8 @@ plt.figure(0)
 plot_residuals(rcus_kepler,vcus_kepler,racus,vacus,tacus,subplot=211,title='Kepler propagation')
 
 #Cache the earth positions and accelerations
-(rEarth,dvdtEM)=cache_earth(tas)
+aug_tas=np.hstack((tas,[tas[-1]+(tas[-1]-tas[-2])]))
+(rEarth,dvdtEM)=cache_earth(aug_tas)
 
 #Use three-body propagation to calculate the target bias
 (rs_for_bias,vs_for_bias)=threeBodyRK4(racus[0],v0_gauss,tacus)
@@ -747,8 +749,11 @@ bias=rs_for_bias[-1,:]-racus[-1]
 #Fit the observations using biased Gauss targeting and three-body propagation
 plt.figure(2)
 (v0_gaussb,_)=bmw.gauss(racus[0],racus[-1,:]-bias,tacus[-1])
-(rcus_gaussb,vcus_gaussb)=threeBodyRK4(racus[0],v0_gaussb,tacus)
-plot_residuals(rcus_gaussb,vcus_gaussb,racus,vacus,tacus,subplot=211,title='Biased Gauss targeting')
+dtacu=(tacus[-1]-tacus[-2])
+tacu1=tacus[-1]+dtacu
+aug_tacus=np.hstack((tacus,np.array([tacu1])))
+(rcus_gaussb,vcus_gaussb)=threeBodyRK4(racus[0],v0_gaussb,aug_tacus)
+plot_residuals(rcus_gaussb,vcus_gaussb,racus,vacus,aug_tacus[:-2],subplot=211,title='Biased Gauss targeting')
 
 rcus_for_spice=rcus_gaussb
 vcus_for_spice=vcus_gaussb
@@ -798,7 +803,8 @@ it from NTRS)
 The report had a table of geocentric state vectors in the True of Date system
 starting at injection and continuing every hour on the hour until impact. The
 report also had selenocentric state vectors starting at 6:00 GMT 31 Jul 1964,
-including one at time of impact, 1964 Jul 31 13:25:48.724 GMT
+including one near time of impact, 1964 Jul 31 13:25:48.724 GMT (impact was 
+at 13:25:48.799)
 
 These vectors were manually entered into a spreadsheet and verified by checking
 the magnitude of the radius and velocity vectors, which always matched to within
@@ -820,8 +826,8 @@ DATA_DELIMITER=';'
 LINES_PER_RECORD=1
 CENTER_GM=%11.4f
 FRAME_DEF_FILE='%s/fk/eci_tod.tf'
-LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
-""" % (mu_earth,'../../Data/spice/generic','../../Data/spice/generic')
+LEAPSECONDS_FILE='%s/lsk/naif0012.tls'
+""" % (mu_earth,'../../../Data/spice/generic','../../../Data/spice/generic')
 
 Ranger7Seleno_txt="""
 Ranger 7 - first completely successful Ranger lunar impact mission. Data from
@@ -832,7 +838,8 @@ it from NTRS)
 The report had a table of geocentric state vectors in the True of Date system
 starting at injection and continuing every hour on the hour until impact. The
 report also had selenocentric state vectors starting at 6:00 GMT 31 Jul 1964,
-including one at time of impact, 1964 Jul 31 13:25:48.724 GMT
+including one near time of impact, 1964 Jul 31 13:25:48.724 GMT (impact was 
+at 13:25:48.799)
 
 These vectors were manually entered into a spreadsheet and verified by checking
 the magnitude of the radius and velocity vectors, which always matched to within
@@ -900,8 +907,8 @@ DATA_DELIMITER=';'
 LINES_PER_RECORD=1
 CENTER_GM=%9.4f
 FRAME_DEF_FILE='%s/fk/eci_tod.tf'
-LEAPSECONDS_FILE='%s/lsk/naif0011.tls'
-""" % (image_a[0].GMT,image_a[-2].GMT,image_a[-1].GMT,mu_moon,'../../Data/spice/generic','../../Data/spice/generic')
+LEAPSECONDS_FILE='%s/lsk/naif0012.tls'
+""" % (image_a[0].GMT,image_a[-2].GMT,image_a[-1].GMT,mu_moon,'../../../Data/spice/generic','../../../Data/spice/generic')
 
 tofs=None
 with open('geo.txt','w') as ouf_geo:
@@ -930,8 +937,8 @@ with open('geo.txt','w') as ouf_geo:
                 this_state[5]),file=ouf_seleno)
 
 with open('seleno2.txt','w') as ouf_seleno2:
-    for i in range(tas.size):
-        print("%23.6f;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e"%(tas[i],
+    for i in range(aug_tas.size):
+        print("%23.6f;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e;%23.15e"%(aug_tas[i],
             rs_for_spice[i,0],
             rs_for_spice[i,1],
             rs_for_spice[i,2],
@@ -1045,7 +1052,7 @@ PRODUCER_ID='C. Jeppesen, Kwan Systems'
 FRAMES_FILE_NAME='%s/fk/eci_tod.tf'
 SCLK_FILE_NAME='Ranger7.tsc'
 LSK_FILE_NAME='%s/lsk/naif0011.tls'
-""" % ('../../Data/spice/generic','../../Data/spice/generic')
+""" % ('../../../Data/spice/generic','../../../Data/spice/generic')
 
 with open('Ranger7_msopck.txt','w') as ouf:
     print(Ranger7CK_txt,file=ouf)
