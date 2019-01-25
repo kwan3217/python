@@ -50,11 +50,11 @@ re_rmc=re.compile(r"""
 """,re.VERBOSE)
 re_pkwne=re.compile(r"""
 PKWNE,
-(?P<type>[0-9]+),                            #Not sure what this is, perhaps button number?
-(?P<hour>[0-9]2):                            #Hour
-(?P<minute>[0-9]2):                          #Minute
-(?P<second>[0-9]2(?:\.[0-9]+)?),             #Second with optional fractional part
-(?P<tag>\S+)                                 #waypoint tag
+(?P<timestamp>[0-9]+),                       #Sensor timestamp
+(?P<hour>[0-9]{2}):                            #Hour
+(?P<minute>[0-9]{2}):                          #Minute
+(?P<second>[0-9]{2}(?:\.[0-9]+)?),             #Second with optional fractional part
+(?P<tag>.*)                                  #Event tag
 """,re.VERBOSE)
 
 old_lat = None
@@ -227,7 +227,7 @@ def check_checksum(infn):
 
     def handle_pkwne(match):
         global printlat,printlon
-        tag=match.group('name')
+        tag=match.group('tag')
         return "GPWPL,%s,%s,%s"%(printlat,printlon,tag)
 
     def calc_checksum(data):
