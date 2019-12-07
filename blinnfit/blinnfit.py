@@ -5,6 +5,39 @@ import matplotlib.image as mpimg
 import matplotlib.widgets as widgets
 from bsc import *
 import os
+import sqlite3
+
+def open_frame_index():
+    """
+    Open an SQLite database and make sure that the appropriate table(s) are present
+    in the database
+
+    :param desc: Used to build the filename of the sqlite database. Different values
+      of desc= will result in different sqlite files being used.
+    """
+    dbname="frame_index.sqlite"
+    #log.info(dbname)
+    conn=sqlite3.connect(dbname)
+    sql=("create table if not exists frames ("+
+      "framenum    integer not null,"+
+      "lat_c       real,"+
+      "lon_c       real,"+
+      "dist        real,"+
+      "angle       real,"+
+      "right_denom real,"+
+      "lookx       real,"+
+      "looky       real,"+
+      "lookz       real,"+
+      "lat_s       real,"+
+      "lon_s       real,"+
+      "primary key (framenum))")
+    #log.info(sql)
+    cur=conn.cursor()
+    cur.execute(sql)
+    conn.commit()
+    return conn
+
+conn=open_frame_index()
 
 os.chdir('/home/jeppesen/workspace/Data/spice/Voyager/')
 cspice.furnsh('vgr1.tm')
@@ -12,15 +45,23 @@ cspice.furnsh('vgr2.tm')
 cspice.furnsh('../generic/lsk/naif0012.tls')
 cspice.furnsh('../generic/spk/planets/de430.bsp')
 if True:
-    framepath='/home/jeppesen/workspace/pov/Blinn/SuperTrajFrames/crop/'
-    framenum=94
-    infn=framepath+"frame%04dcrop.png"%framenum
+    framepath='/home/jeppesen/workspace/Data/Prototype/Blinn/SuperTrajectory/'
+    framenum=1136
+    infn=framepath+"frame%04d.png"%framenum
 else:
     framepath='/home/jeppesen/workspace/pov/Blinn/'
     infn=framepath+"SuperTrajectory.png"
-
 backimg=mpimg.imread(infn)
-#backimg=backimg[:,(1280-960)//2:(1280-960)//2+960]
+
+def llr2xyz(lat,lon,r=1):
+    """Calculate rectangular vector coordinates from spherical coordinates
+    :param lat: Latitude in degrees
+    :param lon: Longitude in degrees
+    :param r:   Radius
+    """
+    return (r * np.array((np.cos(np.radians(lat)) * np.cos(np.radians(lon)),
+                          np.cos(np.radians(lat)) * np.sin(np.radians(lon)),
+                          np.sin(np.radians(lat)))))
 
 def cmatrix(loc=None,look=None,sky=None):
     """
@@ -46,7 +87,7 @@ def cmatrix(loc=None,look=None,sky=None):
     """
 
     #Calculate the relative look direction
-    look_rel=look-loc
+    look_rel = look - loc
     assert np.linalg.norm(look_rel)>0,"Camera look_at same as location"
     look_rel=look_rel/np.linalg.norm(look_rel)
 
@@ -73,8 +114,7 @@ def cmatrix(loc=None,look=None,sky=None):
     result=np.linalg.inv(result)
     return result
 
-
-def project(up=None,right=None,angle=None,width=None,height=None,target_c=None):
+def project(up=None,right=None,angle=None,width=None,height=None,cx=None,cy=None,target_c=None):
     """
     Project the target into the camera field of view
     :param up: Length of Up vector, equivalent to camera{up y*...}
@@ -82,6 +122,8 @@ def project(up=None,right=None,angle=None,width=None,height=None,target_c=None):
     :param angle: Field-of-view angle in degrees, equivalent to camera{angle...}
     :param width: Width of image in pixels, equivalent to image_width
     :param height: Height of image in pixels, equivalent to image_height
+    :param cx: center of projection in x direction in pixels. In POV-Ray perspective camera, cx is always implicitly image_width/2
+    :param cy: center of projection in y direction in pixels. In POV-Ray perspective camera, cy is always implicitly image_height/2
     :param target: 3D position of point to project in camera coordinates. If your point is in world coordinates, use
                    cmatrix(...)@target
     :return: 2D position on camera
@@ -101,8 +143,12 @@ def project(up=None,right=None,angle=None,width=None,height=None,target_c=None):
     # components are normalized screen coordinates
     target_scl=target_c[0:2,...]*direction/target_c[2,...]
     result=np.zeros(target_scl.shape)
-    result[0,...]=linterp(-0.5*right,0,0.5*right,width, target_scl[0,...])
-    result[1,...]=linterp(-0.5*up,   0,0.5*up   ,height,target_scl[1,...])
+    if cx is None:
+        cx=width/2
+    if cy is None:
+        cy=height/2
+    result[0,...]=linterp(-0.5*right,0,0.5*right,width, target_scl[0,...])+cx-width/2
+    result[1,...]=linterp(-0.5*up,   0,0.5*up   ,height,target_scl[1,...])+cy-height/2
     result[:,result[0,...]<0]=float('NaN')
     result[:,result[1,...]<0]=float('NaN')
     result[:,result[0,...]>width]=float('NaN')
@@ -111,15 +157,6 @@ def project(up=None,right=None,angle=None,width=None,height=None,target_c=None):
 
 EB2J=cspice.pxform("ECLIPB1950","J2000",0)
 J2EB=cspice.pxform("J2000","ECLIPB1950",0)
-CamLat=25
-CamLon=-36
-CamAngle=45.9
-CamDist=3.655
-CamUpDenom=3.0
-imwidth=backimg.shape[1]
-imheight=backimg.shape[0]
-CamLook= np.array((0.28,-0.15,0.0))
-CamSky= np.array((0.0,0.0,1.0))
 
 #Load stars
 maxidx=0
@@ -130,53 +167,34 @@ for i,this_star in enumerate(BrightStarCatalog):
         maxidx=i
         break
 
-etcal="1977-08-21 00:00:00 TDB"
-et=cspice.str2et(etcal)
-print(etcal,cspice.etcal(et))
+def frame_to_et(framenum):
+    frame0et=cspice.str2et("1970-07-25 20:40:26 TDB")
+    h=3.647870235*86400
+    return framenum*h+frame0et
+
+et=frame_to_et(framenum)
+#et=cspice.str2et(etcal)
+print(cspice.etcal(et))
 v=np.zeros((4,maxidx+5))
 
-ra=[]
-dec=[]
 name=[]
 for i,this_star in enumerate(BrightStarCatalog):
     star=" "+this_star
     if GetMag(star)>LimitMag:
         break
-    this_dec=np.radians(GetDec(star))
-    this_ra=np.radians(GetRA(star))
-    dec.append(this_dec)
-    ra.append(this_ra)
+    dec=np.radians(GetDec(star))
+    ra=np.radians(GetRA(star))
     name.append(GetName(star))
     #name.append("")
-    this_vec=np.array((np.cos(this_dec)*np.cos(this_ra),np.cos(this_dec)*np.sin(this_ra),np.sin(this_dec)))
+    this_vec=np.array((np.cos(dec)*np.cos(ra),
+                       np.cos(dec)*np.sin(ra),
+                       np.sin(dec)))
     v[0:3,i]=J2EB @ this_vec
 
-au=150000000
-TrajFrame="ECLIPB1950"
-
-def project_stuff(v):
-    global CamLoc,CamLook,CamDist,CamLat,CamLon,CamSky,CamAngle,imwidth,imheight,CamUpDenom
-    CamLoc = (CamDist * np.array((np.cos(np.radians(CamLat)) * np.cos(np.radians(CamLon)),
-                                  np.cos(np.radians(CamLat)) * np.sin(np.radians(CamLon)),
-                                  np.sin(np.radians(CamLat)))))
-    CamLoc+=CamLook
-    print("ImWidth:     ", imwidth)
-    print("ImHeight:    ", imheight)
-    print("CamAngle:    ", CamAngle)
-    print("CamLat(deg): ", CamLat)
-    print("CamLon(deg): ", CamLon)
-    print("CamLook:     ", CamLook)
-    print("CamDist:     ", CamDist)
-    print("CamLoc:      ", CamLoc)
-    print("CamSky:      ", CamSky)
-    print("CamUpDenom:  ", CamUpDenom)
-    C=cmatrix(loc=CamLoc,look=CamLook,sky=CamSky)
-    Cv=C@v
-    prj=project(up=1,right=4/CamUpDenom,angle=CamAngle,width=imwidth,height=imheight,target_c=Cv)
-    return prj
+au = 150000000
+TrajFrame = "ECLIPB1950"
 
 def traj(body,et0,et1,dt):
-    global TrajFrame,au
     et=et0
     v=np.ones((4,int((et1-et0)/dt)))
     for i in range(v.shape[1]):
@@ -200,127 +218,451 @@ ldot=[0,149472.67411175, 58517.81538729, 19140.30268499,  3034.74612775]
 def circ(a):
     return circpos(a,np.arange(0,2*np.pi,0.01))
 
-fig=plt.figure()
-ax=fig.add_subplot(111)
-plt.imshow(backimg)
-prj=project_stuff(circ(a[1]))
-plot1,=plt.plot(prj[0,...],prj[1,...],'w-')
-prj=project_stuff(circ(a[2]))
-plot2,=plt.plot(prj[0,...],prj[1,...],'w-')
-prj=project_stuff(traj(3,et-365*86400,et,86400))
-plot3,=plt.plot(prj[0,...],prj[1,...],'w-')
-prj=project_stuff(traj(4,et-686*86400,et,86400))
-plot4,=plt.plot(prj[0,...],prj[1,...],'w-')
-T=et/(86400*36525)
-v[0:3,-4]=cspice.spkezr("4",et,TrajFrame,"NONE","0")[0][0:3]/au
-v[3,-4]=1
-name.append("Mars")
-v[0:3,-4]=cspice.spkezr("3",et,TrajFrame,"NONE","0")[0][0:3]/au
-v[3,-4]=1
-name.append("Earth")
-v[:,-3]=circpos(a[2],np.array(np.radians(l0[2]+ldot[2]*T)))[:,0]
-name.append("Venus")
-v[:,-2]=circpos(a[1],np.array(np.radians(l0[1]+ldot[1]*T)))[:,0]
-name.append("Mercury")
-v[:,-1]=circpos(a[0],np.array(np.radians(l0[0]+ldot[0]*T)))[:,0]
-name.append("Sun")
+def centroid(img):
+    """
+    Calculate the centroid of an image. Doesn't do anything fancy or robust.
+    :param img: Image to calculate the centroid of
+    :return: tuple containing centroid of image. First element is row number,
+             second is column, following matrix indexing convention
+    """
+    ramp=np.mgrid[0:img.shape[0],0:img.shape[1]]
+    ramp10 = ramp[0,:,:]
+    ramp01 = ramp[1,:,:]
+    m00=np.nansum(img)
+    m10=np.nansum(img*ramp10)
+    m01=np.nansum(img*ramp01)
+    return (m10/m00,m01/m00)
 
+boxfig=None
+boxax=None
+boximg=None
 
-prj=project_stuff(v)
-starplot,=plt.plot(prj[0,...],prj[1,...],'r+')
+def find_star(starm,boxr=10,vis=True):
+    import twodgauss
+    #Subset the image
+    reject=False
+    try:
+        xo=int(prj[0,starm])
+        yo=int(prj[1,starm])
+    except ValueError:
+        reject=True
+        print("Reject: No coordinate for star",starm)
+        return float('nan'), float('nan')
+    if(xo<boxr):
+        reject=True
+        print("Reject: off left edge %",xo)
+    if(xo>backimg.shape[1]-boxr):
+        reject=True
+        print("Reject: off right edge %",xo)
+    if(yo<boxr):
+        reject=True
+        print("Reject: off top edge %",yo)
+    if(yo>backimg.shape[0]-boxr):
+        reject=True
+        print("Reject: off bottom edge %",yo)
+    if reject:
+        return float('nan'),float('nan')
+    box=backimg[yo-boxr:yo+boxr,xo-boxr:xo+boxr,:]
+    box=np.sum(box,2)
+    box=box-np.min(box)
 
-if False:
-    for i in range(prj.shape[1]):
-        if np.isfinite(prj[0,i]):
-            if name[i]!="":
-                print(i, name[i])
-                plt.text(prj[0,i],prj[1,i],name[i],color='blue')
+    if vis:
+        global boxfig,boxax,boximg
+        if boximg is None:
+            boxfig, boxax = plt.subplots(1, 1,num="box")
+            boximg=boxax.imshow(box)
+        else:
+            boxax.cla()
+            boximg=boxax.imshow(box)
+        boxax.set_title(name[starm])
+        plt.pause(0.001)
 
-stepsize=10
+    #Try the 2D Gaussian fit on the subset
+    try:
+        (amp, xo,   yo,   sigx, sigy, theta, ofs, data_fitted)=twodgauss.fit_twoD_Gaussian(box,
+         0.5, boxr, boxr, 5,    3,    0,     0
+        )
+    except RuntimeError:
+        print("Reject: fit failed")
+        return float('nan'),float('nan')
+    xs=box.shape[1]
+    ys=box.shape[0]
+    x=xo+int(prj[0,starm])-boxr
+    y=yo+int(prj[1,starm])-boxr
+    print("%4d %7.3f %7.3f %6.3f %6.3f"%(starm,x,y,sigx,sigy))
+    if np.abs(sigx)>5:
+        print("Reject: bad sigx %f"%sigx)
+        reject=True
+    if np.abs(sigy)>5:
+        print("Reject: bad sigy %f"%sigy)
+        reject=True
+    if reject:
+        x=float('nan')
+        y=float('nan')
+    if vis:
+        color='r' if reject else 'g'
+        xg = np.linspace(0, xs - 1, xs)
+        yg = np.linspace(0, ys - 1, ys)
+        xg, yg = np.meshgrid(xg, yg)
+        boxax.contour(xg, yg, data_fitted, 8, colors=color)
+        plt.pause(0.001)
+    return x,y
 
-class Index(object):
+def curve_fit_interface(starvec,lat_c,lon_c,angle,right_denom,lat_s,lon_s):
+    """
+    Calculate the pixel positions of the given stars, given these camera parameters
+    :param starvec: List of star vectors with homogeneous coordinates of shape (4,M//2)
+    :param camlat: Scalar camera latitude in degrees
+    :param camlon: Scalar camera longitude in degrees
+    :param dist:   Scalar camera distance in AU
+    :param angle:  Scalar camera FOV angle in degrees
+    :param right_denom: Scalar camera aspect ratio constant
+    :param cx:     Scalar image distortion center horizontal coordinate
+    :param cy:     Scalar image distortion center vertical coordinate
+    :param skylat: Scalar sky vector latitude in degrees
+    :param skylon: Scalar sky vector longitude in degrees
+    :return: 1D array of shape M, representing a 2D array of pixel coordinates [x_or_y,star] shape (2,M//2)
+             raveled so as to work with scipy.optimize.curve_fit. This will be all the x coordinates first,
+             then all the y coordinates
+    """
+    # The curve fitter scipy.optimize.curve_fit takes a function to fit f,
+    # independent xdata (can be any object, but f(xdata,*p) must return an
+    # array of shape M), dependent ydata (shape M), and an initial guess at
+    # a set of parameters p0 (shape N). It returns a set of parameters popt
+    # which best fits the data. In our case, the ydata is pixel positions of
+    # the stars, and therefore M is twice the number of stars we are trying
+    # to fit. The p is camera parameters, and therefore by process of elimination
+    # the xdata must be the positions of the stars. In our case, it's easiest to take
+    # the vectors of the stars as inputs, so xdata will be an array of shape
+    # (4,M//2) and we will return a 1D array of raveled x and y pixel coordinates
+    # of each star
+    loc = llr2xyz(lat=lat_c,lon=lon_c)
+    sky = llr2xyz(lat=lat_s,lon=lon_s)
+    C = cmatrix(loc=loc, look=np.zeros(3),sky=sky)
+    Cv = C @ starvec
+    prj = project(up=1, right=4 / right_denom, angle=angle, width=backimg.shape[1], height=backimg.shape[0], target_c=Cv,
+              cx=None, cy=None)
+    return prj.ravel()
+
+class CameraMount(object):
+    def __init__(self,conn):
+        self.conn=conn
+        self.read(framenum)
+        self.width = backimg.shape[1]
+        self.height = backimg.shape[0]
+        self.cx = self.width / 2
+        self.cy = self.height / 2
+        self.step_size=10
+    def read(self,framenum):
+        has_row=False
+        #Check if this frame is already recorded
+        sql="select lat_c,lon_c,dist,angle,right_denom,lookx,looky,lookz,lat_s,lon_s,framenum from frames order by abs(framenum-?) asc"
+        cur = self.conn.cursor()
+        for row in cur.execute(sql, (framenum,)):
+            if True: #row[10]==framenum:
+                self.lat_c        = row[0]
+                self.lon_c        = row[1]
+                self.dist         = row[2]
+                self.angle        = row[3]
+                self.right_denom  = row[4]
+                self.look=np.array((row[5],
+                                    row[6],
+                                    row[7]))
+                self.lat_s        = row[8]
+                self.lon_s        = row[9]
+                has_row = True
+                break
+            elif not has_row:
+                fn0=row[10]
+                lat_c0       = row[0]
+                lon_c0       = row[1]
+                dist0        = row[2]
+                angle0       = row[3]
+                right_denom0 = row[4]
+                lookx0       = row[5]
+                looky0       = row[6]
+                lookz0       = row[7]
+                lat_s0       = row[8]
+                lon_s0       = row[9]
+                has_row=True
+            else:
+                fn1          = row[10]
+                lat_c1       = row[0]
+                lon_c1       = row[1]
+                dist1        = row[2]
+                angle1       = row[3]
+                right_denom1 = row[4]
+                lookx1       = row[5]
+                looky1       = row[6]
+                lookz1       = row[7]
+                lat_s1        = row[8]
+                lon_s1        = row[9]
+                self.lat_c       = linterp(fn0,lat_c0,fn1,lat_c1,framenum)
+                self.lon_c       = linterp(fn0,lon_c0,fn1,lon_c1,framenum)
+                self.dist        = linterp(fn0,dist0,fn1,dist1,framenum)
+                self.angle       = linterp(fn0,angle0,fn1,angle1,framenum)
+                self.right_denom = linterp(fn0,right_denom0,fn1,right_denom1,framenum)
+                self.look=np.array((linterp(fn0,lookx0,fn1,lookx1,framenum),
+                                    linterp(fn0,looky0,fn1,looky1,framenum),
+                                    linterp(fn0,lookz0,fn1,lookz1,framenum)))
+                self.lat_s       = linterp(fn0,lat_s0,fn1,lat_s1,framenum)
+                self.lon_s       = linterp(fn0,lon_s0,fn1,lon_s1,framenum)
+                break
+        if not has_row:
+            #initial conditions valid for frame 675
+            self.lat_c = 25.186          #Spherical coordinate latitude of camera position relative to its look point, in degrees
+            self.lon_c = -35.169         #Spherical coordinate longitude of camera position, in degrees
+            self.dist = 3.655            #Spherical coordinate radius of camera position
+            self.angle = 45.987          #Angle parameter of camera, equivalent to angle keyword in POV-Ray perspective camera
+            self.right_denom = 2.939     #Camera right vector denominator -- right vector in POV-Ray perspective camera is right -x*4/right_denom
+            self.look = np.array(( 0.28,
+                                  -0.15,
+                                   0.00))
+            self.lat_s=90                #Spherical coordinate latitude of sky vector, degrees
+            self.lon_s=1.455             #Spherical coordinate longitude of sky vector, degrees. OK but ineffectual if lat_s=+-90deg.
+    def write(self):
+        sql="insert or replace into frames (framenum,lat_c,lon_c,dist,angle,right_denom,lookx,looky,lookz,lat_s,lon_s) values (?,?,?,?,?,?,?,?,?,?,?)"
+        cur = conn.cursor()
+        cur.execute(sql, (framenum,
+                          self.lat_c,
+                          self.lon_c,
+                          self.dist,
+                          self.angle,
+                          self.right_denom,
+                          self.look[0],
+                          self.look[1],
+                          self.look[2],
+                          self.lat_s,
+                          self.lon_s))
+        conn.commit()
+    def project_stuff(self,v):
+        loc=llr2xyz(lat=self.lat_c,lon=self.lon_c,r=self.dist) + self.look
+        sky=llr2xyz(lat=self.lat_s,lon=self.lon_s)
+        print("image_width  ", self.width)
+        print("image_height ", self.height)
+        print("angle        ", self.angle)
+        print("lat_c(deg)   ", self.lat_c)
+        print("lon_c(deg)   ", self.lon_c)
+        print("dist         ", self.dist)
+        print("lat_s(deg)   ", self.lat_s)
+        print("lon_s(deg)   ", self.lon_s)
+        print("right   -x*4/", self.right_denom)
+        print("cx           ", self.cx)
+        print("cy           ", self.cy)
+        C = cmatrix(loc=loc, look=self.look, sky=sky)
+        Cv = C @ v
+        prj = project(up=1, right=4 / self.right_denom, angle=self.angle, width=self.width, height=self.height, target_c=Cv, cx=self.cx, cy=self.cy)
+        return prj
     def big(self, event):
-        global stepsize
-        stepsize*=10
+        self.step_size*=10
     def sm(self, event):
-        global stepsize
-        stepsize/=10
+        self.step_size/=10
     def replot(self):
-        global v,starplot,plot1,plot2,plot3,plot4,a
-        prj=project_stuff(v)
+        global v,starplot,plot1,plot2,plot3,plot4,a,prj
+        prj=self.project_stuff(v)
+        for i,n_o in enumerate(nameobj):
+            if n_o is not None:
+                n_o.set_visible(np.isfinite(prj[0,i]))
+                if np.isfinite(prj[0,i]):
+                    n_o.set_position((prj[0,i],prj[1,i]))
         starplot.set_xdata(prj[0,...])
         starplot.set_ydata(prj[1,...])
-        prj=project_stuff(circ(a[1]))
-        plot1.set_xdata(prj[0,...])
-        plot1.set_ydata(prj[1,...])
-        prj=project_stuff(circ(a[2]))
-        plot2.set_xdata(prj[0,...])
-        plot2.set_ydata(prj[1,...])
-        prj=project_stuff(traj(3, et -365 * 86400, et, 86400))
-        plot3.set_xdata(prj[0,...])
-        plot3.set_ydata(prj[1,...])
-        prj=project_stuff(traj(4, et -365 * 86400, et, 86400))
-        plot4.set_xdata(prj[0,...])
-        plot4.set_ydata(prj[1,...])
-        plt.draw()
+        if False:
+            prjc=self.project_stuff(circ(a[1]))
+            plot1.set_xdata(prjc[0,...])
+            plot1.set_ydata(prjc[1,...])
+            prjc=self.project_stuff(circ(a[2]))
+            plot2.set_xdata(prjc[0,...])
+            plot2.set_ydata(prjc[1,...])
+            prjc=self.project_stuff(traj(3, et -365 * 86400, et, 86400))
+            plot3.set_xdata(prjc[0,...])
+            plot3.set_ydata(prjc[1,...])
+            prjc=self.project_stuff(traj(4, et -365 * 86400, et, 86400))
+            plot4.set_xdata(prjc[0,...])
+            plot4.set_ydata(prjc[1,...])
+        plt.pause(0.001)
     def camlonp(self, event):
-        global CamLon, stepsize
-        CamLon+=stepsize
+        self.lon_c+=self.step_size
         self.replot()
     def camlonm(self, event):
-        global CamLon, stepsize
-        CamLon-=stepsize
+        self.lon_c-=self.step_size
         self.replot()
     def camlatp(self, event):
-        global CamLat, stepsize
-        CamLat+=stepsize
+        self.lat_c+=self.step_size
         self.replot()
     def camlatm(self, event):
-        global CamLat, stepsize
-        CamLat-=stepsize
+        self.lat_c-=self.step_size
         self.replot()
     def lookxp(self, event):
-        global CamLook, stepsize
-        CamLook[0]+=stepsize
+        self.look[0]+=self.step_size
         self.replot()
     def lookxm(self, event):
-        global CamLook, stepsize
-        CamLook[0]-=stepsize
+        self.look[0]-=self.step_size
         self.replot()
     def lookyp(self, event):
-        global CamLook, stepsize
-        CamLook[1]+=stepsize
+        self.look[1]+=self.step_size
         self.replot()
     def lookym(self, event):
-        global CamLook, stepsize
-        CamLook[1]-=stepsize
+        self.look[1]-=self.step_size
         self.replot()
     def anglep(self, event):
-        global CamAngle, stepsize
-        CamAngle += stepsize
+        self.angle += self.step_size
         self.replot()
     def anglem(self, event):
-        global CamAngle, stepsize
-        CamAngle -= stepsize
+        self.angle -= self.step_size
         self.replot()
     def upp(self, event):
-        global CamUpDenom, stepsize
-        CamUpDenom += stepsize
+        self.right_denom += self.step_size
         self.replot()
     def upm(self, event):
-        global CamUpDenom, stepsize
-        CamUpDenom -= stepsize
+        self.right_denom -= self.step_size
         self.replot()
     def distp(self, event):
-        global CamDist, stepsize
-        CamDist += stepsize
+        self.dist += self.step_size
         self.replot()
     def distm(self, event):
-        global CamDist, stepsize
-        CamDist -= stepsize
+        self.dist -= self.step_size
         self.replot()
+    def framem(self, event):
+        global framenum,backimg
+        framenum-=1
+        self.read(framenum)
+        infn = framepath + "frame%04d.png" % framenum
+        backimg = mpimg.imread(infn)
+        figimg.set_data(backimg)
+        self.replot()
+    def framep(self, event):
+        global framenum,backimg
+        framenum+=1
+        self.read(framenum)
+        infn = framepath + "frame%04d.png" % framenum
+        backimg = mpimg.imread(infn)
+        figimg.set_data(backimg)
+        self.replot()
+    def fit(self, event, vis=False):
+        """
+        Given the current position as an initial guess, find the optimum
+        camera parameters and position to fit the stars.
+        """
+        global ax
+        import scipy.optimize
+        fitx=np.zeros(len(goodstars))*float('nan')
+        fity=np.zeros(len(goodstars))*float('nan')
+        fitv=np.zeros((4,len(goodstars)))*float('nan')
+        for i,i_goodstar in enumerate(goodstars):
+            fitx[i],fity[i]=find_star(i_goodstar,vis=vis)
+            fitv[:,i]=v[:,i_goodstar]
+        #fitplot=ax.plot(fitx,fity,'g*')
+        #plt.pause(0.001)
+        w=np.where(np.isfinite(fitx))
+        fitx=fitx[w]
+        fity=fity[w]
+        pixdata=np.stack((fitx,fity)).ravel()
+        fitv=fitv[:,w[0]] #If we do fitv[:,w] we get a shape (4,1,nstars) instead of the (4,nstars) we want
+        #fiti=np.array(goodstars)[w]
+        p0=np.array((self.lat_c,self.lon_c,self.angle,self.right_denom,self.lat_s,self.lon_s))
+        mn=np.array((-90,       -np.inf,   0,         0,               -90,       -np.inf   ))
+        mx=np.array(( 90,        np.inf,   90,        np.inf,           90,        np.inf   ))
+        np.array((self.lat_c,self.lon_c,self.angle,self.right_denom,self.lat_s,self.lon_s))
+        if p0[4]>mx[4]:
+            p0[4]=90-p0[4]
+            p0[5]=180+p0[5]
+        try:
+            (popt,_)=scipy.optimize.curve_fit(curve_fit_interface,fitv,pixdata,p0=p0,bounds=(mn,mx))
+        except ValueError:
+            print(p0)
+            print(p0>=mn)
+            print(p0<=mx)
+            raise
+        while popt[1]>360:
+            popt[1]-=360
+        while popt[1]<0:
+            popt[1]+=360
+        while popt[5]>360:
+            popt[5]-=360
+        while popt[5]<0:
+            popt[5]+=360
+        (self.lat_c,self.lon_c,self.angle,self.right_denom,self.lat_s,self.lon_s)=popt
+        self.write()
+        self.replot()
+    def autop(self, event):
+        for i in range(10):
+            self.framep(event)
+            self.fit(event,vis=False)
+            self.fit(event,vis=False)
+    def autom(self, event):
+        for i in range(100):
+            self.framem(event)
+            self.fit(event,vis=False)
+            self.fit(event,vis=False)
 
-callback=Index()
+
+
+callback=CameraMount(conn)
+fig=plt.figure()
+ax=fig.add_subplot(111)
+figimg=plt.imshow(backimg)
+if False:
+    prj=callback.project_stuff(circ(a[1]))
+    plot1,=plt.plot(prj[0,...],prj[1,...],'w-')
+    prj=callback.project_stuff(circ(a[2]))
+    plot2,=plt.plot(prj[0,...],prj[1,...],'w-')
+    prj=callback.project_stuff(traj(3,et-365*86400,et,86400))
+    plot3,=plt.plot(prj[0,...],prj[1,...],'w-')
+    prj=callback.project_stuff(traj(4,et-686*86400,et,86400))
+    plot4,=plt.plot(prj[0,...],prj[1,...],'w-')
+    T=et/(86400*36525)
+    v[0:3,-5]=cspice.spkezr("4",et,TrajFrame,"NONE","0")[0][0:3]/au
+    v[3,-5]=1
+    name.append("Mars")
+    v[0:3,-4]=cspice.spkezr("3",et,TrajFrame,"NONE","0")[0][0:3]/au
+    v[3,-4]=1
+    name.append("Earth")
+    v[:,-3]=circpos(a[2],np.array(np.radians(l0[2]+ldot[2]*T)))[:,0]
+    name.append("Venus")
+    v[:,-2]=circpos(a[1],np.array(np.radians(l0[1]+ldot[1]*T)))[:,0]
+    name.append("Mercury")
+    v[:,-1]=circpos(a[0],np.array(np.radians(l0[0]+ldot[0]*T)))[:,0]
+    name.append("Sun")
+
+prj=callback.project_stuff(v)
+starplot,=plt.plot(prj[0,...],prj[1,...],'r+')
+
+nameobj=[None]*prj.shape[1]
+
+goodstars=[1553,1097, 191, 765, 613, 289, 456, 472, 968,1000,
+           1292,1443, 411,1400,1243, 979, 801,1013,1492, 791,
+            741,1149,1020,1496,1399, 724,1569,1148,1108, 467,
+           1475, 887,  47, 666, 133,1414, 241, 909, 845,1109,
+           1021, 501,1045, 436,  88,1323, 848,  65, 277,  22,
+            980,1611, 379, 495, 755,1585, 931, 300,1585,1371,
+           1291, 205, 278,  92, 197, 886, 565, 357, 159,1491,
+            494,  37, 391, 515,   1, 175,1290,1320,1035,1199,
+            237, 799, 790,1060, 908, 227, 510, 877, 753,1136,
+            433,1269, 750,1147, 489, 516, 386,1474,1318, 226,
+
+            580, 397, 661, 850,1146, 432, 220,1058, 308, 567,
+            879,1497,1416,1324,1002,1124,1159, 301, 172,1444,
+            530, 172,  90, 694,1125, 107, 821, 517,1557,1526,
+            122, 458, 682,  94,1189, 811, 744, 263, 737,  98,
+           1046,1446, 173,1139, 228,  57,1062, 727, 111,1229,
+            216, 128, 318, 491, 552,1007, 563, 454, 252, 346,
+            949, 309, 460,1064, 648,1039,1595, 871, 614, 649,
+            387,  75, 200, 240, 142, 243, 334, 163,1387, 555,
+           1217,1559,  24, 115, 706,  39, 992, 347,  83,1376,
+
+            214, 193, 594, 972, 951,1391, 208, 239,  36,1510,
+            584, 505, 705, 595, 194, 983, 784,1421,  13,1390,
+           1378]
+
+if True:
+    for i in range(prj.shape[1]-10):
+        if name[i]!="":
+            print(i, name[i])
+            nameobj[i]=plt.text(prj[0,i] if np.isfinite(prj[0,i]) else 0,
+                                prj[1,i] if np.isfinite(prj[0,i]) else 0," %d %s"%(i,name[i]),
+                                color='yellow' if i in goodstars else 'blue',
+                                visible=np.isfinite(prj[0,i]))
 axs=[]
 btns=[]
 def makebtn(x,y,name,f):
@@ -346,7 +688,14 @@ makebtn(0.85,0.00,'-up',callback.upm)
 makebtn(0.85,0.10,'+up',callback.upp)
 makebtn(0.00,0.00,'/step',callback.sm)
 makebtn(0.10,0.00,'*step',callback.big)
+makebtn(0.00,0.05,'<frame',callback.framem)
+makebtn(0.10,0.05,'>frame',callback.framep)
+makebtn(0.05,0.00,'fit',callback.fit)
+makebtn(0.00,0.10,'<auto',callback.autom)
+makebtn(0.10,0.10,'auto>',callback.autop)
 
 plt.show()
+
+
 
 
