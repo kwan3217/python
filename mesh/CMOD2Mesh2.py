@@ -61,21 +61,20 @@ class CMOD2Mesh2:
     CMOD_String_ID = 5
     CMOD_Uint32_ID = 6
     CMOD_Color_ID = 7
-    #Occasionally in Java, we used for some Enum x, x[i] to
-    #get the i'th member of the enum. In Python, use x.__members__[i].
     class VertexSemantic(Enum):
-        def __init__(self, LpovrayStart=None):
+        def __init__(self, LpovrayStart=None, Lobj=None):
             self.povrayStart = LpovrayStart
-        Position= "vertex_vectors"
-        Color0=   "Color0"
-        Color1=   "Color1"
-        Normal=   "normal_vectors"
-        Tangent=  "Tangent"
-        Texture0= "uv_vectors"
-        Texture1= "Texture1"
-        Texture2= "Texture2"
-        Texture3= "Texture3"
-        PointSize="Color0"
+            self.obj=Lobj
+        Position= ("vertex_vectors","v")
+        Color0=   ("Color0",None)
+        Color1=   ("Color1",None)
+        Normal=   ("normal_vectors","vn")
+        Tangent=  ("Tangent",None)
+        Texture0= ("uv_vectors","vt")
+        Texture1= ("Texture1",None)
+        Texture2= ("Texture2",None)
+        Texture3= ("Texture3",None)
+        PointSize=("Color0",None)
 
     class VertexReader:
         def __init__(self, stride):
@@ -160,7 +159,7 @@ class CMOD2Mesh2:
     class CMOD_Color:
         def __str__(self):
             return "rgb <%f,%f,%f>"%(self.red,self.green,self.blue)
-        def __init__(self,Lred,Lgreen=None,Lblue=None):
+        def __init__(self,Lred,Lgreen=None,Lblue=None,verbose=False):
             if Lgreen is not None:
                 self.red  =Lred
                 self.green=Lgreen
@@ -170,7 +169,8 @@ class CMOD2Mesh2:
                 self.red  =read_float32(Lred)
                 self.green=read_float32(Lred)
                 self.blue =read_float32(Lred)
-                print(str(self),end='')
+                if verbose:
+                    print(str(self),end='')
     class CMOD_Material:
         def str_header(self):
             return "texture {\n"
@@ -201,16 +201,18 @@ class CMOD2Mesh2:
         def str_footer(self):
             return "}\n"
         def __str__(self):
-            result =self.str_header()
-            result+=self.str_diffuse()
-            result+=self.str_specular()
-            result+=self.str_emissive()
-            result+=self.str_phong()
-            result+=self.str_blend()
-            result+=self.str_opacity()
-            result+=self.str_footer()
+            return self.pov()
+        def pov(self):
+            result = self.str_header()
+            result += self.str_diffuse()
+            result += self.str_specular()
+            result += self.str_emissive()
+            result += self.str_phong()
+            result += self.str_blend()
+            result += self.str_opacity()
+            result += self.str_footer()
             return result
-        def __init__(self,Inf):
+        def __init__(self,Inf,verbose=False):
             self.diffuse=CMOD2Mesh2.CMOD_Color(0,0,0)
             self.specular=CMOD2Mesh2.CMOD_Color(0,0,0)
             self.emissive=None #CMOD_Color
@@ -218,36 +220,48 @@ class CMOD2Mesh2:
             self.opacity=CMOD2Mesh2.CMOD_Float1(1)
             self.blend=0 #int16
             self.texture=[None]*4 #CMOD_String[4]
-            print(self.str_header(),end='')
+            if verbose:
+                print(self.str_header(),end='')
             type=read_uint16(Inf)
             while type!=CMOD2Mesh2.CMOD_EndMaterial_ID:
                 if type==CMOD2Mesh2.CMOD_Diffuse_ID:
-                    print(self.str_diffuse_header(),end='')
+                    if verbose:
+                        print(self.str_diffuse_header(),end='')
                     self.diffuse=CMOD2Mesh2.CMOD_Color(Inf)
-                    print(self.str_diffuse_footer(),end='')
+                    if verbose:
+                        print(self.str_diffuse_footer(),end='')
                 elif type==CMOD2Mesh2.CMOD_Specular_ID:
-                    print(self.str_specular_header(),end='')
+                    if verbose:
+                        print(self.str_specular_header(),end='')
                     self.specular=CMOD2Mesh2.CMOD_Color(Inf)
-                    print(self.str_specular_footer(),end='')
+                    if verbose:
+                        print(self.str_specular_footer(),end='')
                 elif type==CMOD2Mesh2.CMOD_Emissive_ID:
-                    print(self.str_emissive_header(),end='')
+                    if verbose:
+                        print(self.str_emissive_header(),end='')
                     self.emissive=CMOD2Mesh2.CMOD_Color(Inf)
-                    print(self.str_emissive_footer(),end='')
+                    if verbose:
+                        print(self.str_emissive_footer(),end='')
                 elif type==CMOD2Mesh2.CMOD_Opacity_ID:
                     self.opacity=CMOD2Mesh2.CMOD_Float1(Inf)
-                    print(self.str_opacity(),end='')
+                    if verbose:
+                        print(self.str_opacity(),end='')
                 elif type==CMOD2Mesh2.CMOD_SpecularPower_ID:
                     self.specularPower=CMOD2Mesh2.CMOD_Float1(Inf)
-                    print(self.str_phong(),end='')
+                    if verbose:
+                        print(self.str_phong(),end='')
                 elif type==CMOD2Mesh2.CMOD_Blend_ID:
                     self.blend=read_int16(Inf)
-                    print(self.str_blend(),end='')
+                    if verbose:
+                        print(self.str_blend(),end='')
                 elif type==CMOD2Mesh2.CMOD_Texture_ID:
                     texType=read_int16(Inf)
                     self.texture[texType]=CMOD2Mesh2.CMOD_String(Inf)
-                    print("  #declare Texture[%d]=\"%s\"\n"%(texType,self.texture[texType].s));
+                    if verbose:
+                        print("  #declare Texture[%d]=\"%s\"\n"%(texType,self.texture[texType].s));
                 type=read_uint16(Inf)
-            print(self.str_footer())
+            if verbose:
+                print(self.str_footer())
 
     class CMOD_VertexDescription:
         def str_header(self):
@@ -260,8 +274,9 @@ class CMOD2Mesh2:
                 result+="    %s (%s) //%d\n"%(str(self.semantic[i]),str(self.format[i]),i)
             result+=self.str_footer()
             return result
-        def __init__(self,Inf):
-            print(self.str_header(),end='')
+        def __init__(self,Inf,verbose=False):
+            if verbose:
+                print(self.str_header(),end='')
             self.semantic=[] #List<VertexSemantic>
             self.format=[]   #List<VertexFormat>
             check_type(Inf,CMOD2Mesh2.CMOD_VertexDesc_ID)
@@ -271,10 +286,12 @@ class CMOD2Mesh2:
                 fmt=read_int16(Inf)
                 self.semantic.append(CMOD2Mesh2.VertexSemantic[list(CMOD2Mesh2.VertexSemantic.__members__)[type]])
                 self.format.append(CMOD2Mesh2.VertexFormatList[fmt])
-                print("    type[%d]%s fmt[%d](%s) //%d\n"%(type,str(self.semantic[i]),fmt,CMOD2Mesh2.VertexFormatNameList[fmt],i),end='')
+                if verbose:
+                    print("    type[%d]%s fmt[%d](%s) //%d\n"%(type,str(self.semantic[i]),fmt,CMOD2Mesh2.VertexFormatNameList[fmt],i),end='')
                 i+=1
                 type=read_int16(Inf)
-            print(self.str_footer())
+            if verbose:
+                print(self.str_footer())
     class CMOD_Vertices:
         def __str__(self):
             result=""
@@ -287,9 +304,9 @@ class CMOD2Mesh2:
                     for j in range(1,len(d[i])):
                         result+=",%f"%d[i][j]
                     result+=">"
-            result+="\n  }"
+                result+="\n  }"
             return result
-        def __init__(self,Inf,Ldesc):
+        def __init__(self,Inf,Ldesc,verbose=False):
             self.desc=Ldesc #CMOD_VertexDescription
             self.length=None #long
             self.data={} #Map<VertexSemantic,float[][]>
@@ -300,10 +317,11 @@ class CMOD2Mesh2:
             for i in range(self.length):
                 for j in range(len(self.desc.format)):
                     self.data[self.desc.semantic[j]][i]=self.desc.format[j].read(Inf)
-            print(str(self))
+            if verbose:
+                print(str(self))
 
     class PrimitiveGroup:
-        def __str__(self):
+        def pov(self):
             result ="  face_indices {\n"
             result+="    %d"%(len(self.data)//3)
             for i in range(len(self.data)//3):
@@ -313,37 +331,67 @@ class CMOD2Mesh2:
                 result+=">"
             result+="\n  }"
             return result
-        def __init__(self,Ltype,Inf):
+        def __str__(self):
+            return self.pov()
+        def obj(self,vofs,vnofs=None,vtofs=None):
+            result=[]
+            for i in range(len(self.data)//3):
+                if vnofs is None:
+                    if vtofs is None:
+                        this_result="f %d %d %d\n"%(self.data[i*3+0]+vofs,
+                                                    self.data[i*3+1]+vofs,
+                                                    self.data[i*3+2]+vofs)
+                    else:
+                        this_result="f %d/%d %d/%d %d/%d\n"%(self.data[i*3+0]+vofs,self.data[i*3+0]+vtofs,
+                                                             self.data[i*3+1]+vofs,self.data[i*3+1]+vtofs,
+                                                             self.data[i*3+2]+vofs,self.data[i*3+2]+vtofs)
+                else:
+                    if vtofs is None:
+                        this_result= "f %d//%d %d//%d %d//%d\n"%(self.data[i*3+0]+vofs,self.data[i*3+0]+vnofs,
+                                                                 self.data[i*3+1]+vofs,self.data[i*3+1]+vnofs,
+                                                                 self.data[i*3+2]+vofs,self.data[i*3+2]+vnofs)
+                    else:
+                        this_result="f %d/%d/%d %d/%d/%d %d/%d/%d\n"%(self.data[i*3+0]+vofs,self.data[i*3+0]+vtofs,self.data[i*3+0]+vnofs,
+                                                                      self.data[i*3+1]+vofs,self.data[i*3+1]+vtofs,self.data[i*3+1]+vnofs,
+                                                                      self.data[i*3+2]+vofs,self.data[i*3+2]+vtofs,self.data[i*3+2]+vnofs)
+                result.append(this_result)
+            return "".join(result)
+        def __init__(self,Ltype,Inf,verbose=False):
             self.type=list(CMOD2Mesh2.PrimitiveType.__members__)[Ltype]    #PrimitiveType
             self.materialIdx=read_int32(Inf) #int
             indexCount=read_int32(Inf)
             self.data = [0]*indexCount  # int[]
             for i in range(indexCount):
                 self.data[i]=read_int32(Inf)
-            print(str(self))
+            if verbose:
+                print(str(self))
     class CMOD_Mesh:
         def str_header(self):
             return "mesh2 {\n"
         def str_footer(self):
             return "} //mesh2\n"
-        def __str__(self):
+        def pov(self):
             result =self.str_header()
             result+=str(self.V)
             for G in self.groups:
                 result+=str(G)
             result+=self.str_footer()
             return result
-        def __init__(self,Inf):
-            print(self.str_header())
-            self.desc=CMOD2Mesh2.CMOD_VertexDescription(Inf) #CMOD_VertexDescription
-            self.V=CMOD2Mesh2.CMOD_Vertices(Inf,self.desc)   #CMOD_Vertices
+        def __str__(self):
+            return self.pov()
+        def __init__(self,Inf,verbose=False):
+            if verbose:
+                print(self.str_header())
+            self.desc=CMOD2Mesh2.CMOD_VertexDescription(Inf,verbose=verbose) #CMOD_VertexDescription
+            self.V=CMOD2Mesh2.CMOD_Vertices(Inf,self.desc,verbose=verbose)   #CMOD_Vertices
             self.groups=[] #List<PrimitiveGroup>
             type=read_int16(Inf)
             while type!=CMOD2Mesh2.CMOD_EndMesh_ID:
                 self.groups.append(CMOD2Mesh2.PrimitiveGroup(type,Inf))
                 type=read_int16(Inf)
-            print(self.str_footer())
-    def __str__(self):
+            if verbose:
+                print(self.str_footer())
+    def pov(self):
         i=0
         result="#declare materialArray=array[%d];"%len(self.materials)
         for M in self.materials:
@@ -373,7 +421,79 @@ class CMOD2Mesh2:
         result+="  #end\n"
         result+="}\n"
         return result
-    def __init__(self,Inf):
+    def __str__(self):
+        return self.pov()
+    def mtl(self):
+        """
+        Return the wavefront form of the entire mesh. Wavefront object files
+        will consist of the following:
+        * For each object, a list of all of its vertices (v), normals (vn), and
+          texture coordinates (vt). There will be comments in between the vectors
+          of each object, but these are not significant to the .obj format
+        * A group for each object in the file (g) followed by triangular faces (f).
+          Since there is only one long list, we will have to pass an offset to
+          the list to the object writer.
+        """
+        #Print out vertices
+        result=[]
+        for i,M in enumerate(self.materials):
+            result.append("newmtl mtl%03d\n"%i)
+            if M.emissive is not None:
+                result.append("Ka %f %f %f\n"%(M.emissive.red,M.emissive.green,M.emissive.blue))
+            else:
+                result.append("Ka 0.0 0.0 0.0 #No emissive specified\n")
+            if M.diffuse is not None:
+                result.append("Kd %f %f %f\n" % (M.diffuse.red, M.diffuse.green, M.diffuse.blue))
+            else:
+                result.append("Kd 0.0 0.0 0.0 #No diffuse specified\n")
+            if M.specular.red>0:
+                result.append("Ks %f %f %f\n" % (M.specular.red, M.specular.green, M.specular.blue))
+                result.append("Ns %f\n"%M.specularPower.data)
+            else:
+                result.append("Ks 0.0 0.0 0.0 #No specular specified\nNs 10.0\n")
+        result="".join(result)
+        return result
+    def obj(self,fn):
+        """
+        Return the wavefront form of the entire mesh. Wavefront object files
+        will consist of the following:
+        * For each object, a list of all of its vertices (v), normals (vn), and
+          texture coordinates (vt). There will be comments in between the vectors
+          of each object, but these are not significant to the .obj format
+        * A group for each object in the file (g) followed by triangular faces (f).
+          Since there is only one long list, we will have to pass an offset to
+          the list to the object writer.
+        """
+        #Print out vertices
+        result=[]
+        ofs={CMOD2Mesh2.VertexSemantic.Position:[1,[None]*len(self.meshes)],
+             CMOD2Mesh2.VertexSemantic.Normal  :[1,[None]*len(self.meshes)],
+             CMOD2Mesh2.VertexSemantic.Texture0:[1,[None]*len(self.meshes)]}
+        import os.path
+        result.append("mtllib %s\n"%os.path.basename(fn)[:-4]+".mtl")
+        for i,M in enumerate(self.meshes):
+            result.append("#vertices for part %3d\n"%i)
+            for s in M.V.data:
+                result.append("#vertex type %s: initial offset %d, number of vectors %d\n"%(s.obj,ofs[s][0],len(M.V.data[s])))
+                ofs[s][1][i]=ofs[s][0]
+                ofs[s][0]+=len(M.V.data[s])
+            for s in M.V.data:
+                for v in M.V.data[s]:
+                    this_result="%s"%s.obj
+                    for e in v:
+                        this_result+=" %f"%e
+                    this_result+="\n"
+                    result.append(this_result)
+        result="".join(result)
+        for i,M in enumerate(self.meshes):
+            result+="g object%03d\n"%i
+            result+="usemtl mtl%03d\n"%i
+            for g in M.groups:
+                result+=g.obj(vofs =ofs[CMOD2Mesh2.VertexSemantic.Position][1][i],
+                              vnofs=ofs[CMOD2Mesh2.VertexSemantic.Normal  ][1][i],
+                              vtofs=ofs[CMOD2Mesh2.VertexSemantic.Texture0][1][i])
+        return result
+    def __init__(self,Inf,verbose=False):
         self.header="" #String
         self.materials=[] #LinkedList<CMOD_Material>
         self.meshes=[] #LinkedList<CMOD_Mesh>
@@ -385,12 +505,13 @@ class CMOD2Mesh2:
             if type==CMOD2Mesh2.CMOD_Material_ID:
                 if seenMesh:
                     raise ValueError("All materials must be before any meshes")
-                print("#declare material[%3d]="%materials,end='')
+                if verbose:
+                    print("#declare material[%3d]="%materials,end='')
                 materials+=1
-                self.materials.append(CMOD2Mesh2.CMOD_Material(Inf))
+                self.materials.append(CMOD2Mesh2.CMOD_Material(Inf,verbose=verbose))
             elif type==CMOD2Mesh2.CMOD_Mesh_ID:
                 seenMesh=True
-                self.meshes.append(CMOD2Mesh2.CMOD_Mesh(Inf))
+                self.meshes.append(CMOD2Mesh2.CMOD_Mesh(Inf,verbose=verbose))
             try:
                 type=read_int16(Inf)
             except:
@@ -399,10 +520,12 @@ class CMOD2Mesh2:
 if __name__=="__main__":
     with open("Data/Mesh/voyager.cmod", "rb") as Inf:
         try:
-            Imp = CMOD2Mesh2(Inf)
+            Imp = CMOD2Mesh2(Inf,verbose=False)
         except:
             print("0x%08X"%Inf.tell())
             raise
         else:
-            with open("Data/Mesh/voyager.mesh2") as ouf:
-                print(str(Imp))
+            with open("Data/Mesh/voyager.py.obj","wt") as ouf:
+                print(Imp.obj("Data/Mesh/voyager.py.obj"),file=ouf)
+            with open("Data/Mesh/voyager.py.mtl","wt") as ouf:
+                print(Imp.mtl(),file=ouf)
