@@ -19,8 +19,9 @@ rxmax = float('-inf')
 rxmin = float('inf')
 rzmax = float('-inf')
 rzmin = float('inf')
-for infn in glob.glob("G:\\home\\chrisj\\multimc~\\MultiMC\\instances\\StoneBlock-1.0.26\\minecraft\\saves\\Mines of Kwania\\region\\r.*.*.mca"):
+for infn in glob.glob("/home/minecraft/world-1.15.2-20200310/region/r.*.*.mca"):
     base_infn=os.path.basename(infn)
+    print(base_infn)
     (_,rx,rz,_)=base_infn.split(".")
     rx=int(rx)
     rz=int(rz)
@@ -78,6 +79,6 @@ plt.imshow(regionmap,origin='upper',extent=(rxmin,rxmax+1,rzmax+1,rzmin))
 plt.show()
 chunkmap=dict_to_map(chunkdict,cxmin,cxmax,czmin,czmax)
 print("Chunks: ",chunks,cxmin,cxmax,czmin,czmax)
-plt.imshow(chunkmap,origin='upper',extent=(cxmin*16,cxmax*16+16,czmax*16+16,czmin*16))
+plt.imshow(np.log2(chunkmap+1),origin='upper',extent=(cxmin*16,cxmax*16+16,czmax*16+16,czmin*16))
 plt.show()
 

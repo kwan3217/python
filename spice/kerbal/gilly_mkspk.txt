@@ -1,0 +1,34 @@
+Spice kernel covering the natural objects in the Kerbol system.
+
+This file is used to generate a kernel roughly equivalent to DE430 for the
+real solar system, but including all planets (including dwarf planets) and
+moons.
+
+Object numbering is not Spice-like, but instead follows the numbering in 
+https://docs.google.com/spreadsheets/d/1HwrFq6r2Wfzvghq8VYMNx0F2rG6nYMAEl_cyLj2EXjA/edit#gid=0
+
+The K0001 epoch (equivalent to J2000) is used, as this matches the in-game
+time scale. The clock ticks at 1 SI second per second, and starts at Y1D1T00:00:00 UT
+
+\begindata
+INPUT_DATA_TYPE = 'ELEMENTS'
+OUTPUT_SPK_TYPE = 15
+OBJECT_ID=13
+CENTER_ID=5
+REF_FRAME_NAME='J2000'
+PRODUCER_ID='C. Jeppesen, Kwan Systems'
+DATA_ORDER='EPOCH A E INC PER NOD MEAN'
+TIME_WRAPPER='# ETSECONDS'
+INPUT_DATA_UNITS = ('ANGLES=DEGREES' 'DISTANCES=km')
+DATA_DELIMITER=','
+LINES_PER_RECORD=1
+CENTER_GM=8171.73022921085
+CENTER_J2=0
+CENTER_EQ_RADIUS=700
+PRECESSION_TYPE='NO PRECESSION'
+CENTER_POLE_RA=0
+CENTER_POLE_DEC=90
+START_TIME='2000-Jan-01 12:00:00 TDB'
+STOP_TIME='3000-Jan-01 12:00:00 TDB'
+LEAPSECONDS_FILE='/home/chrisj/workspace/Data/spice/generic/lsk/naif0012.tls'
+

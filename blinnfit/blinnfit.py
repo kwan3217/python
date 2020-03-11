@@ -7,7 +7,7 @@ from bsc import *
 import os
 import sqlite3
 
-fitsky=False
+fit_sky=True
 
 def open_frame_index():
     """
@@ -15,7 +15,7 @@ def open_frame_index():
     in the database
 
     :param desc: Used to build the filename of the sqlite database. Different values
-      of desc= will result in different sqlite files being used.
+      of des c= will result in different sqlite files being used.
     """
     if fitsky:
         dbname = "frame_index.sqlite"
@@ -45,14 +45,14 @@ def open_frame_index():
 
 conn=open_frame_index()
 
-os.chdir('/home/jeppesen/workspace/Data/spice/Voyager/')
+os.chdir('/home/chrisj/workspace/Data/spice/Voyager/')
 cspice.furnsh('vgr1.tm')
 cspice.furnsh('vgr2.tm')
 cspice.furnsh('../generic/lsk/naif0012.tls')
 cspice.furnsh('../generic/spk/planets/de430.bsp')
 if True:
-    framepath='/home/jeppesen/workspace/Data/Prototype/Blinn/SuperTrajectory/'
-    framenum=432
+    framepath='/home/chrisj/workspace/Data/Prototype/Blinn/SuperTrajectory/'
+    framenum=1136
     infn=framepath+"frame%04d.png"%framenum
 else:
     framepath='/home/jeppesen/workspace/pov/Blinn/'
