@@ -4,15 +4,15 @@ import copy
 import integrate
 
 #Solar system positions
-cspice.furnsh("../../Data/spice/generic/spk/planets/de430s.bsp")
+cspice.furnsh("../../Data/spice/generic/spk/planets/de430.bsp")
 #Satellite positions
 cspice.furnsh("../../Data/spice/generic/spk/satellites/jup230l.bsp")
 #Planet constants
 cspice.furnsh("../../Data/spice/generic/pck/pck00010.tpc")
-cspice.furnsh("../../Data/spice/generic/pck/gm_de431.tpc")
+cspice.furnsh("../../Data/spice/generic/pck/de-421-masses.tpc")
 cspice.furnsh("../../Data/spice/generic/pck/juno.tpc") #Jupiter gravity field
 #Leap seconds
-cspice.furnsh("../../Data/spice/generic/lsk/naif0012.tls")
+cspice.furnsh("../../Data/spice/generic/lsk/naif0011.tls")
 #Spacecraft kernel
 cspice.furnsh("../../Data/spice/Voyager/spk/voyager_1.ST+1991_a54418u.merged.bsp") #Supertrajectory for Voyager 1
 cspice.furnsh("../../Data/spice/Voyager/spk/vgr1_jup230.bsp") #Jupiter encounter trajectory, 1979-02-01/03-19

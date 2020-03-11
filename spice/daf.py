@@ -141,7 +141,7 @@ class daf_SPKSegment:
         segment_size=summary.addr1-summary.addr0+1
         format="%s%d%s"%(daf.dformat[0],segment_size,daf.dformat[1])
         self.buf=struct.unpack(format,daf.inf.read(segment_size*8))
-        self.N=int(self.buf[-1])
+        self.N=int(self.buf[-1]) if self.summary.type not in (15,17) else 1
         result=self.line(0)
         self.csvheader = result.csvheader
     def line(self,i):
@@ -151,8 +151,12 @@ class daf_SPKSegment:
             return daf_SPK02line(self.N,i,self.buf)
         elif self.summary.type==9:
             return daf_SPK09line(self.N,i,self.buf)
-        elif self.summary.type==13:
-            return daf_SPK13line(self.N,i,self.buf)
+        elif self.summary.type == 13:
+            return daf_SPK13line(self.N, i, self.buf)
+        elif self.summary.type == 15:
+            return daf_SPK15line(self.N, i, self.buf)
+        elif self.summary.type == 17:
+            return daf_SPK17line(self.N, i, self.buf)
         else:
             raise ValueError("Unhandled SPK type %d"%self.summary.type)
     def __iter__(self):
@@ -252,6 +256,63 @@ class daf_SPK02line:
             result+=",%25.15e"%y
         for z in self.z:
             result+=",%25.15e"%z
+        return result
+    def eval(self,ET):
+        pass
+
+class daf_SPK15line:
+    def __init__(self,N,i,buf):
+        self.et   =buf[0]
+        self.polex    =buf[1]
+        self.poley    =buf[2]
+        self.polez    =buf[3]
+        self.perix    =buf[4]
+        self.periy    =buf[5]
+        self.periz    =buf[6]
+        self.l=buf[7]
+        self.e =buf[8]
+        self.j2flag=buf[9]
+        self.centx=buf[10]
+        self.centy=buf[11]
+        self.centz=buf[12]
+        self.centgm=buf[13]
+        self.centj2=buf[14]
+        self.centre=buf[15]
+        self.csvheader="ETPERI,ETPERICAL*,polex,poley,polez,perix,periy,periz,l,e,j2flag,centx,centy,centz,centgm,centj2,centre"
+    def __str__(self):
+        result="%30.14f,%s,%.15f,%.15f,%.15f,%.15f,%.15f,%.15f,%.15e,%.15e,%1.0f,%17.14f,%17.14f,%17.14f,%.15e,%.15e,%.15e"%(
+            self.et,cspice_etcal(self.et),
+            self.polex,self.poley,self.polez,self.perix,self.periy,self.periz,
+            self.l,self.e,self.j2flag,
+            self.centx, self.centy, self.centz,
+            self.centgm,self.centj2,self.centre
+        )
+        return result
+    def eval(self,ET):
+        pass
+
+class daf_SPK17line:
+    def __init__(self,N,i,buf):
+        self.et   =buf[0]
+        self.a    =buf[1]
+        self.h    =buf[2]
+        self.k    =buf[3]
+        self.L    =buf[4]
+        self.p    =buf[5]
+        self.q    =buf[6]
+        self.omegabardot=buf[7]
+        self.Ldot =buf[8]
+        self.Omegadot=buf[9]
+        self.polera=buf[10]
+        self.poledec=buf[11]
+        self.csvheader="ETPERI,ETPERICAL*,a,h,k,L,p,q,omegabardot,Ldot,Omegadot,polera,poledec"
+    def __str__(self):
+        result="%30.14f,%s,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f,%30.14f"%(
+            self.et,cspice_etcal(self.et),
+            self.a,self.h,self.k,self.L,self.p,self.q,
+            self.omegabardot,self.Ldot,self.Omegadot,
+            self.polera,self.poledec
+        )
         return result
     def eval(self,ET):
         pass
