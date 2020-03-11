@@ -8,7 +8,11 @@ import numpy as np
 bodytype = namedtuple("body", ["spice_id", "frame", "gm", "j2", "re"])
 
 def getbody(bodyid,frame):
-    gm=cspice.gdpool("BODY%d_GM"%bodyid,0,1)[0] #Not finding a GM is fatal
+    try:
+        gm=cspice.gdpool("BODY%d_GM"%bodyid,0,1)[0] #Not finding a GM is fatal
+    except:
+        print("Could not find value for BODY%d_GM"%bodyid)
+        raise
     try:
         j2=cspice.gdpool("BODY%d_J2"%bodyid,0,1)[0]
     except:
