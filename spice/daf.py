@@ -223,11 +223,11 @@ class daf_SPKStateline:
 
 class daf_SPK09line(daf_SPKStateline):
     def __init__(self,N,i,buf):
-        daf_SPKStateline(self,N,i,buf)
+        super().__init__(N,i,buf)
 
 class daf_SPK13line(daf_SPKStateline):
     def __init__(self,N,i,buf):
-        daf_SPKStateline(self,N,i,buf)
+        super().__init__(N,i,buf)
 
 class daf_SPK02line:
     def __init__(self,N,i,buf):

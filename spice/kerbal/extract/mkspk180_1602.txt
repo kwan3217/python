@@ -1,0 +1,46 @@
+
+Spice kernel covering the natural objects in the Kerbol system. This segment
+is for the position of Vall (Spice ID 1602) relative to Jool Barycenter (Spice ID 1006).
+
+Using data extracted via kRPC, extracted from KSP version 1.8.0
+
+The K0001 epoch (equivalent to J2000) is used, as this matches the in-game
+time scale. The clock ticks at 1 SI second per second, and starts at 
+Year 1, Day 1, 00:00:00 UT which is the exact instant that the game starts
+and matches all UT in seconds in the persistence file.
+
+The actual data is as follows:
+Parent GM/(km**3/s**2):          2.82528015450111998e+05
+Parent radius/km:                6.00000000000000000e+03
+Semimajor axis/km:               4.31520000000000000e+04
+Eccentricity:                    0.00000000000000000e+00
+Inclination/rad:                 0.00000000000000000e+00
+Argument of Periapse/rad:        0.00000000000000000e+00
+Longitude of Ascending Node/rad: 0.00000000000000000e+00
+Mean Anomaly at epoch UT=0s/rad: 8.99999976158141979e-01
+
+Note that KSP uses meters and radians. Spice uses km and
+no explicit angle unit (uses unit vectors instead).
+
+\begindata
+INPUT_DATA_TYPE = 'ELEMENTS'
+OUTPUT_SPK_TYPE = 15
+OBJECT_ID=1602
+CENTER_ID=1006
+REF_FRAME_NAME='J2000'
+PRODUCER_ID='C. Jeppesen, Kwan Systems'
+DATA_ORDER='EPOCH A E INC PER NOD MEAN'
+TIME_WRAPPER='# ETSECONDS'
+INPUT_DATA_UNITS = ('ANGLES=radians' 'DISTANCES=km')
+DATA_DELIMITER=','
+LINES_PER_RECORD=1
+CENTER_GM=2.82528015450111998e+05
+CENTER_J2=0
+CENTER_EQ_RADIUS=6.00000000000000000e+03
+PRECESSION_TYPE='NO PRECESSION'
+CENTER_POLE_RA=0
+CENTER_POLE_DEC=90
+START_TIME='2000-Jan-01 12:00:00 TDB'
+STOP_TIME='3000-Jan-01 12:00:00 TDB'
+LEAPSECONDS_FILE='kernel/kerb0000.tls'
+
