@@ -83,10 +83,11 @@ class daf_SPKsummary(daf_summary):
 class daf_CKsummary(daf_summary):
     def __init__(self,sr,daf,buf,name):
         super().__init__(sr,daf,buf,name)
+    def sclk(self):return self.target // 1000 + (0 if self.target % 1000 == 0 else 1)
     def getsclk0(self): return self.D[0]
     def getsclk1(self): return self.D[1]
-    def getet0(self): return cspice_sct2e(self.target//1000+1,self.sclk0)
-    def getet1(self): return cspice_sct2e(self.target//1000+1,self.sclk1)
+    def getet0(self): return cspice_sct2e(self.sclk(),self.sclk0)
+    def getet1(self): return cspice_sct2e(self.sclk(),self.sclk1)
     def gettarget(self): return self.I[0]
     def getframe (self): return self.I[1]
     def gettype  (self): return self.I[2]
@@ -108,16 +109,16 @@ class daf_CKsummary(daf_summary):
         result ="%s\n"%self.name
         result+="SCLK0:    %20.15e" %self.sclk0
         try:
-            et=cspice_sct2e(self.target//1000+1,self.sclk0)
-            scdecd=cspice_scdecd(self.target//1000+1,self.sclk0)
+            et=cspice_sct2e(self.sclk(),self.sclk0)
+            scdecd=cspice_scdecd(self.sclk(),self.sclk0)
             result+=" (%s ET=%16.6f %s)"%(scdecd,et,cspice_etcal(et))
         except:
             pass #If there is an error, it means that the correct kernels aren't available.
         result+="\n"
         result+="SCLK1:    %20.15e" %self.sclk1
         try:
-            et=cspice_sct2e(self.target//1000+1,self.sclk1)
-            scdecd=cspice_scdecd(self.target//1000+1,self.sclk1)
+            et=cspice_sct2e(self.sclk(),self.sclk1)
+            scdecd=cspice_scdecd(self.sclk(),self.sclk1)
             result+=" (%s ET=%16.6f %s)"%(scdecd,et,cspice_etcal(et))
         except:
             pass #If there is an error, it means that the correct kernels aren't available.
@@ -189,12 +190,13 @@ class daf_CKSegment:
             raise ValueError("Unknown CK type %d"%self.summary.type)
     N=property(fget=getN ,doc="Number of pointing intervals in file")
     def line(self,i):
+        sclk=self.summary.target//1000+(0 if self.summary.target%1000==0 else 1)
         if self.summary.type==1:
-            return daf_CK01line(self.summary.target//1000+1,self.N,i,self.buf,self.summary.rates)
+            return daf_CK01line(sclk,self.N,i,self.buf,self.summary.rates)
         elif self.summary.type==2:
-            return daf_CK02line(self.summary.target//1000+1,self.N,i,self.buf)
+            return daf_CK02line(sclk,self.N,i,self.buf)
         elif self.summary.type == 3:
-            return daf_CK03line(self.summary.target//1000+1,self.N,i,self.buf,self.summary.rates)
+            return daf_CK03line(sclk,self.N,i,self.buf,self.summary.rates)
         else:
             raise ValueError("Unknown CK type %d" % self.summary.type)
     def __iter__(self):
