@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from actor import *
 
-pb=PictureBox(1280,720,autodraw=False,facecolor='#e0e0ff')
+pb=PictureBox(1,1280,720,autodraw=False,facecolor='#e0e0ff')
 
 class AltMark(Actor):
     def __init__(self,ts,x0,y0,y1,d0,d1,data_t,data_y,**kwargs):

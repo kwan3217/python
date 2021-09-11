@@ -19,7 +19,7 @@ rxmax = float('-inf')
 rxmin = float('inf')
 rzmax = float('-inf')
 rzmin = float('inf')
-for infn in glob.glob("/home/minecraft/world-1.15.2-20200310/region/r.*.*.mca"):
+for infn in glob.glob("/home/minecraft/Niceville/world/region/r.*.*.mca"):
     base_infn=os.path.basename(infn)
     print(base_infn)
     (_,rx,rz,_)=base_infn.split(".")
@@ -76,7 +76,7 @@ def dict_to_map(dict,xmin,xmax,zmin,zmax,mark=True):
 regionmap=dict_to_map(regiondict,rxmin,rxmax,rzmin,rzmax)
 print("Regions: ",regions,rxmin,rxmax,rzmin,rzmax)
 plt.imshow(regionmap,origin='upper',extent=(rxmin,rxmax+1,rzmax+1,rzmin))
-plt.show()
+plt.pause(0.001)
 chunkmap=dict_to_map(chunkdict,cxmin,cxmax,czmin,czmax)
 print("Chunks: ",chunks,cxmin,cxmax,czmin,czmax)
 plt.imshow(np.log2(chunkmap+1),origin='upper',extent=(cxmin*16,cxmax*16+16,czmax*16+16,czmin*16))
